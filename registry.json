@@ -6,8 +6,8 @@
       "id": "sub-agents",
       "package": "leo-plugin-sub-agents",
       "path": "plugins/sub-agents",
-      "version": "0.0.0",
-      "status": "planned",
+      "version": "0.1.0",
+      "status": "experimental",
       "description": "子代理：让主 Agent 把任务委派给独立上下文的子 Agent 执行，并汇总结果"
     }
   ]

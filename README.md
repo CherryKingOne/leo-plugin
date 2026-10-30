@@ -6,7 +6,7 @@
 
 | 插件 | 包名 | 状态 | 说明 |
 | --- | --- | --- | --- |
-| [sub-agents](plugins/sub-agents) | `leo-plugin-sub-agents` | 规划中 | 把任务委派给独立上下文的子 Agent 执行并汇总结果 |
+| [sub-agents](plugins/sub-agents) | `leo-plugin-sub-agents` | 实验性 0.1.0 | 把任务委派给独立上下文的子 Agent 执行并汇总结果 |
 
 机器可读的索引见 [`registry.json`](registry.json)。
 
