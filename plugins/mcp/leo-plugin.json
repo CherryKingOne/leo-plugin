@@ -39,5 +39,12 @@
         "timeoutMs": 120000
       }
     ]
+  },
+  "release": {
+    "version": "0.1.0",
+    "bundle": {
+      "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/mcp/0.1.0/mcp.bundle.js",
+      "sha256": "ad01420f4976072cda6f64772545c70e94e7a6e62683c660b869773365df3811"
+    }
   }
 }

@@ -4,6 +4,19 @@
   "version": 1,
   "plugins": [
     {
+      "id": "mcp",
+      "package": "leo-plugin-mcp",
+      "path": "plugins/mcp",
+      "version": "0.1.0",
+      "status": "experimental",
+      "description": "MCP 客户端：把外部 MCP 服务器的工具接入 Agent，兼容 MCP 2026-07-28（MCP 2.0）与 2025-11-25 及更早版本",
+      "leo": ">=0.1.0",
+      "bundle": {
+        "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/mcp/0.1.0/mcp.bundle.js",
+        "sha256": "ad01420f4976072cda6f64772545c70e94e7a6e62683c660b869773365df3811"
+      }
+    },
+    {
       "id": "sub-agents",
       "package": "leo-plugin-sub-agents",
       "path": "plugins/sub-agents",
