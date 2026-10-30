@@ -5,14 +5,29 @@
   "version": "0.1.0",
   "status": "experimental",
   "description": "聊天渠道注册层：统一注册、配置与管理聊天渠道子插件，内置 QQ、飞书、Telegram 机器人",
-  "keywords": ["chat", "channel", "bot", "qq", "feishu", "lark", "telegram"],
+  "keywords": [
+    "chat",
+    "channel",
+    "bot",
+    "qq",
+    "feishu",
+    "lark",
+    "telegram"
+  ],
   "leo": ">=0.1.0",
   "entry": "./dist/index.js",
   "bundle": "./dist/chat-channels.bundle.js",
-  "inject": ["tools"],
+  "inject": [
+    "tools"
+  ],
   "provides": {
-    "services": ["chatChannels"],
-    "tools": ["chat_channels", "chat_send"],
+    "services": [
+      "chatChannels"
+    ],
+    "tools": [
+      "chat_channels",
+      "chat_send"
+    ],
     "events": [
       "chat-channels/driver-registered",
       "chat-channels/status",
@@ -21,17 +36,34 @@
       "chat-channels/sent"
     ]
   },
-  "permissions": ["chat.send"],
+  "permissions": [
+    "chat.send"
+  ],
   "install": {
     "config": "leo-plugin-chat-channels",
     "example": [
       "leo-plugin-chat-channels",
       {
         "accounts": {
-          "tg-main": { "channel": "telegram", "options": { "botToken": "$TELEGRAM_BOT_TOKEN" } }
+          "tg-main": {
+            "channel": "telegram",
+            "options": {
+              "botToken": "$TELEGRAM_BOT_TOKEN"
+            }
+          }
         },
-        "agent": { "enabled": true, "model": "deepseek/deepseek-chat" }
+        "agent": {
+          "enabled": true,
+          "model": "deepseek/deepseek-chat"
+        }
       }
     ]
+  },
+  "release": {
+    "version": "0.1.0",
+    "bundle": {
+      "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/chat-channels/0.1.0/chat-channels.bundle.js",
+      "sha256": "aef9fd89d3bea58bb2a44f40ed47be6c7065d1939066a3c630eece245b2a1263"
+    }
   }
 }
