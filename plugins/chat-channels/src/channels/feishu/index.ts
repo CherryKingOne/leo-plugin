@@ -1,25 +1,29 @@
 /**
- * 飞书 / Lark 机器人（自建应用 + 事件订阅 webhook）。
+ * 飞书 / Lark 机器人（企业自建应用）。收消息两种方式：
+ *
+ * - `websocket`（默认，长连接）：机器人主动连到飞书，不需要公网地址、不需要验签和解密，适合本地与内网。
+ *   开放平台 → 事件与回调 → 订阅方式选「使用长连接接收事件」（需要先把本插件跑起来，保存时平台会检测连接）。
+ * - `webhook`：飞书把事件推送到 `<公网 HTTPS><basePath>/<account>`，需要 Verification Token，建议设置 Encrypt Key。
  *
  * 机器人配置：
  * 1. 飞书开放平台 → 创建企业自建应用 → 添加「机器人」能力，记下 App ID、App Secret。
  * 2. 权限：`im:message`（获取与发送单聊、群组消息）、`im:message.group_at_msg`（接收群聊中 @机器人消息）、
  *    `im:message.p2p_msg`（接收单聊消息），按需加 `im:message.group_msg`（接收群聊所有消息）。
- * 3. 事件与回调 → 加密策略：记下 Verification Token；建议设置 Encrypt Key。
- * 4. 事件订阅方式选「将事件发送至开发者服务器」，请求地址填 `<公网 HTTPS><basePath>/<account>`，
- *    添加事件 `im.message.receive_v1`。保存时飞书会发 url_verification，本驱动自动应答。
- * 5. 发布应用版本，并把机器人拉进群。
+ * 3. 事件与回调：选择订阅方式（见上），添加事件 `im.message.receive_v1`。
+ * 4. 发布应用版本，并把机器人拉进群。
  */
 import { createDecipheriv, createHash, timingSafeEqual } from 'node:crypto'
 import { z } from 'zod'
 import { ChannelHttpError, requestJson, TokenCache } from '../../http.js'
+import { FeishuWsClient } from './ws.js'
 import type { ChannelConnection, ChannelDriver, ChannelInit, InboundMessage, WebhookRequest, WebhookResponse } from '../../types.js'
 
 export const FeishuOptions = z.object({
   appId: z.string().min(1).describe('App ID（cli_ 开头）'),
   appSecret: z.string().min(1).describe('App Secret，写 $FEISHU_APP_SECRET 这样的引用'),
-  verificationToken: z.string().min(1).describe('事件订阅的 Verification Token，写引用'),
-  encryptKey: z.string().optional().describe('事件订阅的 Encrypt Key（设置后请求体加密并校验签名），写引用'),
+  mode: z.enum(['websocket', 'webhook']).default('websocket').describe('收消息方式：websocket = 长连接（默认，无需公网），webhook = HTTP 回调'),
+  verificationToken: z.string().min(1).optional().describe('webhook 模式必填：事件订阅的 Verification Token，写引用'),
+  encryptKey: z.string().optional().describe('事件订阅的 Encrypt Key（设置后事件体加密，webhook 模式还会校验签名），写引用'),
   domain: z.enum(['feishu', 'lark']).default('feishu').describe('feishu = 飞书（open.feishu.cn），lark = 国际版（open.larksuite.com）'),
   requestTimeoutMs: z.number().int().positive().default(15_000),
 })
@@ -114,10 +118,10 @@ async function create(init: ChannelInit<FeishuOptions>): Promise<ChannelConnecti
   const o = init.options
   const base = BASE[o.domain]
   const appSecret = init.secret('appSecret')
-  const verificationToken = init.secret('verificationToken')
+  const verificationToken = o.verificationToken ? init.secret('verificationToken') : undefined
   const encryptKey = o.encryptKey ? init.secret('encryptKey') : undefined
   if (!appSecret) throw new Error('feishu: appSecret is not configured')
-  if (!verificationToken) throw new Error('feishu: verificationToken is not configured')
+  if (o.mode === 'webhook' && !verificationToken) throw new Error('feishu: mode "webhook" requires options.verificationToken')
   if (o.encryptKey && !encryptKey) throw new Error('feishu: encryptKey could not be resolved')
 
   const tokens = new TokenCache(async () => {
@@ -168,6 +172,16 @@ async function create(init: ChannelInit<FeishuOptions>): Promise<ChannelConnecti
     return true
   }
 
+  /** 处理一个已解密的事件（两种模式共用） */
+  const onEvent = (payload: any) => {
+    const header = payload?.header
+    if (header?.event_type !== 'im.message.receive_v1' || !remember(String(header.event_id))) return
+    const ev = payload.event as FeishuMessageEvent
+    if (ev?.sender?.sender_type === 'app') return
+    const m = toInbound(init.account, ev, botOpenId)
+    if (m) init.dispatch(m)
+  }
+
   const json = (obj: unknown): WebhookResponse => ({ status: 200, headers: { 'content-type': 'application/json' }, body: JSON.stringify(obj) })
 
   const handler = (req: WebhookRequest): WebhookResponse => {
@@ -188,7 +202,7 @@ async function create(init: ChannelInit<FeishuOptions>): Promise<ChannelConnecti
     }
     // URL 校验（保存回调地址时）：token 正确就原样返回 challenge
     if (payload?.type === 'url_verification') {
-      if (!safeEqual(String(payload.token ?? ''), verificationToken)) return { status: 401 }
+      if (!safeEqual(String(payload.token ?? ''), verificationToken!)) return { status: 401 }
       return json({ challenge: payload.challenge })
     }
     // 事件签名校验（设置了 Encrypt Key 时飞书会带签名头）
@@ -199,21 +213,37 @@ async function create(init: ChannelInit<FeishuOptions>): Promise<ChannelConnecti
       if (!sig || !safeEqual(signFeishu(ts, nonce, encryptKey, req.body), sig)) return { status: 401, body: 'bad signature' }
     }
     const header = payload?.header
-    if (!header || !safeEqual(String(header.token ?? ''), verificationToken)) return { status: 401 }
-    if (header.event_type === 'im.message.receive_v1' && remember(String(header.event_id))) {
-      const ev = payload.event as FeishuMessageEvent
-      if (ev?.sender?.sender_type !== 'app') {
-        const m = toInbound(init.account, ev, botOpenId)
-        if (m) init.dispatch(m)
-      }
-    }
+    if (!header || !safeEqual(String(header.token ?? ''), verificationToken!)) return { status: 401 }
+    onEvent(payload)
     // 3 秒内必须应答，处理是异步的
     return json({})
   }
 
-  await init.webhook(handler)
+  let ws: FeishuWsClient | undefined
+  if (o.mode === 'webhook') await init.webhook(handler)
+  else {
+    ws = new FeishuWsClient(init, {
+      base,
+      appId: o.appId,
+      appSecret,
+      timeoutMs: o.requestTimeoutMs,
+      onEvent: (payload: any) => {
+        if (typeof payload?.encrypt === 'string') {
+          if (!encryptKey) throw new Error('received an encrypted event but options.encryptKey is not set')
+          payload = JSON.parse(decryptFeishu(payload.encrypt, encryptKey))
+        }
+        onEvent(payload)
+      },
+    })
+  }
 
   return {
+    async start() {
+      await ws?.start()
+    },
+    async stop() {
+      await ws?.stop()
+    },
     async send(target, message, signal) {
       const content = JSON.stringify({ text: message.text })
       const data = message.replyTo
@@ -232,11 +262,11 @@ async function create(init: ChannelInit<FeishuOptions>): Promise<ChannelConnecti
 export const feishu: ChannelDriver<FeishuOptions> = {
   id: 'feishu',
   name: '飞书 / Lark',
-  description: '飞书自建应用机器人：事件订阅 webhook 收消息，OpenAPI 发消息',
+  description: '飞书自建应用机器人：长连接（默认）或 webhook 收消息，OpenAPI 发消息',
   options: FeishuOptions,
   secretFields: ['appSecret', 'verificationToken', 'encryptKey'],
   // 飞书文本消息上限约 150KB，这里保守分段，便于阅读
   textLimit: 4000,
-  receive: 'webhook',
+  receive: 'websocket',
   create,
 }

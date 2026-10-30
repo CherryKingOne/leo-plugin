@@ -2,9 +2,9 @@ import { createCipheriv, createHash, randomBytes, sign, verify } from 'node:cryp
 import { createLeo } from 'leo-agents'
 import { afterEach, describe, expect, it } from 'vitest'
 import { decryptFeishu, extractText, signFeishu } from '../src/channels/feishu/index.js'
+import { decodeFrame, encodeFrame, type Frame } from '../src/channels/feishu/frame.js'
 import { qqKeys, signQq, toInbound as qqInbound } from '../src/channels/qq/index.js'
 import { toInbound as tgInbound } from '../src/channels/telegram/index.js'
-import { decryptWechat, parseXml, signWechat } from '../src/channels/wechat/index.js'
 import { createChatChannelsPlugin, type InboundMessage } from '../src/index.js'
 
 const tick = (ms = 20) => new Promise((r) => setTimeout(r, ms))
@@ -26,11 +26,11 @@ function fakeFetch(routes: Record<string, (body: any, url: string) => unknown | 
   return { impl, calls }
 }
 
-async function boot(fetchImpl: typeof fetch, accounts: Record<string, unknown>) {
+async function boot(fetchImpl: typeof fetch, accounts: Record<string, unknown>, WebSocketImpl?: typeof WebSocket) {
   port++
   const leo = await createLeo({
     logLevel: 'silent',
-    plugins: [[createChatChannelsPlugin({ fetch: fetchImpl }), { accounts, webhook: { port, basePath: '/hook' } }]],
+    plugins: [[createChatChannelsPlugin({ fetch: fetchImpl, ...(WebSocketImpl ? { WebSocket: WebSocketImpl } : {}) }), { accounts, webhook: { port, basePath: '/hook' } }]],
   })
   const received: InboundMessage[] = []
   leo.ctx.on('chat-channels/received', (m) => void received.push(m))
@@ -113,7 +113,7 @@ describe('feishu', () => {
     })
     const encryptKey = 'enc-key'
     const { leo, svc, received, url } = await boot(f.impl, {
-      fs: { channel: 'feishu', options: { appId: 'cli_x', appSecret: 's', verificationToken: 'vt', encryptKey } },
+      fs: { channel: 'feishu', options: { mode: 'webhook', appId: 'cli_x', appSecret: 's', verificationToken: 'vt', encryptKey } },
     })
     cleanup.push(() => leo.dispose())
     expect(svc.accounts()[0]).toMatchObject({ state: 'running', webhookPath: '/hook/fs' })
@@ -155,61 +155,98 @@ describe('feishu', () => {
   })
 })
 
-// ------------------------------------------------------------------ 微信公众号
 
-function encryptWechat(msg: string, aesKey: string, appId: string): string {
-  const key = Buffer.from(`${aesKey}=`, 'base64')
-  const body = Buffer.from(msg)
-  const len = Buffer.alloc(4)
-  len.writeUInt32BE(body.length)
-  let buf = Buffer.concat([randomBytes(16), len, body, Buffer.from(appId)])
-  const pad = 32 - (buf.length % 32)
-  buf = Buffer.concat([buf, Buffer.alloc(pad, pad)])
-  const c = createCipheriv('aes-256-cbc', key, key.subarray(0, 16))
-  c.setAutoPadding(false)
-  return Buffer.concat([c.update(buf), c.final()]).toString('base64')
+/** 测试用 WebSocket：模拟飞书长连接服务端 */
+class FakeWS {
+  static instances: FakeWS[] = []
+  binaryType = 'blob'
+  readyState = 0
+  sent: Frame[] = []
+  onopen: ((ev: unknown) => void) | null = null
+  onmessage: ((ev: { data: ArrayBuffer }) => void) | null = null
+  onclose: ((ev: { code: number }) => void) | null = null
+  onerror: ((ev: unknown) => void) | null = null
+  constructor(readonly url: string) {
+    FakeWS.instances.push(this)
+    setTimeout(() => {
+      this.readyState = 1
+      this.onopen?.({})
+    }, 0)
+  }
+  send(data: Uint8Array) {
+    this.sent.push(decodeFrame(data))
+  }
+  close(code = 1000) {
+    if (this.readyState === 3) return
+    this.readyState = 3
+    setTimeout(() => this.onclose?.({ code }), 0)
+  }
+  push(f: Frame) {
+    const bytes = encodeFrame(f)
+    this.onmessage?.({ data: bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer })
+  }
 }
 
-describe('wechat', () => {
-  const aesKey = 'abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG'
-
-  it('XML 解析与安全模式解密', () => {
-    expect(parseXml('<xml><A><![CDATA[x<y]]></A><B>12</B></xml>')).toEqual({ A: 'x<y', B: '12' })
-    expect(decryptWechat(encryptWechat('<xml/>', aesKey, 'wxapp'), aesKey, 'wxapp')).toBe('<xml/>')
-    expect(() => decryptWechat(encryptWechat('<xml/>', aesKey, 'other'), aesKey, 'wxapp')).toThrow(/appId/)
+describe('feishu 长连接', () => {
+  it('帧编解码往返（含 uint64）', () => {
+    const f: Frame = { seqId: 2n ** 63n + 5n, logId: 1n, service: 7, method: 1, headers: { type: 'event', sum: '1' }, payload: new TextEncoder().encode('{}') }
+    const back = decodeFrame(encodeFrame(f))
+    expect(back).toMatchObject({ seqId: f.seqId, logId: 1n, service: 7, method: 1, headers: { type: 'event', sum: '1' } })
+    expect(new TextDecoder().decode(back.payload)).toBe('{}')
   })
 
-  it('服务器校验、明文与安全模式收消息、客服消息回复', async () => {
+  it('无需公网：取 endpoint、ping、分片事件合并、ACK、断线重连', async () => {
+    FakeWS.instances = []
     const f = fakeFetch({
-      '/cgi-bin/stable_token': () => ({ access_token: 'AT', expires_in: 7200 }),
-      '/cgi-bin/message/custom/send': () => ({ errcode: 0, errmsg: 'ok' }),
+      '/callback/ws/endpoint': (body) => {
+        expect(body).toEqual({ AppID: 'cli_x', AppSecret: 's' })
+        return { code: 0, msg: 'ok', data: { URL: `wss://ws.feishu.test/ws?device_id=d&service_id=7&n=${FakeWS.instances.length}`, ClientConfig: { PingInterval: 120 } } }
+      },
+      '/tenant_access_token/internal': () => ({ code: 0, msg: 'ok', tenant_access_token: 't-1', expire: 7200 }),
+      '/bot/v3/info': () => ({ code: 0, msg: 'ok', bot: { open_id: 'ou_bot', app_name: 'Leo' } }),
     })
-    const { leo, svc, received, url } = await boot(f.impl, { wx: { channel: 'wechat', options: { appId: 'wxapp', appSecret: 's', token: 'tok', encodingAESKey: aesKey } } })
+    const { leo, svc, received } = await boot(f.impl, { fsws: { channel: 'feishu', options: { appId: 'cli_x', appSecret: 's' } } }, FakeWS as unknown as typeof WebSocket)
     cleanup.push(() => leo.dispose())
-    expect(svc.accounts()[0]!.state).toBe('running')
+    expect(svc.accounts()[0]).toMatchObject({ state: 'running' })
+    expect(svc.accounts()[0]!.webhookPath).toBeUndefined()
+    const ws = FakeWS.instances[0]!
+    expect(ws.sent[0]).toMatchObject({ method: 0, service: 7, headers: { type: 'ping' } })
 
-    const ts = '1700000000'
-    const nonce = 'n'
-    const sig = signWechat('tok', ts, nonce)
-    const echo = await fetch(url('wx', `?signature=${sig}&timestamp=${ts}&nonce=${nonce}&echostr=E1`))
-    expect(await echo.text()).toBe('E1')
-    expect((await fetch(url('wx', `?signature=bad&timestamp=${ts}&nonce=${nonce}&echostr=E1`))).status).toBe(401)
-
-    const xml = (id: string, text: string) => `<xml><ToUserName><![CDATA[gh]]></ToUserName><FromUserName><![CDATA[openid-1]]></FromUserName><CreateTime>1700000000</CreateTime><MsgType><![CDATA[text]]></MsgType><Content><![CDATA[${text}]]></Content><MsgId>${id}</MsgId></xml>`
-    const plain = await fetch(url('wx', `?signature=${sig}&timestamp=${ts}&nonce=${nonce}`), { method: 'POST', body: xml('1', '明文') })
-    expect(await plain.text()).toBe('success')
-
-    const enc = encryptWechat(xml('2', '加密'), aesKey, 'wxapp')
-    const msig = signWechat('tok', ts, nonce, enc)
-    const safe = await fetch(url('wx', `?signature=${sig}&timestamp=${ts}&nonce=${nonce}&encrypt_type=aes&msg_signature=${msig}`), { method: 'POST', body: `<xml><ToUserName><![CDATA[gh]]></ToUserName><Encrypt><![CDATA[${enc}]]></Encrypt></xml>` })
-    expect(await safe.text()).toBe('success')
+    const event = JSON.stringify({
+      schema: '2.0',
+      header: { event_id: 'e-ws-1', event_type: 'im.message.receive_v1' },
+      event: { sender: { sender_id: { open_id: 'ou_user' }, sender_type: 'user' }, message: { message_id: 'om_9', chat_id: 'oc_p', chat_type: 'p2p', message_type: 'text', content: '{"text":"长连接你好"}' } },
+    })
+    const bytes = new TextEncoder().encode(event)
+    const half = Math.floor(bytes.length / 2)
+    const frame = (seq: number, payload: Uint8Array): Frame => ({ seqId: 3n, logId: 4n, service: 7, method: 1, headers: { type: 'event', message_id: 'mid', sum: '2', seq: String(seq) }, payload })
+    ws.push(frame(1, bytes.slice(half)))
+    expect(received).toHaveLength(0)
+    ws.push(frame(0, bytes.slice(0, half)))
     await tick()
-    expect(received.map((m) => m.text)).toEqual(['明文', '加密'])
+    expect(received[0]).toMatchObject({ channel: 'feishu', chat: { id: 'oc_p', type: 'direct' }, text: '长连接你好' })
+    const ack = ws.sent.find((s) => s.method === 1)!
+    expect(ack.headers.message_id).toBe('mid')
+    expect(JSON.parse(new TextDecoder().decode(ack.payload))).toEqual({ code: 200 })
 
-    await svc.send('wx', { chatId: 'openid-1' }, { text: '收到' })
-    const send = f.calls.find((c) => c.url.includes('/custom/send'))!
-    expect(send.url).toContain('access_token=AT')
-    expect(send.body).toEqual({ touser: 'openid-1', msgtype: 'text', text: { content: '收到' } })
+    // 服务端断开：重新取 endpoint 再连
+    ws.close(1006)
+    await tick(1700)
+    expect(FakeWS.instances).toHaveLength(2)
+    expect(f.calls.filter((c) => c.url.includes('/callback/ws/endpoint'))).toHaveLength(2)
+    expect(svc.accounts()[0]!.state).toBe('running')
+  })
+
+  it('endpoint 拒绝（未开启长连接）时账号 failed', async () => {
+    const f = fakeFetch({
+      '/callback/ws/endpoint': () => ({ code: 1000040343, msg: 'app has not enabled long connection' }),
+      '/tenant_access_token/internal': () => ({ code: 0, msg: 'ok', tenant_access_token: 't-1', expire: 7200 }),
+      '/bot/v3/info': () => ({ code: 0, msg: 'ok', bot: { open_id: 'ou_bot' } }),
+    })
+    const { leo, svc } = await boot(f.impl, { fsws: { channel: 'feishu', options: { appId: 'cli_x', appSecret: 's' } } }, FakeWS as unknown as typeof WebSocket)
+    cleanup.push(() => leo.dispose())
+    expect(svc.accounts()[0]).toMatchObject({ state: 'failed' })
+    expect(svc.accounts()[0]!.error).toMatch(/long connection/)
   })
 })
 

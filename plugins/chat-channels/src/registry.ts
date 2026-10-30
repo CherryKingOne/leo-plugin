@@ -37,6 +37,8 @@ interface AccountRuntime {
   unmount?: () => Promise<void>
   received: number
   sent: number
+  /** 账号通用配置校验失败的原因；有值时永不启动 */
+  invalid?: string
   /** 串行化 start / stop，避免并发重启 */
   op: Promise<void>
 }
@@ -45,6 +47,7 @@ export interface RegistryDeps {
   ctx: Context<any>
   config: ChatChannelsConfig
   fetch?: typeof fetch
+  WebSocket?: typeof WebSocket
   /** 内置子插件的驱动 id（用于诊断展示） */
   builtinIds: ReadonlySet<string>
   /** `chat-channels/inbound` 中间件链的终点（默认 Agent 桥接）；返回要回复的消息 */
@@ -109,6 +112,7 @@ export function createRegistry(deps: RegistryDeps): { service: ChatChannelServic
 
   async function startAccount(a: AccountRuntime): Promise<void> {
     if (disposed) return
+    if (a.invalid) return setState(a, 'failed', `invalid account config: ${a.invalid}`)
     if (!a.config.enabled) return setState(a, 'disabled')
     const entry = drivers.get(a.config.channel)
     if (!entry) return setState(a, 'waiting_driver')
@@ -136,6 +140,7 @@ export function createRegistry(deps: RegistryDeps): { service: ChatChannelServic
         return path
       },
       fetch: fetchImpl,
+      WebSocket: deps.WebSocket ?? globalThis.WebSocket,
       signal: controller.signal,
       logger: log,
       ctx,
@@ -294,8 +299,20 @@ export function createRegistry(deps: RegistryDeps): { service: ChatChannelServic
     }
   }
 
-  // 配置中的账号：先登记，等驱动注册后自动启动
-  for (const [id, raw] of Object.entries(config.accounts)) addRuntime(id, AccountSchema.parse(raw satisfies AccountInput) as AccountConfig)
+  // 配置中的账号：先登记，等驱动注册后自动启动；单个账号配置错误不影响其他账号
+  for (const [id, raw] of Object.entries(config.accounts)) {
+    const parsed = AccountSchema.safeParse(raw satisfies AccountInput)
+    if (parsed.success) {
+      addRuntime(id, parsed.data as AccountConfig)
+      continue
+    }
+    const channel = typeof (raw as { channel?: unknown }).channel === 'string' ? (raw as { channel: string }).channel : 'unknown'
+    const a = addRuntime(id, AccountSchema.parse({ channel: /^[a-z][a-z0-9-]{0,63}$/.test(channel) ? channel : 'unknown' }) as AccountConfig)
+    a.invalid = parsed.error.issues.map((i) => `${i.path.join('.') || '(root)'}: ${i.message}`).join('; ')
+    a.state = 'failed'
+    a.error = `invalid account config: ${a.invalid}`
+    log.warn({ account: id, issues: a.invalid }, 'chat-channels: invalid account config')
+  }
 
   return {
     service,

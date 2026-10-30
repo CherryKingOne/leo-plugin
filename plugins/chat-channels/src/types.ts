@@ -5,7 +5,7 @@
  *
  * - 大箱子：本插件 `leo-plugin-chat-channels`，是唯一可以被 leo 安装、加载、配置的插件，
  *   对外提供服务 `chatChannels` 与 `chat-channels/*` 事件。
- * - 小盒子：渠道驱动 {@link ChannelDriver}（QQ / 微信 / 飞书 / Telegram），放在 `src/channels/<id>/`。
+ * - 小盒子：渠道驱动 {@link ChannelDriver}（QQ / 飞书 / Telegram），放在 `src/channels/<id>/`。
  *   它们**不是** leo 插件：没有 PluginDefinition、没有独立的 npm 包和 leo-plugin.json，
  *   不能写进 `.leo/config.json` 的 plugins，只能由注册层注册后使用。
  * - 注册层负责：注册驱动、按账号实例化机器人、用各渠道自己的 schema 校验机器人配置、
@@ -29,7 +29,7 @@ export interface InboundMessage {
   /** 渠道侧消息 id（回复时作为 replyTo） */
   id: string
   chat: {
-    /** 发送目标 id：Telegram chat_id、飞书 chat_id、QQ openid / group_openid / channel_id、微信 openid */
+    /** 发送目标 id：Telegram chat_id、飞书 chat_id、QQ openid / group_openid / channel_id */
     id: string
     type: ChatType
     /** 渠道附加路由信息（如 QQ 频道私信的 guild_id），发送时原样带回 */
@@ -106,6 +106,8 @@ export interface ChannelInit<O> {
   webhook(handler: WebhookHandler): Promise<string>
   /** 可注入的 fetch（测试用），所有出站 HTTP 请求都应使用它 */
   fetch: typeof fetch
+  /** 可注入的 WebSocket 构造器（测试用），长连接渠道都应使用它；默认 Node 22 全局 WebSocket */
+  WebSocket: typeof WebSocket
   /** 账号停止时 abort：长轮询、重连循环必须监听它 */
   signal: AbortSignal
   logger: Logger
@@ -128,7 +130,7 @@ export interface ChannelConnection {
  * 每个渠道定义自己的机器人配置 schema（各家机器人的配置方式不同）。
  */
 export interface ChannelDriver<O = any> {
-  /** kebab-case，全局唯一，如 `qq`、`wechat`、`feishu`、`telegram` */
+  /** kebab-case，全局唯一，如 `qq`、`feishu`、`telegram` */
   id: string
   /** 显示名 */
   name: string
@@ -186,7 +188,7 @@ export interface AccountConfig {
 /** `ctx.get('chatChannels')`：聊天渠道注册层 */
 export interface ChatChannelService {
   /**
-   * 向注册层注册一个渠道驱动。内置的 QQ / 微信 / 飞书 / Telegram 由注册层自己注册；
+   * 向注册层注册一个渠道驱动。内置的 QQ / 飞书 / Telegram 由注册层自己注册；
    * 这里也是运行时追加渠道的扩展点（驱动只是对象，不是插件）。返回撤销函数
    */
   registerDriver(driver: ChannelDriver): Disposer

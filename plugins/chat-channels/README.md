@@ -4,7 +4,7 @@
 
 ## 用途
 
-聊天渠道注册层（Chat Channel Registry Layer）：让 leo Agent 通过 QQ、微信、飞书、Telegram 等聊天软件的机器人收发消息。
+聊天渠道注册层（Chat Channel Registry Layer）：让 leo Agent 通过 QQ、飞书、Telegram 等聊天软件的机器人收发消息。
 
 **聊天渠道插件 = 渠道注册层 + 渠道子插件体系。** 可以把它想成一个大箱子里装着几个小盒子：
 
@@ -13,12 +13,11 @@ leo-plugin-chat-channels            ← 大箱子：唯一可安装、可配置�
 ├── 注册层 registry                  注册、发现、配置校验、启动/停止、共享 webhook、收发分发
 └── src/channels/                    小盒子：渠道驱动（不是插件，不能单独使用）
     ├── qq/        QQ 开放平台官方机器人
-    ├── wechat/    微信公众号
     ├── feishu/    飞书 / Lark 自建应用机器人
     └── telegram/  Telegram Bot
 ```
 
-- 四个渠道是**内置的渠道驱动**，没有自己的插件入口、npm 包和 `leo-plugin.json`，不能写进 `.leo/config.json` 的 `plugins`，只能装在本插件里、由注册层注册后使用。
+- 这几个渠道是**内置的渠道驱动**，没有自己的插件入口、npm 包和 `leo-plugin.json`，不能写进 `.leo/config.json` 的 `plugins`，只能装在本插件里、由注册层注册后使用。
 - 每个渠道只关心**自家机器人的配置方式与收发协议**；过滤、排队、分段、重试、生命周期、与 Agent 对接都由注册层统一完成。
 - 上层业务只面向服务 `chatChannels` 与 `chat-channels/*` 事件，不与具体渠道耦合。新增渠道不需要改上层任何代码。
 
@@ -30,17 +29,33 @@ leo plugin add chat-channels
 npm install leo-plugin-chat-channels
 ```
 
+机器人写在 `.leo/chat-channels/` 目录里，**一个渠道一个文件，文件名就是渠道**：
+
+```text
+.leo/
+├── config.json            ← 只放全局项（Agent、webhook）
+└── chat-channels/
+    ├── qq.json
+    ├── feishu.json
+    └── telegram.json
+```
+
+`.leo/chat-channels/feishu.json`（一个机器人，账号 id 就是 `feishu`）：
+
+```jsonc
+{
+  // 长连接，不需要公网地址
+  "appId": "cli_xxx",
+  "appSecret": "$FEISHU_APP_SECRET"
+}
+```
+
 `.leo/config.json`：
 
 ```jsonc
 {
   "plugins": [
-    ["leo-plugin-chat-channels", {
-      "accounts": {
-        "tg-main": { "channel": "telegram", "options": { "botToken": "$TELEGRAM_BOT_TOKEN" } }
-      },
-      "agent": { "enabled": true, "model": "deepseek/deepseek-chat" }
-    }]
+    ["leo-plugin-chat-channels", { "agent": { "enabled": true, "model": "deepseek/deepseek-chat" } }]
   ]
 }
 ```
@@ -49,12 +64,39 @@ npm install leo-plugin-chat-channels
 
 ## 配置
 
-### 顶层
+### 机器人配置文件 `.leo/chat-channels/<渠道>.json`
+
+| 位置 | 说明 |
+| --- | --- |
+| `~/.leo/chat-channels/` | 用户级 |
+| `<项目>/.leo/chat-channels/` | 项目级，同名机器人覆盖用户级 |
+| 插件配置 `botsDir` | 额外目录，优先级最高 |
+
+- 文件名必须是渠道 id：`qq.json`、`feishu.json`、`telegram.json`；`_` 开头的文件和非 `.json` 文件被忽略。支持 `//` 注释和尾随逗号。
+- **单个机器人**：直接写这个渠道的机器人配置，账号 id = 渠道 id。
+- **多个机器人**：写在 `bots` 下，账号 id = `<渠道>-<名称>`：
+
+```jsonc
+// .leo/chat-channels/qq.json
+{
+  "bots": {
+    "main": { "appId": "102000001", "appSecret": "$QQ_MAIN_SECRET" },
+    "test": { "appId": "102000002", "appSecret": "$QQ_TEST_SECRET", "sandbox": true, "allowFrom": ["开发者 openid"] }
+  }
+}
+```
+
+- 机器人对象里 `enabled`、`allowFrom`、`allowChats`、`requireMention`、`autoReply` 是注册层的通用字段（见下表「账号」），**其余字段都是这个渠道自己的机器人配置**，由该渠道的 schema 校验。
+- 某个文件写错只会让对应机器人进入 `failed`，不影响其他机器人和插件加载。
+
+### 顶层（插件配置）
 
 | 字段 | 类型 | 默认值 | 说明 |
 | --- | --- | --- | --- |
-| `builtin` | string[] | `["qq","wechat","feishu","telegram"]` | 装进注册层的内置渠道。只注册驱动，不会启动机器人 |
-| `accounts` | Record<id, Account> | `{}` | 机器人账号，键为账号 id（kebab-case），一个渠道可以有多个账号 |
+| `builtin` | string[] | `["qq","feishu","telegram"]` | 装进注册层的内置渠道。只注册驱动，不会启动机器人 |
+| `loadBotFiles` | boolean | `true` | 读取 `~/.leo/chat-channels/` 与项目 `.leo/chat-channels/` |
+| `botsDir` | string | — | 额外的机器人配置目录（相对路径基于项目根） |
+| `accounts` | Record<id, Account> | `{}` | 也可以直接在插件配置里写机器人（需带 `channel` 和 `options`），与目录中同名时以这里为准 |
 | `webhook.host` | string | `"127.0.0.1"` | webhook 监听地址。默认只听本机，用反向代理或内网穿透暴露 HTTPS |
 | `webhook.port` | number | `8790` | webhook 端口，所有 webhook 型账号共用 |
 | `webhook.basePath` | string | `"/leo/chat"` | 回调路径前缀；账号的回调路径是 `<basePath>/<账号 id>` |
@@ -72,13 +114,13 @@ npm install leo-plugin-chat-channels
 | `requestTimeoutMs` | number | `15000` | 出站 HTTP 超时 |
 | `tools` | boolean | `true` | 注册 `chat_channels` / `chat_send` 工具 |
 
-### 账号（Account）
+### 账号（Account，插件配置 `accounts` 中的写法）
 
 | 字段 | 类型 | 默认值 | 说明 |
 | --- | --- | --- | --- |
-| `channel` | string | — | `qq` / `wechat` / `feishu` / `telegram` |
+| `channel` | string | — | `qq` / `feishu` / `telegram` |
 | `enabled` | boolean | `true` | |
-| `options` | object | `{}` | **各渠道自己的机器人配置**，见下文；由对应渠道的 schema 校验 |
+| `options` | object | `{}` | **各渠道自己的机器人配置**，见下文；由对应渠道的 schema 校验（配置文件里直接平铺在机器人对象上） |
 | `allowFrom` | string[] | `[]` | 发送者白名单（渠道侧用户 id），空为不限 |
 | `allowChats` | string[] | `[]` | 会话白名单（渠道侧 chat id），空为不限 |
 | `requireMention` | boolean | `true` | 群聊里必须 @机器人 才处理 |
@@ -88,7 +130,7 @@ npm install leo-plugin-chat-channels
 
 ## 各渠道的机器人配置
 
-每个渠道的机器人在各自平台上配置方式不同，`options` 也各不相同。
+每个渠道的机器人在各自平台上配置方式不同，配置字段也各不相同。下面的示例都是 `.leo/chat-channels/<渠道>.json` 的内容。
 
 ### Telegram（`telegram`）
 
@@ -105,30 +147,49 @@ npm install leo-plugin-chat-channels
 | `apiBase` | | 自建 Bot API 服务器地址 |
 | `pollTimeoutSec` / `parseMode` | | 长轮询等待秒数 / 回复格式（默认纯文本） |
 
-```json
-"tg-main": { "channel": "telegram", "options": { "botToken": "$TELEGRAM_BOT_TOKEN" } }
+```jsonc
+// .leo/chat-channels/telegram.json
+{ "botToken": "$TELEGRAM_BOT_TOKEN" }
 ```
 
 ### 飞书 / Lark（`feishu`）
 
+收消息两种方式，默认长连接：
+
+| 模式 | 公网地址 | 说明 |
+| --- | --- | --- |
+| `websocket`（默认） | 不需要 | 机器人主动连到飞书，自动心跳、断线重连，事件逐条 ACK；本地、内网直接可用 |
+| `webhook` | 需要 HTTPS | 飞书推送到 `<basePath>/<账号 id>`，校验 Verification Token，设置 Encrypt Key 时解密并校验签名 |
+
 1. 飞书开放平台 → 创建企业自建应用 → 添加「机器人」能力，记下 App ID、App Secret。
 2. 开通权限：`im:message`、`im:message.p2p_msg`、`im:message.group_at_msg`（需要群内所有消息再加 `im:message.group_msg`）。
-3. 事件与回调 → 加密策略：记下 Verification Token，建议设置 Encrypt Key。
-4. 订阅方式选「发送至开发者服务器」，请求地址填 `https://<你的域名><basePath>/<账号 id>`，添加事件 `im.message.receive_v1`。保存时的 url_verification 由插件自动应答。
-5. 发布版本，把机器人拉进群。
+3. 事件与回调 → 订阅方式：
+   - 长连接：选「使用长连接接收事件」。先把 leo 跑起来（账号状态为 running）再保存，平台会检测连接。
+   - webhook：选「将事件发送至开发者服务器」，请求地址填 `https://<你的域名><basePath>/<账号 id>`，记下 Verification Token，建议设置 Encrypt Key。
+4. 添加事件 `im.message.receive_v1`，发布版本，把机器人拉进群。
 
-| options | 必填 | 说明 |
+| 配置项 | 必填 | 说明 |
 | --- | --- | --- |
 | `appId` | 是 | `cli_` 开头 |
 | `appSecret` | 是 | 引用 |
-| `verificationToken` | 是 | 引用 |
-| `encryptKey` | | 引用；设置后解密请求体并校验 `X-Lark-Signature` |
+| `mode` | | `websocket`（默认）或 `webhook` |
+| `verificationToken` | webhook 时 | 引用 |
+| `encryptKey` | | 引用；webhook 模式下解密并校验 `X-Lark-Signature` |
 | `domain` | | `feishu`（默认）或 `lark`（国际版） |
 
-```json
-"feishu-bot": {
-  "channel": "feishu",
-  "options": { "appId": "cli_xxx", "appSecret": "$FEISHU_APP_SECRET", "verificationToken": "$FEISHU_VERIFICATION_TOKEN", "encryptKey": "$FEISHU_ENCRYPT_KEY" }
+```jsonc
+// .leo/chat-channels/feishu.json —— 长连接
+{ "appId": "cli_xxx", "appSecret": "$FEISHU_APP_SECRET" }
+```
+
+```jsonc
+// .leo/chat-channels/feishu.json —— webhook
+{
+  "mode": "webhook",
+  "appId": "cli_xxx",
+  "appSecret": "$FEISHU_APP_SECRET",
+  "verificationToken": "$FEISHU_VERIFICATION_TOKEN",
+  "encryptKey": "$FEISHU_ENCRYPT_KEY"
 }
 ```
 
@@ -145,31 +206,12 @@ npm install leo-plugin-chat-channels
 | `appSecret` | 是 | 引用 |
 | `sandbox` | | 使用沙箱环境 |
 
-```json
-"qq-bot": { "channel": "qq", "options": { "appId": "102xxxxxx", "appSecret": "$QQ_BOT_SECRET" } }
+```jsonc
+// .leo/chat-channels/qq.json
+{ "appId": "102xxxxxx", "appSecret": "$QQ_BOT_SECRET" }
 ```
 
 QQ 官方已逐步下线机器人的 WebSocket 接入，本渠道只实现 Webhook。
-
-### 微信公众号（`wechat`）
-
-1. 微信公众平台 → 设置与开发 → 基本配置：记下 AppID、AppSecret，把服务器 IP 加入 IP 白名单。
-2. 服务器配置：URL 填 `http(s)://<你的域名><basePath>/<账号 id>`（80/443 端口），Token 自定，加解密方式选明文或安全模式（安全模式需 EncodingAESKey）。提交时的 GET 校验由插件自动应答。
-3. 插件收到消息后立即回 `success`，Agent 处理完再用**客服消息接口**发回去：需要公众号有客服消息权限（认证服务号），且只能在用户最近一次发消息后 48 小时内回复。
-4. 公众号只有私聊。
-
-| options | 必填 | 说明 |
-| --- | --- | --- |
-| `appId` | 是 | `wx` 开头 |
-| `appSecret` | 是 | 引用 |
-| `token` | 是 | 服务器配置的 Token，引用 |
-| `encodingAESKey` | | 安全模式的 43 位密钥，引用 |
-
-```json
-"wx-mp": { "channel": "wechat", "options": { "appId": "wx123", "appSecret": "$WECHAT_APP_SECRET", "token": "$WECHAT_TOKEN", "encodingAESKey": "$WECHAT_AES_KEY" } }
-```
-
-> 这里的「微信」指公众号。企业微信（WeCom）机器人、个人微信不在本版本内，企业微信可以按下文规范作为新渠道加入。
 
 ## 提供的能力
 
@@ -192,21 +234,21 @@ ctx.on('chat-channels/inbound', (p, next) => (p.message.text === '/ping' ? { tex
 
 ## 新增一个渠道
 
-新渠道和内置的四个一样，是放进大箱子的小盒子：
+新渠道和内置的几个一样，是放进大箱子的小盒子：
 
 1. 新建 `src/channels/<id>/index.ts`，导出一个 `ChannelDriver`：
    - `options`：这个渠道自己的机器人配置 zod schema（每个字段带 `describe`，密钥字段写进 `secretFields`）；
-   - `create(init)`：用 `init.secret()` 取密钥、`init.webhook()` 挂回调或在 `start()` 里起长轮询、收到消息调用 `init.dispatch()`、出站请求一律用 `init.fetch` 并监听 `init.signal`；
+   - `create(init)`：用 `init.secret()` 取密钥、`init.webhook()` 挂回调，或在 `start()` 里起长轮询 / 长连接（用 `init.WebSocket`）、收到消息调用 `init.dispatch()`、出站请求一律用 `init.fetch` 并监听 `init.signal`；
    - 返回 `{ start?, send, stop? }`。`send` 每次只发一段，分段由注册层负责。
 2. 在 `src/channels/index.ts` 的 `BUILTIN_DRIVERS` 和 `src/config.ts` 的 `BUILTIN_CHANNELS` 里登记 id。
-3. 在 `test/channels.test.ts` 补上收发与验签测试，在本 README 补「机器人配置」一节。
+3. 在 `test/channels.test.ts` 补上收发与验签测试，在本 README 补「机器人配置」一节。用户就可以写 `.leo/chat-channels/<id>.json` 了。
 
 运行时也可以通过 `ctx.get('chatChannels').registerDriver(driver)` 追加驱动（驱动只是对象，不是插件），供私有渠道使用。
 
 ## 安全说明
 
 - **默认不自动回复**；开启后聊天 Agent 默认**没有任何工具**（聊天对象是外部用户），需要时在 `agent.tools` 显式列出。工具过滤由核心工具管线强制执行。
-- 所有回调都校验来源：飞书 Verification Token + 签名（设置 Encrypt Key 时）、QQ Ed25519 签名、微信 SHA1 签名 / 安全模式、Telegram secret token；比较使用常量时间。
+- 所有回调都校验来源：飞书 Verification Token + 签名（webhook 模式设置 Encrypt Key 时）、QQ Ed25519 签名、Telegram secret token；飞书长连接与 Telegram 长轮询由机器人主动发起，无需对外开放端口；比较使用常量时间。
 - 群聊默认需要 @机器人；可用 `allowFrom` / `allowChats` 白名单收紧。
 - webhook 默认只监听 `127.0.0.1`，请求体大小有上限；重推事件按 id 去重。
 - 密钥只接受引用或 credentials，不会出现在日志、状态、错误信息与工具输出中。

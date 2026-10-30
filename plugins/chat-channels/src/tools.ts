@@ -10,7 +10,7 @@ export function createListTool(service: () => ChatChannelService): ToolDefinitio
     name: 'chat_channels',
     title: 'Chat channels',
     description:
-      'List the chat channels (QQ, WeChat, Feishu, Telegram, ...) and the bot accounts configured on them, with their state. Use it before chat_send to find a valid account id. Read-only.',
+      'List the chat channels (QQ, Feishu, Telegram, ...) and the bot accounts configured on them, with their state. Use it before chat_send to find a valid account id. Read-only.',
     parameters: z.object({}),
     execute() {
       const s = service()
@@ -24,10 +24,10 @@ export function createSendTool(service: () => ChatChannelService): ToolDefinitio
     name: 'chat_send',
     title: 'Send chat message',
     description:
-      'Send a text message through a configured chat bot account (QQ, WeChat, Feishu, Telegram). Use only when the user explicitly asks you to message someone; do not use it to reply to the conversation you are currently in (that happens automatically). Long text is split automatically. Returns the message ids.',
+      'Send a text message through a configured chat bot account (QQ, Feishu, Telegram). Use only when the user explicitly asks you to message someone; do not use it to reply to the conversation you are currently in (that happens automatically). Long text is split automatically. Returns the message ids.',
     parameters: z.object({
       account: z.string().min(1).describe('Bot account id from chat_channels'),
-      chat_id: z.string().min(1).describe('Target chat id on that channel (Telegram chat_id, Feishu chat_id/open_id, QQ openid/group_openid/channel_id, WeChat openid)'),
+      chat_id: z.string().min(1).describe('Target chat id on that channel (Telegram chat_id, Feishu chat_id/open_id, QQ openid/group_openid/channel_id)'),
       chat_type: z.enum(['direct', 'group', 'channel']).optional().describe('Kind of chat; needed for QQ when it is not a direct chat'),
       text: z.string().min(1).max(20_000).describe('Plain-text message'),
       reply_to: z.string().optional().describe('Channel message id to reply to (QQ requires it for passive replies)'),

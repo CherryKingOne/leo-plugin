@@ -10,11 +10,9 @@ import type { ChannelDriver } from '../types.js'
 import { feishu } from './feishu/index.js'
 import { qq } from './qq/index.js'
 import { telegram } from './telegram/index.js'
-import { wechat } from './wechat/index.js'
 
 export const BUILTIN_DRIVERS: Readonly<Record<BuiltinChannel, ChannelDriver>> = {
   qq,
-  wechat,
   feishu,
   telegram,
 }

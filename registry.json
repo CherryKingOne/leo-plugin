@@ -9,7 +9,7 @@
       "path": "plugins/chat-channels",
       "version": "0.1.0",
       "status": "experimental",
-      "description": "聊天渠道注册层：统一注册、配置与管理聊天渠道子插件，内置 QQ、微信、飞书、Telegram 机器人",
+      "description": "聊天渠道注册层：统一注册、配置与管理聊天渠道子插件，内置 QQ、飞书、Telegram 机器人",
       "leo": ">=0.1.0"
     },
     {

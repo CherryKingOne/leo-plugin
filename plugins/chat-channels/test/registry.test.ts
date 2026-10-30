@@ -43,10 +43,10 @@ const msg = (over: Partial<InboundMessage> = {}): InboundMessage => ({
 })
 
 describe('加载与卸载', () => {
-  it('无配置可加载：注册 4 个内置渠道、服务与工具', async () => {
+  it('无配置可加载：注册 3 个内置渠道、服务与工具', async () => {
     const leo = await createLeo({ logLevel: 'silent', plugins: [plugin] })
     const svc = leo.ctx.get('chatChannels')
-    expect(svc.drivers().map((d) => d.id).sort()).toEqual(['feishu', 'qq', 'telegram', 'wechat'])
+    expect(svc.drivers().map((d) => d.id).sort()).toEqual(['feishu', 'qq', 'telegram'])
     expect(svc.drivers().every((d) => d.builtin)).toBe(true)
     expect(svc.accounts()).toEqual([])
     expect(leo.ctx.get('tools').get('chat_send')?.permissions?.[0]).toMatchObject({ kind: 'chat.send', sideEffect: true })
