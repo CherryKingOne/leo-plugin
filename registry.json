@@ -20,12 +20,12 @@
       "id": "sub-agents",
       "package": "leo-plugin-sub-agents",
       "path": "plugins/sub-agents",
-      "version": "0.2.0",
+      "version": "0.1.0",
       "status": "experimental",
       "description": "子代理：把任务委派给独立上下文的子 Agent 执行并汇总结果",
       "leo": ">=0.1.0",
       "bundle": {
-        "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/sub-agents/0.2.0/sub-agents.bundle.js",
+        "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/sub-agents/0.1.0/sub-agents.bundle.js",
         "sha256": "7cb2ea40b8f1ae34607a34ce384fef23fb97305a9f356d3121b5583a1e6ee199"
       }
     }

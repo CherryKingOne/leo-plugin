@@ -75,7 +75,7 @@ npm install leo-plugin-sub-agents
 ```bash
 mkdir -p .leo/plugins
 curl -fsSL -o .leo/plugins/sub-agents.bundle.js \
-  https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/sub-agents/0.2.0/sub-agents.bundle.js
+  https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/sub-agents/0.1.0/sub-agents.bundle.js
 ```
 
 `.leo/plugins/` 下的 `.js` / `.mjs` / `.ts` 文件会被自动加载，**不需要**写入 `config.json`，但也因此无法传配置，插件使用默认值运行。需要自定义配置时，改为在 `config.json` 中显式引用该文件：

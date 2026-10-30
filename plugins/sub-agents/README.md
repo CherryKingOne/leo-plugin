@@ -1,6 +1,6 @@
 # leo-plugin-sub-agents
 
-> 状态：**experimental**（0.2.0）
+> 状态：**experimental**（0.1.0）
 
 让主 Agent 把一个独立的子任务（调研代码库、查资料、并行处理多个文件）交给**子 Agent** 执行。子 Agent 有自己的上下文窗口，只把最终结论返回给主 Agent，避免主对话被大量中间过程撑满。
 

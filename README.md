@@ -7,7 +7,7 @@
 | 插件 | 包名 | 状态 | 说明 |
 | --- | --- | --- | --- |
 | [mcp](plugins/mcp) | `leo-plugin-mcp` | 实验性 0.1.0 | 接入外部 MCP 服务器的工具（stdio / HTTP），兼容 MCP 2026-07-28（MCP 2.0）与旧版握手协议 |
-| [sub-agents](plugins/sub-agents) | `leo-plugin-sub-agents` | 实验性 0.2.0 | 把任务委派给独立上下文的子 Agent 执行并汇总结果 |
+| [sub-agents](plugins/sub-agents) | `leo-plugin-sub-agents` | 实验性 0.1.0 | 把任务委派给独立上下文的子 Agent 执行并汇总结果 |
 
 机器可读的索引见 [`registry.json`](registry.json)。
 
