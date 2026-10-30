@@ -1,0 +1,14 @@
+{
+  "$schema": "./schemas/registry.schema.json",
+  "description": "官方插件索引。由 scripts/gen-registry.mjs 根据 plugins/*/leo-plugin.json 生成，请勿手改。",
+  "plugins": [
+    {
+      "id": "sub-agents",
+      "package": "leo-plugin-sub-agents",
+      "path": "plugins/sub-agents",
+      "version": "0.0.0",
+      "status": "planned",
+      "description": "子代理：让主 Agent 把任务委派给独立上下文的子 Agent 执行，并汇总结果"
+    }
+  ]
+}

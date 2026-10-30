@@ -1,0 +1,18 @@
+{
+  "$schema": "../../schemas/leo-plugin.schema.json",
+  "id": "template",
+  "package": "leo-plugin-template",
+  "version": "0.0.0",
+  "status": "planned",
+  "description": "新插件模板，不会发布",
+  "leo": ">=0.1.0",
+  "entry": "./dist/index.js",
+  "inject": ["tools"],
+  "provides": {
+    "tools": ["template_echo"]
+  },
+  "install": {
+    "config": "leo-plugin-template",
+    "example": ["leo-plugin-template", { "prefix": "echo: " }]
+  }
+}

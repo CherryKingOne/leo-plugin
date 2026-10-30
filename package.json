@@ -1,0 +1,18 @@
+{
+  "name": "leo-plugin",
+  "private": true,
+  "description": "leo-agents 官方插件仓库：一个插件一个目录",
+  "type": "module",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "workspaces": [
+    "plugins/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present"
+  }
+}

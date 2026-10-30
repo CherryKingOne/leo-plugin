@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "leo plugin registry",
+  "type": "object",
+  "required": ["plugins"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "description": { "type": "string" },
+    "plugins": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "package", "path", "version", "status", "description"],
+        "properties": {
+          "id": { "type": "string" },
+          "package": { "type": "string" },
+          "path": { "type": "string" },
+          "version": { "type": "string" },
+          "status": { "enum": ["planned", "experimental", "stable", "deprecated"] },
+          "description": { "type": "string" }
+        }
+      }
+    }
+  }
+}

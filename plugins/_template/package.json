@@ -1,0 +1,34 @@
+{
+  "name": "leo-plugin-template",
+  "version": "0.0.0",
+  "private": true,
+  "description": "新插件模板：复制本目录并替换 template 为你的插件 id",
+  "type": "module",
+  "license": "Apache-2.0",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "leo-plugin.json", "README.md"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "leo-agents": ">=0.1.0"
+  },
+  "dependencies": {
+    "zod": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "leo-agents": "github:CherryKingOne/leo-agents",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.0"
+  }
+}
