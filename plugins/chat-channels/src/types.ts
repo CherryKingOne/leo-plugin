@@ -108,6 +108,11 @@ export interface ChannelInit<O> {
   fetch: typeof fetch
   /** 可注入的 WebSocket 构造器（测试用），长连接渠道都应使用它；默认 Node 22 全局 WebSocket */
   WebSocket: typeof WebSocket
+  /**
+   * 后台连接遇到不可恢复的错误（如机器人被封禁、凭证失效）时调用：账号进入 failed 并释放资源。
+   * 可恢复的断线应自行重连，不要调用它
+   */
+  fail(error: string): void
   /** 账号停止时 abort：长轮询、重连循环必须监听它 */
   signal: AbortSignal
   logger: Logger

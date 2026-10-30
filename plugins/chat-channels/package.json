@@ -1,6 +1,6 @@
 {
   "name": "leo-plugin-chat-channels",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "聊天渠道注册层：统一注册、配置与管理聊天渠道子插件，内置 QQ、飞书、Telegram 机器人",
   "type": "module",
   "license": "Apache-2.0",

@@ -141,6 +141,15 @@ export function createRegistry(deps: RegistryDeps): { service: ChatChannelServic
       },
       fetch: fetchImpl,
       WebSocket: deps.WebSocket ?? globalThis.WebSocket,
+      fail: (error) => {
+        if (controller.signal.aborted || a.state !== 'running') return
+        log.error({ account: a.id, channel: a.config.channel, err: error }, 'chat-channels: account failed')
+        a.op = a.op.then(async () => {
+          if (controller.signal.aborted) return
+          await teardown(a)
+          setState(a, 'failed', error)
+        })
+      },
       signal: controller.signal,
       logger: log,
       ctx,

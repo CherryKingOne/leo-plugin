@@ -195,23 +195,35 @@ npm install leo-plugin-chat-channels
 
 ### QQ（`qq`）
 
+收消息两种方式，默认长连接：
+
+| 模式 | 公网地址 | 说明 |
+| --- | --- | --- |
+| `websocket`（默认） | 不需要 | 机器人主动连 QQ 网关：Identify 鉴权、按服务端周期心跳、断线后 Resume 补发遗漏事件、重连退避；被封禁 / 下架 / intent 无权限时账号进入 `failed` 并给出原因 |
+| `webhook` | 需要 HTTPS | 回调地址 `https://<你的域名><basePath>/<账号 id>`（端口仅支持 80/443/8080/8443），op=13 校验与每个回调都用 AppSecret 派生的 Ed25519 密钥签名 / 验签 |
+
 1. QQ 开放平台（q.qq.com）创建机器人，开发设置里记下 AppID、AppSecret。
-2. 回调配置：地址填 `https://<你的域名><basePath>/<账号 id>`（端口仅支持 80/443/8080/8443），勾选事件 `C2C_MESSAGE_CREATE`（单聊）、`GROUP_AT_MESSAGE_CREATE`（群 @）、`AT_MESSAGE_CREATE`（频道 @）、`DIRECT_MESSAGE_CREATE`（频道私信）。保存时平台发 op=13 校验，插件用 AppSecret 派生的 Ed25519 密钥签名应答，之后每个回调都校验签名。
-3. 把服务器出口 IP 加入 IP 白名单；调试期可 `sandbox: true`。
+2. 把服务器出口 IP 加入 IP 白名单；调试期可 `sandbox: true`（机器人未上架时只能连沙箱）。
+3. webhook 模式才需要：回调配置里填地址并勾选 `C2C_MESSAGE_CREATE`、`GROUP_AT_MESSAGE_CREATE`、`AT_MESSAGE_CREATE`、`DIRECT_MESSAGE_CREATE`。
 4. 自动回复都是带原消息 id 的**被动回复**（单聊 60 分钟、群 5 分钟内有效）；`chat_send` 不带 `reply_to` 时是主动消息，有严格的月度额度。
 
-| options | 必填 | 说明 |
+| 配置项 | 必填 | 说明 |
 | --- | --- | --- |
 | `appId` | 是 | |
 | `appSecret` | 是 | 引用 |
+| `mode` | | `websocket`（默认）或 `webhook` |
+| `events` | | 长连接订阅的事件，默认 `["c2c_group", "guild_at"]`：`c2c_group` 单聊与群 @，`guild_at` 频道 @，`guild_dm` 频道私信（需申请权限，没权限会被网关以 4014 拒绝） |
 | `sandbox` | | 使用沙箱环境 |
 
 ```jsonc
-// .leo/chat-channels/qq.json
+// .leo/chat-channels/qq.json —— 长连接
 { "appId": "102xxxxxx", "appSecret": "$QQ_BOT_SECRET" }
 ```
 
-QQ 官方已逐步下线机器人的 WebSocket 接入，本渠道只实现 Webhook。
+```jsonc
+// .leo/chat-channels/qq.json —— webhook
+{ "mode": "webhook", "appId": "102xxxxxx", "appSecret": "$QQ_BOT_SECRET" }
+```
 
 ## 提供的能力
 
@@ -238,7 +250,7 @@ ctx.on('chat-channels/inbound', (p, next) => (p.message.text === '/ping' ? { tex
 
 1. 新建 `src/channels/<id>/index.ts`，导出一个 `ChannelDriver`：
    - `options`：这个渠道自己的机器人配置 zod schema（每个字段带 `describe`，密钥字段写进 `secretFields`）；
-   - `create(init)`：用 `init.secret()` 取密钥、`init.webhook()` 挂回调，或在 `start()` 里起长轮询 / 长连接（用 `init.WebSocket`）、收到消息调用 `init.dispatch()`、出站请求一律用 `init.fetch` 并监听 `init.signal`；
+   - `create(init)`：用 `init.secret()` 取密钥、`init.webhook()` 挂回调，或在 `start()` 里起长轮询 / 长连接（用 `init.WebSocket`，不可恢复的错误调用 `init.fail()`）、收到消息调用 `init.dispatch()`、出站请求一律用 `init.fetch` 并监听 `init.signal`；
    - 返回 `{ start?, send, stop? }`。`send` 每次只发一段，分段由注册层负责。
 2. 在 `src/channels/index.ts` 的 `BUILTIN_DRIVERS` 和 `src/config.ts` 的 `BUILTIN_CHANNELS` 里登记 id。
 3. 在 `test/channels.test.ts` 补上收发与验签测试，在本 README 补「机器人配置」一节。用户就可以写 `.leo/chat-channels/<id>.json` 了。
@@ -248,7 +260,7 @@ ctx.on('chat-channels/inbound', (p, next) => (p.message.text === '/ping' ? { tex
 ## 安全说明
 
 - **默认不自动回复**；开启后聊天 Agent 默认**没有任何工具**（聊天对象是外部用户），需要时在 `agent.tools` 显式列出。工具过滤由核心工具管线强制执行。
-- 所有回调都校验来源：飞书 Verification Token + 签名（webhook 模式设置 Encrypt Key 时）、QQ Ed25519 签名、Telegram secret token；飞书长连接与 Telegram 长轮询由机器人主动发起，无需对外开放端口；比较使用常量时间。
+- 所有回调都校验来源：飞书 Verification Token + 签名（webhook 模式设置 Encrypt Key 时）、QQ Ed25519 签名、Telegram secret token；QQ / 飞书长连接与 Telegram 长轮询由机器人主动发起，无需对外开放端口；比较使用常量时间。
 - 群聊默认需要 @机器人；可用 `allowFrom` / `allowChats` 白名单收紧。
 - webhook 默认只监听 `127.0.0.1`，请求体大小有上限；重推事件按 id 去重。
 - 密钥只接受引用或 credentials，不会出现在日志、状态、错误信息与工具输出中。

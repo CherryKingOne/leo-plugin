@@ -266,7 +266,7 @@ describe('qq', () => {
       'bots.qq.com/app/getAppAccessToken': () => ({ access_token: 'QT', expires_in: '7200' }),
       '/v2/groups/G/messages': () => ({ id: 'sent-1', timestamp: 1 }),
     })
-    const { leo, svc, received, url } = await boot(f.impl, { qqbot: { channel: 'qq', options: { appId: '1', appSecret: secret } } })
+    const { leo, svc, received, url } = await boot(f.impl, { qqbot: { channel: 'qq', options: { mode: 'webhook', appId: '1', appSecret: secret } } })
     cleanup.push(() => leo.dispose())
     expect(svc.accounts()[0]!.state).toBe('running')
     const { privateKey, publicKey } = qqKeys(secret)
@@ -295,5 +295,106 @@ describe('qq', () => {
       { content: 'b', msg_type: 0, msg_id: 'msg-1', msg_seq: 2 },
     ])
     expect(sends[0]!.headers.authorization).toBe('QQBot QT')
+  })
+})
+
+// ------------------------------------------------------------------ QQ 长连接
+
+/** 测试用 WebSocket：模拟 QQ 网关（Hello → Identify/Resume → READY/RESUMED） */
+class QqFakeWS {
+  static instances: QqFakeWS[] = []
+  /** 收到 Identify 时用这个关闭码断开（模拟 4014 / 4914） */
+  static rejectIdentify: number | undefined
+  readyState = 0
+  sent: any[] = []
+  onopen: ((ev: unknown) => void) | null = null
+  onmessage: ((ev: { data: string }) => void) | null = null
+  onclose: ((ev: { code: number }) => void) | null = null
+  onerror: ((ev: unknown) => void) | null = null
+  constructor(readonly url: string) {
+    QqFakeWS.instances.push(this)
+    setTimeout(() => {
+      this.readyState = 1
+      this.onopen?.({})
+      this.push({ op: 10, d: { heartbeat_interval: 30_000 } })
+    }, 0)
+  }
+  send(data: string) {
+    const p = JSON.parse(data)
+    this.sent.push(p)
+    setTimeout(() => {
+      if (p.op === 2) {
+        if (QqFakeWS.rejectIdentify) return this.close(QqFakeWS.rejectIdentify)
+        this.push({ op: 0, s: 1, t: 'READY', d: { session_id: 'sess-1', user: { username: 'leo' } } })
+      }
+      if (p.op === 6) this.push({ op: 0, s: p.d.seq + 1, t: 'RESUMED', d: '' })
+    }, 0)
+  }
+  close(code = 1000) {
+    if (this.readyState === 3) return
+    this.readyState = 3
+    setTimeout(() => this.onclose?.({ code }), 0)
+  }
+  push(p: unknown) {
+    this.onmessage?.({ data: JSON.stringify(p) })
+  }
+}
+
+describe('QQ 长连接', () => {
+  const qqFetch = () =>
+    fakeFetch({
+      'bots.qq.com/app/getAppAccessToken': () => ({ access_token: 'QT', expires_in: '7200' }),
+      '/gateway': () => ({ url: 'wss://api.sgroup.qq.com/websocket' }),
+    })
+  const qqWs = QqFakeWS as unknown as typeof WebSocket
+
+  it('identify、收事件、断线后 resume 补发', async () => {
+    QqFakeWS.instances = []
+    QqFakeWS.rejectIdentify = undefined
+    const f = qqFetch()
+    const { leo, svc, received } = await boot(f.impl, { qqws: { channel: 'qq', options: { appId: '1', appSecret: 's' } } }, qqWs)
+    cleanup.push(() => leo.dispose())
+    expect(svc.accounts()[0]).toMatchObject({ state: 'running' })
+    expect(svc.accounts()[0]!.webhookPath).toBeUndefined()
+    const ws = QqFakeWS.instances[0]!
+    expect(ws.sent[0]).toEqual({
+      op: 2,
+      d: expect.objectContaining({ token: 'QQBot QT', intents: ((1 << 25) | (1 << 30)) >>> 0, shard: [0, 1] }),
+    })
+
+    ws.push({ op: 0, s: 2, t: 'GROUP_AT_MESSAGE_CREATE', id: 'ev', d: { id: 'm-1', content: ' 你好', group_openid: 'G', author: { member_openid: 'U' } } })
+    await tick()
+    expect(received[0]).toMatchObject({ channel: 'qq', chat: { id: 'G', type: 'group' }, sender: { id: 'U' }, text: '你好' })
+
+    // 服务端要求重连：保留 session，新连接发 Resume 带最近的 seq
+    ws.push({ op: 7 })
+    await tick(1700)
+    const ws2 = QqFakeWS.instances[1]!
+    expect(ws2.sent[0]).toEqual({ op: 6, d: { token: 'QQBot QT', session_id: 'sess-1', seq: 2 } })
+    expect(svc.accounts()[0]!.state).toBe('running')
+  })
+
+  it('无权限的 intent（4014）：启动失败并给出原因', async () => {
+    QqFakeWS.instances = []
+    QqFakeWS.rejectIdentify = 4014
+    const { leo, svc } = await boot(qqFetch().impl, { qqws: { channel: 'qq', options: { appId: '1', appSecret: 's', events: ['guild_dm'] } } }, qqWs)
+    cleanup.push(() => leo.dispose())
+    expect(svc.accounts()[0]).toMatchObject({ state: 'failed' })
+    expect(svc.accounts()[0]!.error).toMatch(/4014/)
+    expect(QqFakeWS.instances[0]!.sent[0].d.intents).toBe(1 << 12)
+    QqFakeWS.rejectIdentify = undefined
+  })
+
+  it('运行中被下架（4914）：账号进入 failed，不再重连', async () => {
+    QqFakeWS.instances = []
+    QqFakeWS.rejectIdentify = undefined
+    const { leo, svc } = await boot(qqFetch().impl, { qqws: { channel: 'qq', options: { appId: '1', appSecret: 's' } } }, qqWs)
+    cleanup.push(() => leo.dispose())
+    QqFakeWS.instances[0]!.close(4914)
+    await tick(50)
+    expect(svc.accounts()[0]).toMatchObject({ state: 'failed' })
+    expect(svc.accounts()[0]!.error).toMatch(/sandbox/)
+    await tick(1700)
+    expect(QqFakeWS.instances).toHaveLength(1)
   })
 })

@@ -1,25 +1,36 @@
 /**
- * QQ 官方机器人（QQ 开放平台 q.qq.com，Webhook 回调）。
+ * QQ 官方机器人（QQ 开放平台 q.qq.com）。收消息两种方式：
+ *
+ * - `websocket`（默认，长连接）：机器人主动连 QQ 网关，不需要公网地址、回调配置和 IP 白名单之外的东西。
+ *   自动心跳、断线 resume 补发遗漏事件、重连退避。
+ * - `webhook`：开发设置 → 回调配置，回调地址填 `<公网 HTTPS><basePath>/<account>`（仅支持 80/443/8080/8443），
+ *   勾选事件。保存时平台发 op=13 校验请求，本驱动用 AppSecret 派生的 Ed25519 密钥签名应答；之后每个回调都校验签名。
  *
  * 机器人配置：
  * 1. QQ 开放平台创建机器人，开发设置里记下 AppID、AppSecret（ClientSecret）。
- * 2. 开发设置 → 回调配置：回调地址填 `<公网 HTTPS><basePath>/<account>`（仅支持 80/443/8080/8443），
- *    勾选事件：单聊 C2C_MESSAGE_CREATE、群 @ GROUP_AT_MESSAGE_CREATE、频道 AT_MESSAGE_CREATE、频道私信 DIRECT_MESSAGE_CREATE。
- *    保存时平台发 op=13 校验请求，本驱动用 AppSecret 派生的 Ed25519 密钥签名应答；之后每个回调都校验签名。
- * 3. 把服务器出口 IP 加入 IP 白名单；上线前可设 sandbox=true 走沙箱环境。
- * 4. 回复：带上原消息 id 的「被动回复」不占主动消息额度（单聊 60 分钟、群聊 5 分钟内有效）；
+ * 2. 把服务器出口 IP 加入 IP 白名单；上线前可设 sandbox=true 走沙箱环境。
+ * 3. 回复：带上原消息 id 的「被动回复」不占主动消息额度（单聊 60 分钟、群聊 5 分钟内有效）；
  *    不带 replyTo 的主动消息有严格的月度额度限制。
- *
- * （QQ 机器人的 WebSocket 接入已被官方逐步下线，这里只实现 Webhook。）
  */
 import { createPrivateKey, createPublicKey, type KeyObject, sign, verify } from 'node:crypto'
 import { z } from 'zod'
 import { ChannelHttpError, requestJson, TokenCache } from '../../http.js'
+import { intentsOf, QQ_INTENTS, QqGateway, type QqIntent } from './gateway.js'
 import type { ChannelConnection, ChannelDriver, ChannelInit, InboundMessage, WebhookRequest, WebhookResponse } from '../../types.js'
 
 export const QqOptions = z.object({
   appId: z.string().min(1).describe('机器人 AppID'),
   appSecret: z.string().min(1).describe('机器人 AppSecret（ClientSecret），写 $QQ_BOT_SECRET 这样的引用'),
+  mode: z.enum(['websocket', 'webhook']).default('websocket').describe('收消息方式：websocket = 长连接（默认，无需公网），webhook = HTTP 回调'),
+  /**
+   * websocket 模式订阅的事件：c2c_group = 单聊与群 @（默认），guild_at = 频道 @（默认），guild_dm = 频道私信（需申请权限）。
+   * 订阅了没有权限的事件，网关会以 4014 关闭连接
+   */
+  events: z
+    .array(z.enum(Object.keys(QQ_INTENTS) as [QqIntent, ...QqIntent[]]))
+    .min(1)
+    .default(['c2c_group', 'guild_at'])
+    .describe('websocket 模式订阅的事件：c2c_group / guild_at / guild_dm'),
   sandbox: z.boolean().default(false).describe('使用沙箱环境 sandbox.api.sgroup.qq.com'),
   requestTimeoutMs: z.number().int().positive().default(15_000),
 })
@@ -129,6 +140,13 @@ async function create(init: ChannelInit<QqOptions>): Promise<ChannelConnection> 
     return n
   }
 
+  /** 两种模式共用：事件 → 统一消息 */
+  const onEvent = (type: string, d: unknown) => {
+    if (!d || typeof d !== 'object') return
+    const m = toInbound(init.account, type, d as QqEvent)
+    if (m && remember(m.id)) init.dispatch(m)
+  }
+
   const json = (obj: unknown): WebhookResponse => ({ status: 200, headers: { 'content-type': 'application/json' }, body: JSON.stringify(obj) })
 
   const handler = (req: WebhookRequest): WebhookResponse => {
@@ -156,17 +174,30 @@ async function create(init: ChannelInit<QqOptions>): Promise<ChannelConnection> 
       ok = false
     }
     if (!ok) return { status: 401, body: 'bad signature' }
-    if (payload.op === 0 && payload.t && payload.d) {
-      const m = toInbound(init.account, payload.t, payload.d as QqEvent)
-      if (m && remember(m.id)) init.dispatch(m)
-    }
+    if (payload.op === 0 && payload.t && payload.d) onEvent(payload.t, payload.d)
     // HTTP 回调 ACK
     return json({ op: 12 })
   }
 
-  await init.webhook(handler)
+  let gateway: QqGateway | undefined
+  if (o.mode === 'webhook') await init.webhook(handler)
+  else
+    gateway = new QqGateway(init, {
+      base,
+      intents: intentsOf(o.events),
+      timeoutMs: o.requestTimeoutMs,
+      token: () => tokens.get(),
+      invalidateToken: () => tokens.invalidate(),
+      onEvent,
+    })
 
   return {
+    async start() {
+      await gateway?.start()
+    },
+    async stop() {
+      await gateway?.stop()
+    },
     async send(target, message, signal) {
       const kind = (target.extra?.kind as Kind | undefined) ?? (target.chatType === 'group' ? 'group' : target.chatType === 'channel' ? 'channel' : 'c2c')
       const id = encodeURIComponent(target.chatId)
@@ -200,10 +231,10 @@ async function create(init: ChannelInit<QqOptions>): Promise<ChannelConnection> 
 export const qq: ChannelDriver<QqOptions> = {
   id: 'qq',
   name: 'QQ 机器人',
-  description: 'QQ 开放平台官方机器人：单聊、群 @、频道，Webhook 回调 + Ed25519 签名校验',
+  description: 'QQ 开放平台官方机器人：单聊、群 @、频道；长连接（默认）或 Webhook 回调 + Ed25519 签名校验',
   options: QqOptions,
   secretFields: ['appSecret'],
   textLimit: 2000,
-  receive: 'webhook',
+  receive: 'websocket',
   create,
 }
