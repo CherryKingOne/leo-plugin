@@ -3,42 +3,151 @@
   "$id": "https://github.com/CherryKingOne/leo-plugin/schemas/leo-plugin.schema.json",
   "title": "leo plugin manifest",
   "type": "object",
-  "required": ["id", "package", "version", "status", "description", "leo", "entry", "install"],
+  "required": [
+    "id",
+    "package",
+    "version",
+    "status",
+    "description",
+    "leo",
+    "entry",
+    "install"
+  ],
   "properties": {
-    "$schema": { "type": "string" },
-    "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-    "package": { "type": "string", "pattern": "^leo-plugin-[a-z][a-z0-9-]*$" },
-    "version": { "type": "string" },
-    "status": { "enum": ["planned", "experimental", "stable", "deprecated"] },
-    "description": { "type": "string", "minLength": 1 },
-    "keywords": { "type": "array", "items": { "type": "string" } },
-    "leo": { "type": "string" },
-    "entry": { "type": "string" },
-    "bundle": { "type": "string" },
-    "inject": { "type": "array", "items": { "type": "string" } },
+    "$schema": {
+      "type": "string"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "package": {
+      "type": "string",
+      "pattern": "^leo-plugin-[a-z][a-z0-9-]*$"
+    },
+    "version": {
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "planned",
+        "experimental",
+        "stable",
+        "deprecated"
+      ]
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "keywords": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "leo": {
+      "type": "string"
+    },
+    "entry": {
+      "type": "string"
+    },
+    "bundle": {
+      "type": "string"
+    },
+    "inject": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "provides": {
       "type": "object",
       "properties": {
-        "services": { "type": "array", "items": { "type": "string" } },
-        "tools": { "type": "array", "items": { "type": "string", "pattern": "^[a-zA-Z][a-zA-Z0-9_-]{0,63}$" } },
-        "events": { "type": "array", "items": { "type": "string" } }
+        "services": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "tools": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-zA-Z][a-zA-Z0-9_-]{0,63}$"
+          }
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
       },
       "additionalProperties": false
     },
-    "permissions": { "type": "array", "items": { "type": "string" } },
+    "permissions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "install": {
       "type": "object",
-      "required": ["config"],
+      "required": [
+        "config"
+      ],
       "properties": {
         "config": {
           "oneOf": [
-            { "type": "string" },
-            { "type": "array", "prefixItems": [{ "type": "string" }, {}], "minItems": 2, "maxItems": 2 }
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {}
+              ],
+              "minItems": 2,
+              "maxItems": 2
+            }
           ]
         },
         "example": {}
       },
       "additionalProperties": false
+    },
+    "release": {
+      "type": "object",
+      "description": "由 scripts/release.mjs 写入，请勿手改",
+      "required": [
+        "version",
+        "bundle"
+      ],
+      "properties": {
+        "version": {
+          "type": "string"
+        },
+        "bundle": {
+          "type": "object",
+          "required": [
+            "url",
+            "sha256"
+          ],
+          "properties": {
+            "url": {
+              "type": "string"
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        }
+      }
     }
   },
   "additionalProperties": false

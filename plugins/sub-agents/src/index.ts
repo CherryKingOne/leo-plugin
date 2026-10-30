@@ -9,12 +9,15 @@
  * 嵌套深度、并发数、步数、超时均有上限，父 turn 取消时子 Agent 一起取消。
  */
 import type { EventDef, PluginDefinition, PreExecutePayload, ToolDecision } from 'leo-agents'
+import { join } from 'node:path'
+import { loadAgentDir } from './agents-md.js'
 import { type AgentProfile, DEFAULT_PROFILES, type SubAgentsConfig, SubAgentsConfigSchema } from './config.js'
 import { createSubAgentService, type SubAgentInfo, type SubAgentService } from './service.js'
 import { createTaskTool } from './tool.js'
 
 export type { AgentProfile, SubAgentsConfig } from './config.js'
 export { SubAgentsConfigSchema } from './config.js'
+export { parseAgentMarkdown } from './agents-md.js'
 export type { SubAgentInfo, SubAgentResult, SubAgentRunOptions, SubAgentService } from './service.js'
 export { SubAgentError } from './service.js'
 export type { SubAgentProgress } from './tool.js'
@@ -41,7 +44,14 @@ const plugin: PluginDefinition<SubAgentsConfig> = {
   inject: ['agentLoop', 'tools'],
   config: SubAgentsConfigSchema,
   async apply(ctx, config) {
-    const profiles: Record<string, AgentProfile> = { ...DEFAULT_PROFILES, ...config.agents }
+    // 优先级：内置 general < ~/.leo/agents/*.md < 项目 .leo/agents/*.md < 配置中的 agents
+    const paths = config.loadAgentFiles ? ctx.maybe('leoPaths') : undefined
+    const onError = (file: string, err: Error) => ctx.logger.warn({ file, err: err.message }, 'sub-agents: skipped invalid agent file')
+    const fromFiles: Record<string, AgentProfile> = {
+      ...(paths ? await loadAgentDir(join(paths.userDir, 'agents'), onError) : {}),
+      ...(paths?.projectDir ? await loadAgentDir(join(paths.projectDir, 'agents'), onError) : {}),
+    }
+    const profiles: Record<string, AgentProfile> = { ...DEFAULT_PROFILES, ...fromFiles, ...config.agents }
     const { service, children } = createSubAgentService(ctx, config, profiles)
     ctx.provide('subAgents', service)
 

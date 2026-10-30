@@ -7,15 +7,30 @@ import { SubAgentError, type SubAgentService } from './service.js'
 /** 等价于 leo-agents 的 toolOutput()；插件不运行时依赖 leo-agents（见 PROTOCOL.md 第 3 节） */
 const output = (out: ToolOutput): ToolOutput => Object.assign(out, { [Symbol.for('leo.toolOutput')]: true })
 
-/** 子 Agent 进度（经 tool_update 事件转发给界面） */
-export type SubAgentProgress =
-  | { type: 'sub_agent_tool'; agentId: string; tool: string }
-  | { type: 'sub_agent_step'; agentId: string; step: number }
+/**
+ * 子 Agent 进度，经 tool_update 事件转发。遵循 leo-agents 的 ToolProgress 约定：
+ * 界面显示 message，其余字段供程序化消费
+ */
+export interface SubAgentProgress {
+  type: 'progress'
+  message: string
+  agentId: string
+  agent: string
+  tool: string
+}
 
-function progressOf(agentId: string, ev: AgentEvent): SubAgentProgress | undefined {
-  if (ev.type === 'tool_start') return { type: 'sub_agent_tool', agentId, tool: ev.call.name }
-  if (ev.type === 'step_start') return { type: 'sub_agent_step', agentId, step: ev.step }
-  return undefined
+function preview(args: unknown): string {
+  if (!args || typeof args !== 'object') return ''
+  const a = args as Record<string, unknown>
+  const v = a.command ?? a.path ?? a.url ?? a.pattern ?? a.description
+  const s = typeof v === 'string' ? v : JSON.stringify(a)
+  return s.length > 80 ? `${s.slice(0, 80)}…` : s
+}
+
+function progressOf(agent: string, ev: AgentEvent): SubAgentProgress | undefined {
+  if (ev.type !== 'tool_start') return undefined
+  const p = preview(ev.call.arguments)
+  return { type: 'progress', message: `[${agent}] ${ev.call.name}${p ? ` ${p}` : ''}`, agentId: '', agent, tool: ev.call.name }
 }
 
 export function createTaskTool(
@@ -48,9 +63,9 @@ export function createTaskTool(
           ...(agent ? { agent } : {}),
           parentAgentId: exec.agentId,
           signal: exec.signal,
-          onEvent: (ev) => {
-            const p = progressOf(exec.agentId, ev)
-            if (p) exec.onUpdate(p)
+          onEvent: (ev, info) => {
+            const p = progressOf(info.agent, ev)
+            if (p) exec.onUpdate({ ...p, agentId: info.id })
           },
         })
         const details = { agentId: r.id, agent: r.agent, sessionId: r.sessionId, reason: r.reason, steps: r.steps, usage: r.usage, durationMs: r.durationMs, truncated: r.truncated }

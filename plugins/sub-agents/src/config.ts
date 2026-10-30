@@ -35,6 +35,8 @@ export const SubAgentsConfigSchema = z
     maxOutputChars: z.number().int().positive().default(20_000),
     /** 子 Agent 配置；与内置的 general 合并，同名覆盖 */
     agents: z.record(z.string().regex(/^[a-zA-Z][a-zA-Z0-9_-]{0,63}$/), AgentProfileSchema).default({}),
+    /** 读取 ~/.leo/agents/*.md 与项目 .leo/agents/*.md 中的子 Agent 定义（需要 leo-agents 提供 leoPaths） */
+    loadAgentFiles: z.boolean().default(true),
     /** 工具名，默认 task */
     toolName: z
       .string()
@@ -48,6 +50,7 @@ export const SubAgentsConfigSchema = z
     timeoutMs: 600_000,
     maxOutputChars: 20_000,
     agents: {},
+    loadAgentFiles: true,
     toolName: 'task',
   })
 

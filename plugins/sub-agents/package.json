@@ -1,6 +1,6 @@
 {
   "name": "leo-plugin-sub-agents",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "子代理：把任务委派给独立上下文的子 Agent 执行并汇总结果",
   "type": "module",
   "license": "Apache-2.0",
@@ -17,7 +17,8 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     }
   },
   "files": [
@@ -39,9 +40,9 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
-    "leo-agents": "github:CherryKingOne/leo-agents",
+    "esbuild": "^0.28.0",
+    "leo-agents": "github:CherryKingOne/leo-agents#9f19bc9",
     "typescript": "^5.9.0",
-    "vitest": "^3.2.0",
-    "esbuild": "^0.28.0"
+    "vitest": "^3.2.0"
   }
 }

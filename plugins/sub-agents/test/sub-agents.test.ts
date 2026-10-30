@@ -45,13 +45,17 @@ describe('加载与卸载', () => {
 describe('委派', () => {
   it('子 Agent 独立上下文运行，结果作为工具结果返回', async () => {
     const { leo, mock } = await setup((req) => {
-      if (isChild(req)) return { text: 'FOUND: answer is 42' }
+      if (isChild(req)) return hasToolResult(req) ? { text: 'FOUND: answer is 42' } : { toolCalls: [{ id: 'e1', name: 'echo', arguments: { text: 'hi' } }] }
       if (!hasToolResult(req)) return { toolCalls: [task('find the answer')] }
       return { text: 'done' }
     })
     const events: string[] = []
     leo.ctx.on('sub-agents/started', (i) => void events.push(`start:${i.agent}:${i.depth}`))
     leo.ctx.on('sub-agents/finished', (i) => void events.push(`end:${i.reason}`))
+    const labels: (string | undefined)[] = []
+    leo.ctx.on('sub-agents/started', (i) => void labels.push(leo.ctx.get('agentLoop').get(i.id)?.options.label))
+    const progress: unknown[] = []
+    leo.ctx.on('agent/event', ({ event }) => void (event.type === 'tool_update' && progress.push(event.partial)))
 
     const agent = leo.createAgent({ model: 'm', systemPrompt: 'PARENT PROMPT' })
     const r = await agent.run('hi')
@@ -62,6 +66,7 @@ describe('委派', () => {
     expect(toolMsg.isError).toBeFalsy()
 
     const childReq = mock.requests.find(isChild)!
+    expect(mock.requests.filter(isChild)).toHaveLength(2)
     // 子 Agent 只看到委派的 prompt，看不到父对话
     expect(childReq.messages.filter((m) => m.role === 'user')).toHaveLength(1)
     expect(lastUserText(childReq)).toBe('find the answer')
@@ -70,6 +75,8 @@ describe('委派', () => {
     // maxDepth=1：子 Agent 看不到 task
     expect(toolNames(childReq).sort()).toEqual(['echo', 'secret'])
     expect(events).toEqual(['start:general:1', 'end:completed'])
+    expect(labels).toEqual(['sub-agent:general'])
+    expect(progress).toEqual([expect.objectContaining({ type: 'progress', message: '[general] echo {"text":"hi"}', agent: 'general', tool: 'echo' })])
     expect(leo.ctx.get('subAgents').list()).toHaveLength(0)
     await leo.dispose()
   })
@@ -101,10 +108,14 @@ describe('委派', () => {
       },
       { agents: { explorer: { description: 'echo only', tools: ['echo'] } } },
     )
+    const updates: { type: string; message: string; agent: string; tool: string }[] = []
+    leo.ctx.on('agent/event', ({ event }) => void (event.type === 'tool_update' && updates.push(event.partial as never)))
     const r = await leo.createAgent({ model: 'm' }).run('hi')
     expect(executed).not.toContain('secret')
+    // 被拒绝的调用不会开始执行，也就没有进度
+    expect(updates).toEqual([])
     const toolMsg = r.messages.find((m) => m.role === 'tool')!
-    expect((toolMsg.content[0] as { text: string }).text).toMatch(/denied: Tool "secret" is not available to sub-agent "explorer"/)
+    expect((toolMsg.content[0] as { text: string }).text).toMatch(/Tool "secret" is not available/)
     await leo.dispose()
   })
 

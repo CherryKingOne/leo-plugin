@@ -1,36 +1,28 @@
 # leo-plugin-sub-agents
 
-> 状态：**experimental**（0.1.0）
+> 状态：**experimental**（0.2.0）
 
 让主 Agent 把一个独立的子任务（调研代码库、查资料、并行处理多个文件）交给**子 Agent** 执行。子 Agent 有自己的上下文窗口，只把最终结论返回给主 Agent，避免主对话被大量中间过程撑满。
 
 ## 安装
 
 ```bash
-npm install leo-plugin-sub-agents
+leo plugin add sub-agents        # 装到当前项目；-g 装到 ~/.leo，所有项目可用
 ```
 
-`.leo/config.json`：
+要改配置，在 `.leo/config.json` 里显式引用安装好的文件：
 
 ```jsonc
-{
-  "plugins": [
-    "leo-plugin-sub-agents",
-    // 或带配置：
-    ["leo-plugin-sub-agents", { "maxConcurrent": 4 }]
-  ]
-}
+{ "plugins": [["./.leo/plugins/sub-agents.bundle.js", { "maxConcurrent": 2 }]] }
 ```
 
-离线安装：把 `dist/sub-agents.bundle.js` 复制到 `.leo/plugins/`，会被自动发现（使用默认配置；要改配置，在 `plugins` 里写 `["./.leo/plugins/sub-agents.bundle.js", { ... }]`）。
-
-代码中使用：
+其他安装方式（npm、手动复制、代码中传入）见 [docs/install.md](../../docs/install.md)。代码中使用：
 
 ```ts
 import { createLeoFromConfig } from 'leo-agents'
 import subAgents from 'leo-plugin-sub-agents'
 
-const leo = await createLeoFromConfig({ plugins: [[subAgents, { maxDepth: 1 }]] })
+const app = await createLeoFromConfig({ plugins: [[subAgents, { maxDepth: 1 }]] })
 ```
 
 ## 工作方式
@@ -51,7 +43,8 @@ const leo = await createLeoFromConfig({ plugins: [[subAgents, { maxDepth: 1 }]] 
 - 成功：返回子 Agent 的最终回复（超过 `maxOutputChars` 截断）。
 - 未完成（步数用尽、超时、出错、取消）：`isError: true`，附带已有的部分结果。
 - `details`（不发给模型，供界面与审计）：`agentId`、`sessionId`、`reason`、`steps`、`usage`、`durationMs`、`truncated`。
-- 进度：子 Agent 每个 step、每次工具调用通过 `tool_update` 事件上报（`{ type: 'sub_agent_step' | 'sub_agent_tool', ... }`）。
+- 进度：子 Agent 每次调用工具，通过 `tool_update` 上报 `{ type: 'progress', message: '[general] grep TODO', agentId, agent, tool }`，CLI 显示为 `  … [general] grep TODO`。
+- 子 Agent 的 `label` 为 `sub-agent:<名字>`，CLI 审批提示会显示它，便于分辨是谁要执行命令。
 
 ### 子 Agent 继承什么
 
@@ -65,7 +58,7 @@ const leo = await createLeoFromConfig({ plugins: [[subAgents, { maxDepth: 1 }]] 
 
 ## 安全边界
 
-- **不扩大权限**：子 Agent 的工具集 ⊆ 父 Agent 的工具集。这不只是隐藏 schema：插件在 `tools/pre-execute` 最前面和 `tools/guard` 中拒绝子 Agent 调用未授权的工具，模型“猜”工具名也调不到，也不会为越权调用弹出审批。
+- **不扩大权限**：子 Agent 的工具集 ⊆ 父 Agent 的工具集。这不只是隐藏 schema：leo-agents 在执行时强制工具筛选，插件也在 `tools/pre-execute` 最前面和 `tools/guard` 中兜底拒绝，模型“猜”工具名也调不到，也不会为越权调用弹出审批。
 - **不能无限套娃**：`maxDepth` 默认 1，子 Agent 看不到 `task`。
 - **有上限**：并发数、单个子 Agent 最大步数、超时都有限制。
 - **可取消**：父 turn 取消时，排队和运行中的子 Agent 一起取消。
@@ -81,6 +74,7 @@ const leo = await createLeoFromConfig({ plugins: [[subAgents, { maxDepth: 1 }]] 
 | `timeoutMs` | number | `600000` | 单个子 Agent 的超时 |
 | `maxOutputChars` | number | `20000` | 返回给主 Agent 的文本上限 |
 | `toolName` | string | `"task"` | 工具名，与其他插件冲突时可改 |
+| `loadAgentFiles` | boolean | `true` | 读取 `~/.leo/agents/*.md` 与项目 `.leo/agents/*.md` |
 | `agents` | object | `{}` | 子 Agent 配置，与内置 `general` 合并，同名覆盖 |
 
 ```jsonc
@@ -96,6 +90,22 @@ const leo = await createLeoFromConfig({ plugins: [[subAgents, { maxDepth: 1 }]] 
   }
 }
 ```
+
+### 用 Markdown 定义子 Agent
+
+在项目 `.leo/agents/`（或 `~/.leo/agents/`，所有项目共用）放一个 `.md` 文件，文件名即名字：
+
+```md
+---
+description: 只读调研：搜索和阅读代码，回答问题
+model: deepseek/deepseek-chat          # 可选
+tools: read_file, list_dir, grep       # 可选，也可写 [a, b] 或多行 "- a"
+maxSteps: 20                           # 可选
+---
+你是只读调研助手。只读不写，结论附上文件路径和行号。
+```
+
+正文是系统提示（可选，不写则继承父 Agent）。优先级：内置 `general` < `~/.leo/agents` < `.leo/agents` < 配置里的 `agents`。格式有误的文件会被跳过并记录警告。需要 leo-agents 提供 `leoPaths`（`createLeoFromConfig` / CLI 启动时都有）。
 
 ## 提供的能力
 
@@ -116,14 +126,14 @@ src/
 ├── config.ts     zod 配置 schema 与内置 general 配置
 ├── service.ts    subAgents 服务：创建、并发控制、取消、深度与工具集计算
 ├── tool.ts       task 工具
+├── agents-md.ts  解析 .leo/agents/*.md
 └── prompt.ts     子 Agent 说明与工具描述
 ```
 
 ## 已知限制
 
-- 不支持用 `.leo/agents/*.md` 定义子 Agent：插件目前拿不到项目目录，需要 `leo-agents` 先提供该信息。
-- CLI 尚未渲染 `tool_update`，看不到子 Agent 的实时进度，只能看到最终结果。
-- 子 Agent 的审批请求和父 Agent 共用同一个审批界面，提示里不区分来源。
+- 子 Agent 只运行一个 turn，主 Agent 不能对同一个子 Agent 追问（需要时重新委派，并在 prompt 里带上上次的结论）。
+- 运行在旧版 leo-agents（没有 `leoPaths` / `label`）上时，不会读取 Markdown 定义，审批提示也不显示来源，其余功能正常。
 
 ## 开发
 

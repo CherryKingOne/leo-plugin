@@ -6,21 +6,18 @@
 
 | 插件 | 包名 | 状态 | 说明 |
 | --- | --- | --- | --- |
-| [sub-agents](plugins/sub-agents) | `leo-plugin-sub-agents` | 实验性 0.1.0 | 把任务委派给独立上下文的子 Agent 执行并汇总结果 |
+| [sub-agents](plugins/sub-agents) | `leo-plugin-sub-agents` | 实验性 0.2.0 | 把任务委派给独立上下文的子 Agent 执行并汇总结果 |
 
 机器可读的索引见 [`registry.json`](registry.json)。
 
 ## 快速安装
 
 ```bash
-npm install leo-plugin-sub-agents
+leo plugin list               # 查看可安装的插件
+leo plugin add sub-agents     # 装到当前项目（-g 装到 ~/.leo）
 ```
 
-`.leo/config.json`：
-
-```json
-{ "plugins": ["leo-plugin-sub-agents"] }
-```
+其他方式（npm、离线复制、代码中传入）见 [docs/install.md](docs/install.md)。
 
 四种安装方式（一条命令、npm、复制单文件、代码中传入）见 [docs/install.md](docs/install.md)。
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.0
+
+- 支持用 `~/.leo/agents/*.md` 与 `.leo/agents/*.md` 定义子 Agent（新配置 `loadAgentFiles`）
+- 进度改为 leo-agents 的 `ToolProgress` 格式，CLI 可显示子 Agent 正在调用的工具
+- 子 Agent 设置 `label: sub-agent:<名字>`，CLI 审批提示显示来源
+- 首次通过 `leo plugin add sub-agents` 发布单文件版本
+
 ## 0.1.0
 
 - 首个实现：`task` 工具、`subAgents` 服务、`sub-agents/started` / `sub-agents/finished` 事件

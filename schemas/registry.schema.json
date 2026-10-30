@@ -2,24 +2,80 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "leo plugin registry",
   "type": "object",
-  "required": ["plugins"],
+  "required": [
+    "plugins"
+  ],
   "properties": {
-    "$schema": { "type": "string" },
-    "description": { "type": "string" },
+    "$schema": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
     "plugins": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["id", "package", "path", "version", "status", "description"],
+        "required": [
+          "id",
+          "package",
+          "path",
+          "version",
+          "status",
+          "description"
+        ],
         "properties": {
-          "id": { "type": "string" },
-          "package": { "type": "string" },
-          "path": { "type": "string" },
-          "version": { "type": "string" },
-          "status": { "enum": ["planned", "experimental", "stable", "deprecated"] },
-          "description": { "type": "string" }
+          "id": {
+            "type": "string"
+          },
+          "package": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "planned",
+              "experimental",
+              "stable",
+              "deprecated"
+            ]
+          },
+          "description": {
+            "type": "string"
+          },
+          "leo": {
+            "type": "string",
+            "description": "兼容的 leo-agents 版本范围，如 >=0.1.0"
+          },
+          "bundle": {
+            "type": "object",
+            "required": [
+              "url",
+              "sha256"
+            ],
+            "properties": {
+              "url": {
+                "type": "string",
+                "description": "单文件下载地址；相对地址以 registry.json 为基准"
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            },
+            "additionalProperties": false
+          }
         }
       }
+    },
+    "version": {
+      "type": "integer",
+      "const": 1
     }
   }
 }

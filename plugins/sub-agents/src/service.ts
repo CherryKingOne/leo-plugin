@@ -13,7 +13,7 @@ export interface SubAgentRunOptions {
   parentAgentId?: string
   signal?: AbortSignal
   /** 子 Agent 的事件流（进度展示） */
-  onEvent?(event: AgentEvent): void
+  onEvent?(event: AgentEvent, info: SubAgentInfo): void
 }
 
 export interface SubAgentResult {
@@ -173,6 +173,7 @@ export function createSubAgentService(ctx: Context<any>, config: SubAgentsConfig
         ...(sameModel && parent?.options.temperature !== undefined ? { temperature: parent.options.temperature } : {}),
         ...(sameModel && parent?.options.maxOutputTokens ? { maxOutputTokens: parent.options.maxOutputTokens } : {}),
         ...(sameModel && parent?.options.providerOptions ? { providerOptions: parent.options.providerOptions } : {}),
+        label: `sub-agent:${agentName}`,
         limits: { maxSteps: profile.maxSteps ?? config.maxSteps, turnTimeoutMs: config.timeoutMs },
         state: { subAgent: { agent: agentName, depth, ...(parent ? { parentAgentId: parent.id } : {}) } },
       })
@@ -195,7 +196,7 @@ export function createSubAgentService(ctx: Context<any>, config: SubAgentsConfig
       for await (const ev of child.prompt(opts.prompt, opts.signal ? { signal: opts.signal } : {})) {
         if (ev.type === 'message' && ev.message.role === 'assistant') last = ev.message
         if (ev.type === 'turn_end') end = ev
-        opts.onEvent?.(ev)
+        opts.onEvent?.(ev, info)
       }
 
       const full = textOf(last).trim()
