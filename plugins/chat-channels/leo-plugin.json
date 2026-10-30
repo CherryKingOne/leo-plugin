@@ -60,10 +60,10 @@
     ]
   },
   "release": {
-    "version": "0.1.0",
+    "version": "0.2.0",
     "bundle": {
-      "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/chat-channels/0.1.0/chat-channels.bundle.js",
-      "sha256": "aef9fd89d3bea58bb2a44f40ed47be6c7065d1939066a3c630eece245b2a1263"
+      "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/chat-channels/0.2.0/chat-channels.bundle.js",
+      "sha256": "01024240980a192f24603e70c638a2eaaf93bc7058443f6a6263f2ac59bc191f"
     }
   }
 }
