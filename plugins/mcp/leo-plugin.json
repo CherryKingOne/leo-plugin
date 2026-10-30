@@ -1,0 +1,43 @@
+{
+  "$schema": "../../schemas/leo-plugin.schema.json",
+  "id": "mcp",
+  "package": "leo-plugin-mcp",
+  "version": "0.1.0",
+  "status": "experimental",
+  "description": "MCP 客户端：把外部 MCP 服务器的工具接入 Agent，兼容 MCP 2026-07-28（MCP 2.0）与 2025-11-25 及更早版本",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "tools"
+  ],
+  "leo": ">=0.1.0",
+  "entry": "./dist/index.js",
+  "bundle": "./dist/mcp.bundle.js",
+  "inject": [
+    "tools"
+  ],
+  "provides": {
+    "services": [
+      "mcp"
+    ],
+    "tools": [],
+    "events": [
+      "mcp/connected",
+      "mcp/error"
+    ]
+  },
+  "permissions": [
+    "mcp.call",
+    "process.spawn",
+    "net.connect"
+  ],
+  "install": {
+    "config": "leo-plugin-mcp",
+    "example": [
+      "leo-plugin-mcp",
+      {
+        "timeoutMs": 120000
+      }
+    ]
+  }
+}

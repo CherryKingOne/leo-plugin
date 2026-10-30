@@ -140,7 +140,7 @@ declare module 'leo-agents' {
 - **命名**：`^[a-zA-Z][a-zA-Z0-9_-]{0,63}$`，snake_case。核心内置工具名（`read_file`、`write_file`、`edit_file`、`list_dir`、`grep`、`bash`、`web_fetch`）为保留名，插件不得占用。
 - **描述**：写给模型看：做什么、什么时候用、什么时候不要用、返回什么。
 - **参数**：使用 zod schema，每个字段带 `.describe()`。
-- **权限**：有副作用的工具**必须**声明 `permissions`。CLI 默认审批策略把 `fs.write`、`process.exec` 视为副作用；新的副作用类型（如 `net.post`、`agent.spawn`）**应当**在 README 中说明，并提示用户在审批配置中加入。
+- **权限**：有副作用的工具**必须**声明 `permissions`。CLI 默认审批策略把 `fs.write`、`process.exec` 视为副作用；新的副作用类型（如 `net.post`、`mcp.call`）**应当**在权限上加 `sideEffect: true`（leo-agents `f73f7c9` 起支持），这样会沿用用户的审批模式（ask / auto / deny、`-y`），无需用户改配置；并在 README 中说明。
 - **取消**：**必须**遵守 `exec.signal`，取消或超时时尽快停止并释放资源。
 - **失败**：业务失败返回 `isError: true` 的结果，不要抛异常；抛异常会被记为 `tool_error`。
 - **输出**：控制长度，大输出应截断并告知模型如何获取剩余部分。

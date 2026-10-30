@@ -6,6 +6,7 @@
 
 | 插件 | 包名 | 状态 | 说明 |
 | --- | --- | --- | --- |
+| [mcp](plugins/mcp) | `leo-plugin-mcp` | 实验性 0.1.0 | 接入外部 MCP 服务器的工具（stdio / HTTP），兼容 MCP 2026-07-28（MCP 2.0）与旧版握手协议 |
 | [sub-agents](plugins/sub-agents) | `leo-plugin-sub-agents` | 实验性 0.2.0 | 把任务委派给独立上下文的子 Agent 执行并汇总结果 |
 
 机器可读的索引见 [`registry.json`](registry.json)。
@@ -15,9 +16,8 @@
 ```bash
 leo plugin list               # 查看可安装的插件
 leo plugin add sub-agents     # 装到当前项目（-g 装到 ~/.leo）
+leo plugin add mcp            # MCP 客户端，服务器写在 .leo/mcp-servers.json
 ```
-
-其他方式（npm、离线复制、代码中传入）见 [docs/install.md](docs/install.md)。
 
 四种安装方式（一条命令、npm、复制单文件、代码中传入）见 [docs/install.md](docs/install.md)。
 
@@ -46,6 +46,7 @@ leo-plugin/
 ├── scripts/                  新建插件、生成索引、校验（规划中）
 └── plugins/
     ├── _template/            新插件模板（可运行的最小示例）
+    ├── mcp/                  MCP 客户端插件
     └── sub-agents/           子代理插件
 ```
 
