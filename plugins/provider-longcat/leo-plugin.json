@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schemas/leo-plugin.schema.json",
+  "id": "provider-longcat",
+  "package": "leo-plugin-provider-longcat",
+  "version": "0.1.0",
+  "status": "experimental",
+  "description": "模型供应商注册层的 LongCat（美团）子插件：LongCat-2.5-Preview，1M 上下文，保存密钥即自动接入，思考模式与工具调用开箱可用（需要 provider ≥ 0.2.0）",
+  "keywords": [
+    "provider",
+    "longcat",
+    "meituan",
+    "llm"
+  ],
+  "leo": ">=0.2.0",
+  "entry": "./dist/index.js",
+  "bundle": "./dist/provider-longcat.bundle.js",
+  "inject": [
+    "providers"
+  ],
+  "provides": {
+    "services": [],
+    "tools": [],
+    "events": []
+  },
+  "permissions": [
+    "net.connect"
+  ],
+  "install": {
+    "config": "leo-plugin-provider-longcat",
+    "example": [
+      "leo-plugin-provider-longcat",
+      {}
+    ]
+  }
+}

@@ -7,6 +7,7 @@ Agent ⇄ llm 服务（底座，只有接口）
           ⇅
       provider（注册层：读配置、取密钥、选默认模型、统一调度）
         ├── provider-deepseek   DeepSeek 子插件（驱动 deepseek）
+        ├── provider-longcat    LongCat（美团）子插件（驱动 longcat）
         ├── provider-xxx        以后的通义、Kimi……子插件
         └── openai-compatible   内置通用协议：没有子插件的兼容端点写 baseURL 即可
 ```
@@ -18,6 +19,7 @@ Agent ⇄ llm 服务（底座，只有接口）
 ```bash
 leo plugin add provider            # 注册层，同时生成 ~/.leo/provider.json
 leo plugin add provider-deepseek   # DeepSeek 子插件
+leo plugin add provider-longcat    # LongCat（美团）子插件
 leo auth set deepseek              # 保存密钥（或 export DEEPSEEK_API_KEY）
 leo models                         # 实时列出各厂商的真实模型与详情
 ```
