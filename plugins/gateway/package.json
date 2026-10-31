@@ -1,6 +1,6 @@
 {
   "name": "leo-plugin-gateway",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "leo 消息网关：常驻接入 Telegram / 飞书 / QQ 等聊天平台，按会话路由给 leo Agent，带授权配对、聊天内审批、主动投递，以及 HTTP / SSE / WebSocket / OpenAI 兼容控制面",
   "type": "module",
   "license": "Apache-2.0",

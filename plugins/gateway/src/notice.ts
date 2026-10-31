@@ -56,8 +56,10 @@ export function accountNotifier(notify: Notify, webhookBase: () => string | unde
   const last = new Map<string, string>()
   return (s) => {
     const prev = last.get(s.account)
-    if (s.state === prev || s.state === 'starting') return
-    last.set(s.account, s.state)
+    // waiting_bind 带上 bindUrl 一起去重：二维码过期刷新后再提示一次
+    const key = s.state === 'waiting_bind' ? `waiting_bind ${s.bindUrl ?? ''}` : s.state
+    if (key === prev || s.state === 'starting') return
+    last.set(s.account, key)
     const name = s.account === s.channel ? s.account : `${s.account}（${s.channel}）`
     switch (s.state) {
       case 'running': {
@@ -71,6 +73,9 @@ export function accountNotifier(notify: Notify, webhookBase: () => string | unde
         break
       case 'waiting_driver':
         notify(`${name} 等待渠道驱动 "${s.channel}"：内置只有 telegram / feishu / qq，其他渠道需要安装对应插件`, 'warn')
+        break
+      case 'waiting_bind':
+        notify(`${name} 等待绑定${s.detail ? `：${s.detail}` : ''}${s.bindUrl ? ` ${s.bindUrl}` : ''}`, 'warn')
         break
       case 'disabled':
         notify(`${name} 已停用（enabled=false）`)

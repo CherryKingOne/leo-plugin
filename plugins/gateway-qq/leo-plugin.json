@@ -1,0 +1,40 @@
+{
+  "$schema": "../../schemas/leo-plugin.schema.json",
+  "id": "gateway-qq",
+  "package": "leo-plugin-gateway-qq",
+  "version": "0.2.0",
+  "status": "experimental",
+  "description": "消息网关的 QQ 子插件：QQ 官方机器人渠道驱动，支持手机 QQ 扫码绑定，替代网关内置 QQ 驱动（需要 gateway ≥ 0.2.0）",
+  "keywords": [
+    "gateway",
+    "qq",
+    "qqbot",
+    "qr",
+    "chatbot"
+  ],
+  "leo": ">=0.1.0",
+  "entry": "./dist/index.js",
+  "bundle": "./dist/gateway-qq.bundle.js",
+  "inject": [
+    "gateway",
+    "tools"
+  ],
+  "provides": {
+    "tools": [
+      "gateway_qq_bind"
+    ]
+  },
+  "permissions": [
+    "gateway.bind",
+    "net.connect"
+  ],
+  "install": {
+    "config": "leo-plugin-gateway-qq",
+    "example": [
+      "leo-plugin-gateway-qq",
+      {
+        "qrConsole": true
+      }
+    ]
+  }
+}

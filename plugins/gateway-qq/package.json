@@ -1,0 +1,49 @@
+{
+  "name": "leo-plugin-gateway-qq",
+  "version": "0.2.0",
+  "description": "leo 消息网关的 QQ 子插件：QQ 官方机器人渠道驱动（WebSocket / webhook），支持手机 QQ 扫码绑定，替代网关内置的 QQ 驱动",
+  "type": "module",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/CherryKingOne/leo-plugin.git",
+    "directory": "plugins/gateway-qq"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "leo-plugin.json",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json && esbuild src/index.ts --bundle --platform=node --format=esm --target=node22 --external:leo-agents --outfile=dist/gateway-qq.bundle.js --log-level=warning",
+    "typecheck": "tsc -p tsconfig.test.json --noEmit",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "leo-agents": ">=0.1.0"
+  },
+  "dependencies": {
+    "@tencent-connect/qqbot-connector": "^1.2.0",
+    "zod": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "esbuild": "^0.28.0",
+    "leo-agents": "github:CherryKingOne/leo-agents#921b284",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.0"
+  }
+}

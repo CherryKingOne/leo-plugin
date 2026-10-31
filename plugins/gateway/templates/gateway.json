@@ -23,7 +23,8 @@
     //   "domain": "feishu"               // 国际版写 "lark"
     // },
 
-    // QQ 开放平台官方机器人；默认 WebSocket 长连接
+    // QQ 开放平台官方机器人；默认 WebSocket 长连接。
+    // 想用手机 QQ 扫码绑定：安装 QQ 子插件（leo plugin add gateway-qq），appId / appSecret 不填即可
     // "qq": {
     //   "channel": "qq",
     //   "appId": "102xxxxx",

@@ -4,6 +4,10 @@
  * 一个常驻的“总机”：接入 Telegram / 飞书 / QQ 等聊天平台，把每个聊天路由到独立的 leo 会话，
  * 由 leo 的 Agent 回复；同一个端口提供控制面 HTTP / SSE / WebSocket 与 OpenAI 兼容接口。
  *
+ * 0.2.0 起网关是“注册层”：授权、会话、路由、审批、控制面归网关；聊天平台是驱动，
+ * 内置驱动（telegram / feishu / qq）由网关自己注册，其他插件用 `ctx.get('gateway').registerChannel(driver)` 注册，
+ * 与内置驱动同 id 时顶替内置驱动（如 leo-plugin-gateway-qq）。
+ *
  * 运行：`leo serve`（后台常驻，推荐）或交互式 `leo`（对话的同时网关也在线）。
  *
  * - 服务 `gateway`（见 GatewayService）：渠道、会话、投递、配对
@@ -78,6 +82,8 @@ export function createGatewayPlugin(opts: GatewayPluginOptions = {}): PluginDefi
       const config = await loadConfig(ctx, raw)
       if (!config.enabled) {
         notify('已停用（gateway.json 里 enabled=false）')
+        // 仍然提供一个空的注册层，依赖 gateway 服务的渠道插件（如 leo-plugin-gateway-qq）不会因此卡住宿主启动
+        ctx.provide('gateway', disabledService())
         return void ctx.logger.info('gateway: disabled (enabled=false)')
       }
 
@@ -124,7 +130,7 @@ export function createGatewayPlugin(opts: GatewayPluginOptions = {}): PluginDefi
         registerChannel: (driver) => registry.registerDriver(driver),
         channels: () => registry.drivers(),
         accounts: () => registry.accounts(),
-        restartAccount: (id) => registry.restart(id),
+        restartAccount: (id, o) => registry.restart(id, o),
         sessions: () => core.sessions(),
         chat: (input) => core.chat(input),
         resetSession: (key) => core.resetSession(key),
@@ -141,6 +147,7 @@ export function createGatewayPlugin(opts: GatewayPluginOptions = {}): PluginDefi
         approvePairing: (code) => core.approvePairing(code, 'operator'),
         revokeUser: (user) => state.unpair(user),
         pairedUsers: () => state.pairedUsers(),
+        sessionOfAgent: (agentId) => core.laneOfAgent(agentId)?.key,
         address: () => server?.address(),
       }
 
@@ -169,7 +176,7 @@ export function createGatewayPlugin(opts: GatewayPluginOptions = {}): PluginDefi
       registry = createChannelRegistry({
         ctx,
         accounts: config.channels,
-        builtinIds: new Set(config.builtin),
+        notify: (m, l) => notify(m, l),
         mountHook: (account, handler) => {
           if (!server) return Promise.reject(new Error(`account "${account}" uses webhook mode but server.enabled is false`))
           return server.mountHook(account, handler)
@@ -210,7 +217,7 @@ export function createGatewayPlugin(opts: GatewayPluginOptions = {}): PluginDefi
       }
 
       // 最后注册驱动：注册即启动对应账号
-      for (const id of config.builtin) await ctx.effect(() => registry.registerDriver(BUILTIN_DRIVERS[id]))
+      for (const id of config.builtin) await ctx.effect(() => registry.registerDriver(BUILTIN_DRIVERS[id], { builtin: true }))
 
       // 最后注册 → 卸载时最先执行
       await ctx.effect(() => () => notify.mute())
@@ -225,6 +232,32 @@ export function createGatewayPlugin(opts: GatewayPluginOptions = {}): PluginDefi
         'gateway: started',
       )
     },
+  }
+}
+
+/** enabled=false 时提供的空注册层：驱动可以注册（不启动任何账号），其余操作报错 */
+function disabledService(): GatewayService {
+  const off = (): never => {
+    throw new Error('gateway is disabled (enabled=false in gateway.json)')
+  }
+  return {
+    registerChannel: () => () => {},
+    channels: () => [],
+    accounts: () => [],
+    restartAccount: async () => off(),
+    sessions: () => [],
+    chat: async () => off(),
+    resetSession: async () => false,
+    abortSession: () => false,
+    history: async () => [],
+    send: async () => off(),
+    inject: () => {},
+    pairing: () => [],
+    approvePairing: () => undefined,
+    revokeUser: () => false,
+    pairedUsers: () => [],
+    sessionOfAgent: () => undefined,
+    address: () => undefined,
   }
 }
 

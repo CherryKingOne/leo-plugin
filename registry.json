@@ -27,6 +27,15 @@
       }
     },
     {
+      "id": "gateway-qq",
+      "package": "leo-plugin-gateway-qq",
+      "path": "plugins/gateway-qq",
+      "version": "0.2.0",
+      "status": "experimental",
+      "description": "消息网关的 QQ 子插件：QQ 官方机器人渠道驱动，支持手机 QQ 扫码绑定，替代网关内置 QQ 驱动（需要 gateway ≥ 0.2.0）",
+      "leo": ">=0.1.0"
+    },
+    {
       "id": "mcp",
       "package": "leo-plugin-mcp",
       "path": "plugins/mcp",
