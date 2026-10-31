@@ -4,19 +4,6 @@
   "version": 1,
   "plugins": [
     {
-      "id": "chat-channels",
-      "package": "leo-plugin-chat-channels",
-      "path": "plugins/chat-channels",
-      "version": "0.1.0",
-      "status": "experimental",
-      "description": "聊天渠道注册层：统一注册、配置与管理聊天渠道子插件，内置 QQ、飞书、Telegram 机器人",
-      "leo": ">=0.1.0",
-      "bundle": {
-        "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/chat-channels/0.1.0/chat-channels.bundle.js",
-        "sha256": "01024240980a192f24603e70c638a2eaaf93bc7058443f6a6263f2ac59bc191f"
-      }
-    },
-    {
       "id": "mcp",
       "package": "leo-plugin-mcp",
       "path": "plugins/mcp",
