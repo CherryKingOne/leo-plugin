@@ -155,7 +155,7 @@ export class GatewayCore {
     const cmd = parseCommand(text)
 
     // /whoami 不需要授权：方便用户拿到自己的 id 交给管理员
-    if (cmd?.name === 'whoami') return void reply(`你的 id：${user}${this.isAuthorized(user, m.sender.id, account) ? '（已授权）' : '（未授权）'}\n会话：${m.chat.type} ${m.chat.id}`).catch(this.warn('reply'))
+    if (cmd?.name === 'whoami') return void reply(`你的 id：${user}${this.isAdmin(user) ? '（管理员）' : this.isAuthorized(user, m.sender.id, account) ? '（已授权）' : '（未授权）'}\n会话：${m.chat.type} ${m.chat.id}`).catch(this.warn('reply'))
 
     if (!this.isAuthorized(user, m.sender.id, account)) return this.unauthorized(m, user, reply)
 
@@ -195,7 +195,7 @@ export class GatewayCore {
   }
 
   isAdmin(user: string): boolean {
-    return this.cfg.auth.admins.includes(user)
+    return this.cfg.auth.admins.includes(user) || this.deps.state.isPairedAdmin(user)
   }
 
   private unauthorized(m: InboundMessage, user: string, reply: (t: string) => Promise<void>): void {
@@ -262,6 +262,12 @@ export class GatewayCore {
         // 不认识的 / 开头消息当作普通文本交给 Agent（例如用户真的想问 “/etc/hosts 是什么”）
         this.enqueue(lane, { text: args ? `/${name} ${args}` : `/${name}`, source: c.source, deliver: reply })
     }
+  }
+
+  /** 渠道驱动直接授权某个用户（如扫码绑定机器人的人），不经过配对码 */
+  authorize(user: string, opts: { admin?: boolean; name?: string; by?: string } = {}): void {
+    this.deps.state.pair(user, opts.name, opts.by ?? 'channel', { admin: Boolean(opts.admin) })
+    this.deps.ctx.emit('gateway/paired', { user, by: opts.by ?? 'channel' })
   }
 
   approvePairing(code: string, by?: string): PairingRequest | undefined {

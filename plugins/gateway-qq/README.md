@@ -1,6 +1,6 @@
 # leo-plugin-gateway-qq
 
-> 实验性 0.2.1 · 需要 [leo-plugin-gateway](../gateway/) ≥ 0.2.0
+> 实验性 0.2.2 · 需要 [leo-plugin-gateway](../gateway/) ≥ 0.2.0
 
 ## 用途
 
@@ -33,6 +33,7 @@ leo serve
 | `qrConsole` | `"auto"` | 在终端打印二维码：`auto` 时 `leo serve` 下打印、交互式 `leo` 下不打印（会打乱界面，只提示链接）；也可写 `true` / `false` |
 | `source` | `"leo"` | 二维码页面上的接入来源标识 |
 | `credentialsFile` | leo 的 `credentials.json` | 扫码凭据写到哪个文件 |
+| `authorizeScanner` | `true` | 扫码成功后把扫码的 QQ 号设为网关管理员，私聊不需要配对码（需要网关 ≥ 0.2.2） |
 | `tools` | `true` | 注册 `gateway_qq_bind` 工具 |
 
 ```jsonc
@@ -52,7 +53,6 @@ leo serve
   "channels": {
     "qq": { "channel": "qq" }          // 不填 appId / appSecret
   },
-  "auth": { "admins": ["qq:<你的 openid>"] }
 }
 ```
 
@@ -66,6 +66,7 @@ leo serve
 
 ```text
 [gateway] qq：扫码绑定成功（AppID 102xxxxx），凭据已保存到 ~/.leo/credentials.json
+[gateway] qq：已授权扫码的 QQ 号为管理员（qq:<openid>），可以直接私聊机器人
 [gateway] 已连接 qq
 ```
 
@@ -113,7 +114,7 @@ leo serve
 ## 安全
 
 - 凭据只写进 `credentials.json`（0600，临时文件 + rename），不出现在日志、提示、工具输出与状态里（只显示 AppID）。
-- 扫码会把一个 QQ 机器人绑定到**扫码的 QQ 号**名下；`gateway.json` 的授权规则（默认拒绝、管理员、配对）不变。
+- 扫码会把一个 QQ 机器人绑定到**扫码的 QQ 号**名下，并默认把这个 QQ 号授权为网关管理员（`authorizeScanner: false` 关闭）；其他人仍按 `gateway.json` 的授权规则（默认拒绝、管理员、配对）。
 - 账号停止、重启、插件或网关卸载时立即取消扫码轮询。
 
 ## 兼容性与说明

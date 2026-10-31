@@ -127,6 +127,8 @@ export interface QqDriverDeps {
   qrConsole: boolean
   /** 本插件实例里扫码得到的凭据（凭据文件写入失败时也能用） */
   bound: Map<string, QqCredentials>
+  /** 扫码成功后把扫码者授权为网关管理员 */
+  authorizeScanner: boolean
   /** 旧版网关没有 init.notify 时的提示出口 */
   notify(message: string, level?: 'info' | 'warn' | 'error'): void
 }
@@ -143,7 +145,7 @@ async function credentialsFor(init: ChannelInit<QqOptions>, deps: QqDriverDeps):
     if (appId && appSecret) return { appId, appSecret }
     if (init.options.bind === 'off') throw new Error(`qq: ${appId ? 'appSecret' : 'appId'} is not configured (set "bind": "qr" to bind by scanning a QR code)`)
   }
-  const creds = await qrBind(init, deps.connector, { source: deps.source, qrConsole: deps.qrConsole, say })
+  const { userOpenid, ...creds } = await qrBind(init, deps.connector, { source: deps.source, qrConsole: deps.qrConsole, say })
   deps.bound.set(init.account, creds)
   try {
     const file = await deps.store.save(init.account, creds)
@@ -151,6 +153,14 @@ async function credentialsFor(init: ChannelInit<QqOptions>, deps: QqDriverDeps):
   } catch (err) {
     init.logger.warn({ account: init.account, err: (err as Error).message }, 'qq: failed to save bound credentials')
     say(`扫码绑定成功（AppID ${creds.appId}），但凭据保存失败：${(err as Error).message}；重启后需要重新扫码`, 'warn')
+  }
+  if (deps.authorizeScanner && userOpenid) {
+    if (init.authorize) {
+      init.authorize(userOpenid, { admin: true, name: '扫码绑定者' })
+      say(`已授权扫码的 QQ 号为管理员（qq:${userOpenid}），可以直接私聊机器人`)
+    } else {
+      say(`网关版本较旧，不能自动授权扫码者：在 gateway.json 的 auth.admins 里加上 "qq:${userOpenid}"`, 'warn')
+    }
   }
   init.report?.()
   return creds

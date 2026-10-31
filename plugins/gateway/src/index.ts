@@ -177,6 +177,7 @@ export function createGatewayPlugin(opts: GatewayPluginOptions = {}): PluginDefi
         ctx,
         accounts: config.channels,
         notify: (m, l) => notify(m, l),
+        authorize: (user, o) => core.authorize(user, o),
         mountHook: (account, handler) => {
           if (!server) return Promise.reject(new Error(`account "${account}" uses webhook mode but server.enabled is false`))
           return server.mountHook(account, handler)

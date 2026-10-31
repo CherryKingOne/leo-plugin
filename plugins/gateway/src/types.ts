@@ -124,6 +124,11 @@ export interface ChannelInit<O> {
    * 支持交互式绑定的驱动应忽略已保存的凭据、重新走绑定流程；其他驱动忽略即可（0.2.0 起）
    */
   rebind: boolean
+  /**
+   * 直接授权本渠道的某个用户（`userId` 是平台用户 id，网关自动加上 `<渠道>:` 前缀），不用配对码；`admin: true` 时同时成为管理员。
+   * 授权持久化在网关状态里，重启后仍有效，可用 `/unpair` 或 `revokeUser()` 撤销。用于扫码绑定时把扫码者设为主人（0.2.2 起）
+   */
+  authorize(userId: string, opts?: { admin?: boolean; name?: string }): void
   /** 账号停止时 abort：长轮询、重连循环必须监听它 */
   signal: AbortSignal
   logger: Logger

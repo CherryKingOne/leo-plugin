@@ -79,6 +79,8 @@ export interface RegistryDeps {
   onStatus?(status: AccountStatus): void
   /** 给用户看的提示（驱动顶替 / 恢复、驱动自己的提示） */
   notify?(message: string, level?: 'info' | 'warn' | 'error'): void
+  /** 渠道驱动直接授权用户（init.authorize） */
+  authorize?(user: string, opts: { admin?: boolean; name?: string; by: string }): void
 }
 
 export interface ChannelRegistry {
@@ -215,6 +217,10 @@ export function createChannelRegistry(deps: RegistryDeps): ChannelRegistry {
         if (!controller.signal.aborted) deps.notify?.(`${a.id === a.channel ? a.id : `${a.id}（${a.channel}）`}：${message}`, level)
       },
       rebind,
+      authorize: (userId, o = {}) => {
+        if (controller.signal.aborted || !userId) return
+        deps.authorize?.(`${a.channel}:${userId}`, { ...o, by: `${a.channel}:${a.id}` })
+      },
       fail: (error) => {
         if (controller.signal.aborted || a.state !== 'running') return
         log.error({ account: a.id, channel: a.channel, err: error }, 'gateway: account failed')

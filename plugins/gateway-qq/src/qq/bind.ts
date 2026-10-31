@@ -3,7 +3,7 @@
  *
  * - onQrDisplayed(url)：二维码链接就绪 → 账号进入 waiting_bind，链接出现在账号状态、`GET /v1/channels` 与启动提示里；
  * - onQrExpired()：二维码过期，SDK 自动刷新并再次 onQrDisplayed（新链接再提示一次）；
- * - onSuccess(creds[])：扫码完成，返回 [{ appId, appSecret }]（目前只会有一个，按数组处理）；
+ * - onSuccess(creds[])：扫码完成，返回 [{ appId, appSecret, userOpenid }]（目前只会有一个，按数组处理；userOpenid 是扫码者的 openid）；
  * - onFailure(err)：失败或被取消。
  * 账号停止 / 插件卸载时 init.signal abort → 调用 SDK 返回的 stop() 并立即结束等待。
  */
@@ -31,8 +31,8 @@ export function qrBind(
   init: Pick<ChannelInit<unknown>, 'account' | 'signal' | 'logger' | 'report'>,
   connector: QrConnector,
   opts: { source: string; qrConsole: boolean; say(message: string, level?: 'info' | 'warn' | 'error'): void },
-): Promise<QqCredentials> {
-  return new Promise<QqCredentials>((resolve, reject) => {
+): Promise<QqCredentials & { userOpenid?: string }> {
+  return new Promise<QqCredentials & { userOpenid?: string }>((resolve, reject) => {
     if (init.signal.aborted) return reject(new QrBindError('qq: QR binding cancelled'))
     let settled = false
     let stop: (() => void) | undefined
@@ -66,7 +66,8 @@ export function qrBind(
             const valid = (Array.isArray(list) ? list : []).filter((c) => c && typeof c.appId === 'string' && c.appId && typeof c.appSecret === 'string' && c.appSecret)
             if (!valid.length) return reject(new QrBindError('qq: QR binding returned no credentials'))
             if (valid.length > 1) init.logger.warn({ account: init.account, count: valid.length }, 'qq: QR binding returned several bots, using the first one')
-            resolve({ appId: String(valid[0]!.appId), appSecret: String(valid[0]!.appSecret) })
+            const c = valid[0]!
+            resolve({ appId: String(c.appId), appSecret: String(c.appSecret), ...(typeof c.userOpenid === 'string' && c.userOpenid ? { userOpenid: c.userOpenid } : {}) })
           })
         },
         onFailure(err) {

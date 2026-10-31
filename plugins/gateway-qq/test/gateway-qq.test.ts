@@ -91,7 +91,7 @@ function fakeConnector() {
       last().cb.onQrExpired?.()
       last().cb.onQrDisplayed?.(`https://q.qq.com/qqbot/openclaw/connect.html?task_id=t${++n}&source=${last().opts.source}`)
     },
-    succeed: (appId = '102000001', appSecret = 'S3cretFromQr') => last().cb.onSuccess([{ appId, appSecret }]),
+    succeed: (appId = '102000001', appSecret = 'S3cretFromQr', userOpenid?: string) => last().cb.onSuccess([{ appId, appSecret, ...(userOpenid ? { userOpenid } : {}) }]),
     fail: (msg: string) => last().cb.onFailure(new Error(msg)),
   }
 }
@@ -190,6 +190,15 @@ describe('扫码绑定', () => {
     expect(saved).toEqual({ 'gateway/qq/appId': '102000001', 'gateway/qq/appSecret': '$$weird!secret' })
     expect((await stat(credentialsFile)).mode & 0o777).toBe(0o600)
     expect(notices.some((n) => n.message.includes('扫码绑定成功（AppID 102000001）') && !n.message.includes('weird'))).toBe(true)
+  })
+
+  it('扫码成功后扫码者自动成为管理员，不需要配对码', async () => {
+    const { sdk, notices, service, account } = await boot({ builtin: ['telegram', 'feishu'] })
+    await until(() => account().state === 'waiting_bind')
+    sdk.succeed('102000001', 'S3cret', 'OPENID_OWNER')
+    await until(() => account().state === 'running')
+    expect(service().pairedUsers()).toContain('qq:OPENID_OWNER')
+    expect(notices.some((n) => n.message.includes('已授权扫码的 QQ 号为管理员'))).toBe(true)
   })
 
   it('凭据已保存：重启后直接连接，不再扫码；保留文件里的其他凭据', async () => {

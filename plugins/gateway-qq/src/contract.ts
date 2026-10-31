@@ -72,6 +72,8 @@ export interface ChannelInit<O> {
   notify?(message: string, level?: 'info' | 'warn' | 'error'): void
   /** 网关 0.2.0 起提供：运维要求重新绑定 */
   rebind?: boolean
+  /** 网关 0.2.2 起提供：直接授权本渠道用户（admin 时同时成为管理员） */
+  authorize?(userId: string, opts?: { admin?: boolean; name?: string }): void
   signal: AbortSignal
   logger: Logger
   ctx: Context<any>

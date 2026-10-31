@@ -35,6 +35,8 @@ export const Config = z
      * 同时在终端打印二维码。默认 `auto`：`leo serve` 下打印（可以直接扫），交互式 leo 下不打印（会打乱界面，只提示绑定链接）
      */
     qrConsole: z.union([z.boolean(), z.literal('auto')]).default('auto'),
+    /** 扫码绑定成功后把扫码的 QQ 号授权为网关管理员（不用配对码）；需要网关 ≥ 0.2.2 */
+    authorizeScanner: z.boolean().default(true),
     /** 注册 gateway_qq_bind 工具 */
     tools: z.boolean().default(true),
   })
@@ -102,6 +104,7 @@ export function createGatewayQqPlugin(opts: GatewayQqPluginOptions = {}): Plugin
         connector: opts.connector ?? (qqbotConnector as QrConnector),
         source: config.source,
         qrConsole: config.qrConsole === 'auto' ? isLeoServe() : config.qrConsole,
+        authorizeScanner: config.authorizeScanner,
         bound,
         notify,
       })

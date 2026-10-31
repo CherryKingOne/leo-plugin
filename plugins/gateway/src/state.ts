@@ -21,7 +21,7 @@ export interface SessionRecord {
 interface StateFile {
   version: 1
   sessions: Record<string, SessionRecord>
-  paired: Record<string, { name?: string; pairedAt: number; by?: string }>
+  paired: Record<string, { name?: string; pairedAt: number; by?: string; admin?: boolean }>
   pending: PairingRequest[]
 }
 
@@ -81,8 +81,13 @@ export class GatewayState {
   pairedUsers(): string[] {
     return Object.keys(this.data.paired)
   }
-  pair(user: string, name: string | undefined, by: string | undefined): void {
-    this.data.paired[user] = { ...(name ? { name } : {}), pairedAt: Date.now(), ...(by ? { by } : {}) }
+  /** 运行时授予的管理员（如扫码绑定机器人的人），与 gateway.json 的 auth.admins 等效 */
+  isPairedAdmin(user: string): boolean {
+    return Boolean(this.data.paired[user]?.admin)
+  }
+  pair(user: string, name: string | undefined, by: string | undefined, opts: { admin?: boolean } = {}): void {
+    const admin = opts.admin || this.data.paired[user]?.admin
+    this.data.paired[user] = { ...(name ? { name } : {}), pairedAt: Date.now(), ...(by ? { by } : {}), ...(admin ? { admin: true } : {}) }
     this.data.pending = this.data.pending.filter((p) => p.user !== user)
     this.save()
   }

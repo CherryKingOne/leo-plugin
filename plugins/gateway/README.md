@@ -1,6 +1,6 @@
 # leo-plugin-gateway
 
-> 实验性 0.2.1
+> 实验性 0.2.2
 
 ## 用途
 
@@ -278,6 +278,7 @@ const r = await gw.chat({ sessionKey: 'cron', text: '总结今天的邮件' })
 | `report({ state: 'waiting_bind', bindUrl, detail })` / `report()` | 启动过程中等待用户绑定（扫码）：账号进入 `waiting_bind`，链接出现在状态、`GET /v1/channels`、启动提示里；`report()` 回到 `starting` |
 | `notify(message, level?)` | 给用户的一行提示（自动带账号名） |
 | `rebind` | 运维要求重新绑定，应忽略已保存的凭据 |
+| `authorize(userId, { admin?, name? })` | 直接授权本渠道用户（不用配对码），`admin` 时同时成为管理员；持久化，可 `/unpair` 撤销（0.2.2 起） |
 | `signal` | 账号停止、重启、驱动被顶替、插件卸载时 abort；等待扫码这类长时间启动必须监听它 |
 
 也可以作为内置驱动放进 `src/channels/<id>/` 并登记到 `BUILTIN_DRIVERS` 与 `BUILTIN_CHANNELS`。
