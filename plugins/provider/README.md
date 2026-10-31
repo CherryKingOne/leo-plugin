@@ -11,7 +11,7 @@ Agent ⇄ llm 服务（底座，只有接口）
         └── openai-compatible   内置通用协议：没有子插件的兼容端点写 baseURL 即可
 ```
 
-> 需要 leo-agents ≥ 0.2.0（目前在 leo-agents 的 `feat/provider-plugin` 分支，尚未合并 main）。在 0.1.x 上加载会直接报错：0.1.x 自带的供应商会和本插件冲突。
+> 需要 leo-agents ≥ 0.2.0；实时模型列表的展示、思考与推理强度调整需要 leo-agents ≥ 0.3.0（目前在 leo-agents 的 `feat/provider-plugin` 分支）。在 0.1.x 上加载会直接报错：0.1.x 自带的供应商会和本插件冲突。
 
 ## 安装
 
@@ -19,7 +19,7 @@ Agent ⇄ llm 服务（底座，只有接口）
 leo plugin add provider            # 注册层，同时生成 ~/.leo/provider.json
 leo plugin add provider-deepseek   # DeepSeek 子插件
 leo auth set deepseek              # 保存密钥（或 export DEEPSEEK_API_KEY）
-leo models                         # ● deepseek  DeepSeek  默认模型 deepseek-flash
+leo models                         # 实时列出各厂商的真实模型与详情
 ```
 
 装了子插件的厂商自动接入（`autoDetect`），不用改配置：有密钥即可用；没密钥时 `leo models` / `leo doctor` 会列出来并提示 `leo auth set <id>`。
@@ -61,10 +61,15 @@ npm install -g github:CherryKingOne/leo-agents#feat/provider-plugin
 | `default` | 设为默认 provider |
 | `baseURL` | 端点；有驱动时可省略（覆盖驱动默认值，例如走代理） |
 | `apiKey` / `apiKeyEnv` | 密钥引用 `$ENV` / `!command`；推荐 `leo auth set <id>` |
-| `models` / `defaultModel` | 模型列表（字符串或 `{ id, contextWindow, maxOutputTokens, pricing }`）与默认模型 |
+| `models` / `defaultModel` | 内置模型列表（字符串或 `{ id, name, contextWindow, maxOutputTokens, pricing, inputModalities, reasoning }`）与默认模型；实时获取到的信息优先，这里的价格等接口不给的字段会沿用 |
+| `fetchModels` | 从 `GET {baseURL}/models` 实时获取模型列表与详情，默认 `true`；端点不支持时设 `false` |
 | `headers` | 额外请求头，值支持 `$ENV` / `!command` |
 | `keyless` | 本地服务不需要密钥 |
 | `maxTokensField` / `sendReasoning` / `connectTimeoutMs` / `idleTimeoutMs` | 协议细节，一般由驱动决定 |
+
+**模型列表**：`leo models` / 交互 `/models` 会调用每个 provider 的 `GET {baseURL}/models`，显示真实模型 id 与接口给出的详情（认识 `name` / `display_name`、`context_window` / `context_length`、`max_output_tokens`、`input_modalities`、`effort.supported_levels` 等常见字段，驱动可用 `mapModel` 解析厂商扩展）；第一次调用模型时也会在后台获取一次，让上下文窗口按真实值计算。获取失败时退回内置列表并显示原因。
+
+**思考与推理强度**：宿主统一的 `reasoning`（`--thinking` / `--effort`、`/think` / `/effort`、配置 `agent.reasoning`，leo-agents ≥ 0.3.0）交给驱动的 `prepare` 翻译；通用端点只在明确指定强度时发送 OpenAI 的 `reasoning_effort`。
 
 **0.1.x 兼容**：写在 `.leo/config.json` 里的 `"providers"` 与 `"model"` 照常生效（优先级低于 provider.json）。0.1.x 内置的预设现在由子插件提供：例如 `"deepseek": {}` 需要装 `provider-deepseek`，没装时会提示安装，或给它写 `baseURL` 当作通用端点。
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { createLeo, defineTool, providerPlugin, z } from 'leo-agents'
-import { OpenAICompatibleProvider } from '../src/openai.js'
+import { OpenAICompatibleProvider, parseRemoteModel } from '../src/openai.js'
 import type { ProviderError as LeoError } from '../src/errors.js'
 
 function sseResponse(chunks: unknown[], init: ResponseInit = {}) {
@@ -82,8 +82,8 @@ describe('OpenAICompatibleProvider', () => {
     const p = new OpenAICompatibleProvider({
       id: 'x',
       baseURL: 'https://x.test/v1',
-      fetch: (async () => {
-        calls++
+      fetch: (async (_u: string, init: RequestInit) => {
+        if (init.method === 'POST') calls++
         return new Response(JSON.stringify({ error: { message: 'bad key' } }), { status: 401 })
       }) as unknown as typeof fetch,
     })
@@ -172,5 +172,53 @@ describe('OpenAICompatibleProvider', () => {
       { role: 'assistant', content: null, tool_calls: [{ id: 'c1', type: 'function', function: { name: 'add', arguments: '{"a":2,"b":3}' } }] },
       { role: 'tool', tool_call_id: 'c1', content: '5' },
     ])
+  })
+
+  it('refreshes models from GET /models with generic field parsing and builtin fallback fields', async () => {
+    const seen: string[] = []
+    const p = new OpenAICompatibleProvider({
+      id: 'x',
+      baseURL: 'https://x.test/v1/',
+      apiKey: 'k',
+      models: [{ id: 'a', contextWindow: 8000, pricing: { inputPerMTok: 1, outputPerMTok: 2 } }, { id: 'old', contextWindow: 8000, alias: true }],
+      fetch: (async (u: string, init: RequestInit) => {
+        seen.push(`${init.method} ${u} ${(init.headers as Record<string, string>).authorization}`)
+        return Response.json({
+          object: 'list',
+          data: [
+            { id: 'a', owned_by: 'x', context_length: 32000, top_provider: { max_completion_tokens: 4000 }, architecture: { input_modalities: ['text', 'image'] } },
+            { id: 'b', display_name: 'Model B', context_window: 64000, max_output_tokens: 8000, effort: { supported_levels: ['low', 'medium', 'high'], default_level: 'medium' } },
+            { nope: true },
+          ],
+        })
+      }) as unknown as typeof fetch,
+    })
+    expect(p.listModels().map((m) => m.source)).toEqual(['builtin', 'builtin'])
+    const list = await p.refreshModels()
+    expect(seen).toEqual(['GET https://x.test/v1/models Bearer k'])
+    expect(list).toEqual([
+      { id: 'a', contextWindow: 32000, maxOutputTokens: 4000, inputModalities: ['text', 'image'], pricing: { inputPerMTok: 1, outputPerMTok: 2 }, ownedBy: 'x', source: 'remote' },
+      { id: 'b', name: 'Model B', contextWindow: 64000, maxOutputTokens: 8000, reasoning: { supported: true, efforts: ['low', 'medium', 'high'], defaultEffort: 'medium' }, source: 'remote' },
+      { id: 'old', contextWindow: 8000, alias: true, source: 'builtin' },
+    ])
+    expect(p.getModelInfo('b')?.name).toBe('Model B')
+    expect(parseRemoteModel({ id: 'z' })).toEqual({ id: 'z', contextWindow: 128000, source: 'remote' })
+  })
+
+  it('reports GET /models failures and skips fetching when disabled', async () => {
+    let n = 0
+    const bad = new OpenAICompatibleProvider({ baseURL: 'https://x.test/v1', apiKey: 'k', fetch: (async () => new Response('nope', { status: 404 })) as unknown as typeof fetch })
+    await expect(bad.refreshModels()).rejects.toMatchObject({ code: 'invalid_request' })
+    const off = new OpenAICompatibleProvider({ baseURL: 'https://x.test/v1', apiKey: 'k', fetchModels: false, models: [{ id: 'm', contextWindow: 1 }], fetch: (async () => (n++, Response.json({ data: [] }))) as unknown as typeof fetch })
+    expect((await off.refreshModels()).map((m) => m.id)).toEqual(['m'])
+    expect(n).toBe(0)
+  })
+
+  it('sends reasoning_effort for an explicit effort on generic endpoints', async () => {
+    const p = new OpenAICompatibleProvider({ baseURL: 'https://x.test/v1', apiKey: 'k', fetchModels: false })
+    expect(p.buildBody({ model: 'm', messages: [], reasoning: { effort: 'low' } })).toMatchObject({ reasoning_effort: 'low' })
+    expect(p.buildBody({ model: 'm', messages: [], reasoning: { enabled: false, effort: 'low' } }).reasoning_effort).toBeUndefined()
+    expect(p.buildBody({ model: 'm', messages: [], reasoning: { effort: 'none' } }).reasoning_effort).toBeUndefined()
+    expect(p.buildBody({ model: 'm', messages: [] }).reasoning_effort).toBeUndefined()
   })
 })

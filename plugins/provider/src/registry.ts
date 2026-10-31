@@ -74,6 +74,8 @@ export function openaiCompatibleProtocol(fetchImpl?: typeof fetch): ProviderProt
       ...(resolved.connectTimeoutMs ? { connectTimeoutMs: resolved.connectTimeoutMs } : {}),
       ...(resolved.idleTimeoutMs ? { idleTimeoutMs: resolved.idleTimeoutMs } : {}),
       ...(resolved.prepare ? { prepare: resolved.prepare } : {}),
+      fetchModels: resolved.fetchModels,
+      ...(resolved.mapModel ? { mapModel: resolved.mapModel } : {}),
       ...(fetchImpl ? { fetch: fetchImpl } : {}),
     })
   }
@@ -143,6 +145,7 @@ export function createProviderRegistry(deps: RegistryDeps): ProviderRegistry {
     const maxTokensField = s.maxTokensField ?? driver?.maxTokensField
     const sendReasoning = s.sendReasoning ?? driver?.sendReasoning
     const prepare = driver?.prepare
+    const mapModel = driver?.mapModel
     return {
       id: e.id,
       name: driver?.name ?? e.id,
@@ -156,7 +159,9 @@ export function createProviderRegistry(deps: RegistryDeps): ProviderRegistry {
       ...(headers ? { headers } : {}),
       ...(s.connectTimeoutMs ? { connectTimeoutMs: s.connectTimeoutMs } : {}),
       ...(s.idleTimeoutMs ? { idleTimeoutMs: s.idleTimeoutMs } : {}),
-      ...(prepare ? { prepare: (body, request) => prepare.call(driver, body, { request, settings: s }) } : {}),
+      ...(prepare ? { prepare: (body, request, model) => prepare.call(driver, body, { request, settings: s, ...(model ? { model } : {}) }) } : {}),
+      fetchModels: s.fetchModels ?? driver?.fetchModels ?? true,
+      ...(mapModel ? { mapModel: (raw, builtin) => mapModel.call(driver, raw, builtin) } : {}),
       via: driver ? (driver.plugin ?? `driver ${driver.id}`) : `provider（通用 ${OPENAI_COMPATIBLE}）`,
     }
   }
@@ -350,6 +355,7 @@ function decorate(p: LlmProvider, id: string, r: ResolvedProvider, status: () =>
     ...(p.countTokens ? { countTokens: (req: Parameters<NonNullable<LlmProvider['countTokens']>>[0]) => p.countTokens!(req) } : {}),
     getModelInfo: info,
     listModels: () => (p.listModels?.().length ? p.listModels() : r.models),
+    ...(p.refreshModels ? { refreshModels: (o?: { signal?: AbortSignal }) => p.refreshModels!(o) } : {}),
     status: () => {
       const own = p instanceof OpenAICompatibleProvider ? undefined : p.status?.()
       const base = status()

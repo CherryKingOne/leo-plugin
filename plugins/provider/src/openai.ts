@@ -6,6 +6,7 @@ import type { AgentMessage, ContentBlock, FinishReason, LlmProvider, LlmRequest,
 import { isAbortError, isProviderError, type ProviderError, providerError } from './errors.js'
 import { resolveValue } from './secrets.js'
 import { parseSSE } from './sse.js'
+import type { RawModel } from './types.js'
 
 type LeoError = ProviderError
 const LeoErrorCtor = providerError
@@ -41,7 +42,49 @@ export interface OpenAICompatibleOptions {
   /** 当前状态（缺密钥等），注册层提供 */
   status?: () => ProviderStatusInfo
   /** 厂商参数：在通用请求体构造完之后、用户 providerOptions 合并之前改写请求体 */
-  prepare?: (body: Record<string, unknown>, request: LlmRequest) => Record<string, unknown>
+  prepare?: (body: Record<string, unknown>, request: LlmRequest, model?: ModelInfo) => Record<string, unknown>
+  /** 是否向 GET {baseURL}/models 实时获取模型，默认 true */
+  fetchModels?: boolean
+  /** 把 /models 的一项解析成 ModelInfo（厂商扩展字段）；返回 undefined 时用通用解析 */
+  mapModel?: (raw: RawModel, builtin?: ModelInfo) => ModelInfo | undefined
+}
+
+const EFFORT_SET = new Set(['none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max'])
+const num = (v: unknown): number | undefined => (typeof v === 'number' && Number.isFinite(v) && v > 0 ? Math.floor(v) : undefined)
+const strs = (v: unknown): string[] | undefined => (Array.isArray(v) && v.every((x) => typeof x === 'string') ? (v as string[]) : undefined)
+
+/**
+ * 通用解析 `GET /models` 的一项。认识 OpenAI 的 id / owned_by，以及常见扩展：
+ * name / display_name、context_window / context_length / max_context_length、max_output_tokens / max_completion_tokens、
+ * input_modalities / output_modalities（或 architecture.input_modalities）、effort.supported_levels / default_level
+ */
+export function parseRemoteModel(raw: RawModel, builtin?: ModelInfo): ModelInfo {
+  const arch = (raw.architecture ?? {}) as Record<string, unknown>
+  const top = (raw.top_provider ?? {}) as Record<string, unknown>
+  const contextWindow = num(raw.context_window) ?? num(raw.context_length) ?? num(raw.max_context_length) ?? num(raw.max_model_len) ?? builtin?.contextWindow ?? 128_000
+  const maxOutputTokens = num(raw.max_output_tokens) ?? num(raw.max_completion_tokens) ?? num(top.max_completion_tokens) ?? builtin?.maxOutputTokens
+  const name = typeof raw.name === 'string' ? raw.name : typeof raw.display_name === 'string' ? raw.display_name : builtin?.name
+  const input = strs(raw.input_modalities) ?? strs(arch.input_modalities) ?? builtin?.inputModalities
+  const output = strs(raw.output_modalities) ?? strs(arch.output_modalities) ?? builtin?.outputModalities
+  const effort = (raw.effort ?? undefined) as { supported_levels?: unknown; default_level?: unknown } | undefined
+  const levels = strs(effort?.supported_levels)?.filter((l) => EFFORT_SET.has(l) && l !== 'none')
+  let reasoning = builtin?.reasoning
+  if (levels?.length) {
+    const def = typeof effort?.default_level === 'string' && levels.includes(effort.default_level) ? effort.default_level : undefined
+    reasoning = { ...builtin?.reasoning, supported: true, efforts: levels as never, ...(def ? { defaultEffort: def as never } : {}) }
+  }
+  return {
+    ...builtin,
+    id: raw.id,
+    ...(name ? { name } : {}),
+    contextWindow,
+    ...(maxOutputTokens ? { maxOutputTokens } : {}),
+    ...(input ? { inputModalities: input } : {}),
+    ...(output ? { outputModalities: output } : {}),
+    ...(reasoning ? { reasoning } : {}),
+    ...(typeof raw.owned_by === 'string' ? { ownedBy: raw.owned_by } : {}),
+    source: 'remote',
+  }
 }
 
 /**
@@ -61,12 +104,54 @@ export class OpenAICompatibleProvider implements LlmProvider {
     if (opts.defaultModel) this.defaultModel = opts.defaultModel
   }
 
+  /** 最近一次 GET /models 的结果 */
+  private remote: ModelInfo[] | undefined
+  private refreshing: Promise<ModelInfo[]> | undefined
+  private autoRefreshed = false
+
   getModelInfo(model: string): ModelInfo | undefined {
-    return this.opts.models?.find((m) => m.id === model)
+    return this.remote?.find((m) => m.id === model) ?? this.opts.models?.find((m) => m.id === model)
   }
 
+  /** 实时获取过就是真实列表（加上内置的别名），否则是内置列表 */
   listModels(): ModelInfo[] {
-    return [...(this.opts.models ?? [])]
+    const builtin = (this.opts.models ?? []).map((m) => ({ source: 'builtin' as const, ...m }))
+    if (!this.remote) return builtin
+    const ids = new Set(this.remote.map((m) => m.id))
+    return [...this.remote, ...builtin.filter((m) => m.alias && !ids.has(m.id))]
+  }
+
+  /** GET {baseURL}/models：真实模型名与详情。内置信息里接口不给的字段（价格等）会沿用 */
+  async refreshModels(opts: { signal?: AbortSignal } = {}): Promise<ModelInfo[]> {
+    if (this.opts.fetchModels === false) return this.listModels()
+    this.refreshing ??= this.fetchModels(opts.signal).finally(() => (this.refreshing = undefined))
+    return this.refreshing
+  }
+
+  private async fetchModels(signal?: AbortSignal): Promise<ModelInfo[]> {
+    const doFetch = this.opts.fetch ?? fetch
+    const headers = { ...this.headers(), accept: 'application/json' }
+    delete (headers as Record<string, string>)['content-type']
+    const timeout = AbortSignal.timeout(this.opts.connectTimeoutMs ?? 15_000)
+    let res: Response
+    try {
+      res = await doFetch(`${this.opts.baseURL.replace(/\/+$/, '')}/models`, { method: 'GET', headers, signal: signal ? AbortSignal.any([signal, timeout]) : timeout })
+    } catch (err) {
+      throw this.mapThrown(err, undefined, signal ?? new AbortController().signal)
+    }
+    if (!res.ok) throw await this.mapHttpError(res)
+    const json = (await res.json().catch(() => undefined)) as { data?: unknown } | undefined
+    if (!json || !Array.isArray(json.data)) throw LeoErrorCtor('invalid_request', `GET /models of provider "${this.id}" returned no model list`)
+    const builtin = new Map((this.opts.models ?? []).map((m) => [m.id, m]))
+    const out: ModelInfo[] = []
+    for (const item of json.data) {
+      if (!item || typeof item !== 'object' || typeof (item as RawModel).id !== 'string') continue
+      const raw = item as RawModel
+      const b = builtin.get(raw.id)
+      out.push(this.opts.mapModel?.(raw, b) ?? parseRemoteModel(raw, b))
+    }
+    this.remote = out
+    return this.listModels()
   }
 
   status(): ProviderStatusInfo {
@@ -91,6 +176,11 @@ export class OpenAICompatibleProvider implements LlmProvider {
       }, ms)
     }
 
+    // 第一次调用模型时在后台获取一次真实模型信息（上下文窗口等），不阻塞这次请求
+    if (!this.autoRefreshed && this.opts.fetchModels !== false) {
+      this.autoRefreshed = true
+      this.refreshModels().catch(() => {})
+    }
     try {
       arm('connect', this.opts.connectTimeoutMs ?? 60_000)
       let res: Response
@@ -197,7 +287,10 @@ export class OpenAICompatibleProvider implements LlmProvider {
     if (req.temperature !== undefined) body.temperature = req.temperature
     if (req.topP !== undefined) body.top_p = req.topP
     if (req.stop?.length) body.stop = req.stop
-    const prepared = this.opts.prepare ? this.opts.prepare(body, req) : body
+    // 通用端点：只在明确指定推理强度时发 OpenAI 的 reasoning_effort（驱动的 prepare 可改写或删掉）
+    const effort = req.reasoning?.effort
+    if (effort && effort !== 'none' && req.reasoning?.enabled !== false) body.reasoning_effort = effort
+    const prepared = this.opts.prepare ? this.opts.prepare(body, req, this.getModelInfo(req.model)) : body
     return { ...prepared, ...req.providerOptions }
   }
 

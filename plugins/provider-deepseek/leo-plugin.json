@@ -2,7 +2,7 @@
   "$schema": "../../schemas/leo-plugin.schema.json",
   "id": "provider-deepseek",
   "package": "leo-plugin-provider-deepseek",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "status": "experimental",
   "description": "模型供应商注册层的 DeepSeek 子插件：deepseek-flash / deepseek-v4-pro，保存密钥即自动接入，思考模式与工具调用开箱可用，旧模型名 deepseek-chat / deepseek-reasoner 自动改写（需要 provider ≥ 0.1.0）",
   "keywords": [

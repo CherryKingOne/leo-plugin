@@ -7,6 +7,18 @@ const modelInfo = z.object({
   contextWindow: z.number().int().positive(),
   maxOutputTokens: z.number().int().positive().optional(),
   pricing: z.object({ inputPerMTok: z.number(), outputPerMTok: z.number(), cachedInputPerMTok: z.number().optional() }).optional(),
+  name: z.string().optional(),
+  inputModalities: z.array(z.string()).optional(),
+  outputModalities: z.array(z.string()).optional(),
+  reasoning: z
+    .object({
+      supported: z.boolean(),
+      canDisable: z.boolean().optional(),
+      defaultEnabled: z.boolean().optional(),
+      efforts: z.array(z.enum(['none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max'])).optional(),
+      defaultEffort: z.enum(['none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max']).optional(),
+    })
+    .optional(),
 })
 
 export const ProviderSettingsSchema = z
@@ -25,6 +37,8 @@ export const ProviderSettingsSchema = z
     defaultModel: z.string().min(1).optional(),
     maxTokensField: z.enum(['max_tokens', 'max_completion_tokens']).optional(),
     sendReasoning: z.boolean().optional(),
+    /** 是否向厂商的 GET /models 实时获取模型列表与详情，默认 true（端点不支持时设 false） */
+    fetchModels: z.boolean().optional(),
     connectTimeoutMs: z.number().int().positive().optional(),
     idleTimeoutMs: z.number().int().positive().optional(),
     keyless: z.boolean().optional(),
