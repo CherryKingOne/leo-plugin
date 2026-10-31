@@ -86,6 +86,42 @@
       }
     },
     {
+      "id": "provider",
+      "package": "leo-plugin-provider",
+      "path": "plugins/provider",
+      "version": "0.1.0",
+      "status": "experimental",
+      "description": "模型供应商注册层：子插件（provider-deepseek 等）注册驱动，统一读配置、取密钥、接入 Agent；自带通用 OpenAI 兼容协议，任意兼容端点写 baseURL 即可（需要 leo ≥ 0.2.0）",
+      "leo": ">=0.2.0",
+      "bundle": {
+        "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/provider/0.1.0/provider.bundle.js",
+        "sha256": "8d7e4ee2df643fb44c91a2f03453422cfb16212b93cee21a766546277fbe05e0"
+      },
+      "init": {
+        "files": [
+          {
+            "path": "provider.json",
+            "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/provider/0.1.0/init/provider.json",
+            "sha256": "52a5f4601d6e82b27254e285c36cc90d1b579fc21ad8f07c815df2c1d4e87037",
+            "description": "模型供应商配置：默认模型、各厂商的 baseURL / 模型 / 密钥引用；装了子插件并保存密钥的厂商会自动接入"
+          }
+        ]
+      }
+    },
+    {
+      "id": "provider-deepseek",
+      "package": "leo-plugin-provider-deepseek",
+      "path": "plugins/provider-deepseek",
+      "version": "0.1.0",
+      "status": "experimental",
+      "description": "模型供应商注册层的 DeepSeek 子插件：deepseek-flash / deepseek-v4-pro，保存密钥即自动接入，思考模式与工具调用开箱可用，旧模型名 deepseek-chat / deepseek-reasoner 自动改写（需要 provider ≥ 0.1.0）",
+      "leo": ">=0.2.0",
+      "bundle": {
+        "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/provider-deepseek/0.1.0/provider-deepseek.bundle.js",
+        "sha256": "780d6468de0457372dc40a9d3ab3936e6ad0c1671f2ce902ac0c5f7c581075d5"
+      }
+    },
+    {
       "id": "sub-agents",
       "package": "leo-plugin-sub-agents",
       "path": "plugins/sub-agents",

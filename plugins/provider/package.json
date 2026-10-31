@@ -1,0 +1,49 @@
+{
+  "name": "leo-plugin-provider",
+  "version": "0.1.0",
+  "description": "leo 模型供应商注册层：子插件（provider-deepseek 等）注册驱动，统一读配置、取密钥、接入 llm 服务；自带通用 OpenAI 兼容协议",
+  "type": "module",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/CherryKingOne/leo-plugin.git",
+    "directory": "plugins/provider"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "templates",
+    "leo-plugin.json",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json && esbuild src/index.ts --bundle --platform=node --format=esm --target=node22 --external:leo-agents --outfile=dist/provider.bundle.js --log-level=warning",
+    "typecheck": "tsc -p tsconfig.test.json --noEmit",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "leo-agents": ">=0.2.0"
+  },
+  "dependencies": {
+    "zod": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "esbuild": "^0.28.0",
+    "leo-agents": "github:CherryKingOne/leo-agents#46c3e32",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.0"
+  }
+}

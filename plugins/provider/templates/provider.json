@@ -1,0 +1,29 @@
+// leo 模型供应商配置（leo-plugin-provider）。支持注释；改完保存自动重新接入，不用重启。
+// 用户级 ~/.leo/provider.json，项目级 .leo/provider.json 覆盖用户级。
+//
+// 最简单的用法不需要改这个文件：
+//   leo plugin add provider-deepseek    安装 DeepSeek 子插件
+//   leo auth set deepseek               保存密钥（或 export DEEPSEEK_API_KEY）
+// 装了子插件的厂商会自动接入（autoDetect），有密钥即可用。
+{
+  // 默认模型 <provider>/<model>；.leo/config.json 里的 "model" 优先
+  // "model": "deepseek/deepseek-flash",
+
+  "providers": {
+    // 有子插件的厂商：写 id 即可，只填要改的字段
+    "deepseek": {}
+
+    // 还没有子插件的厂商 / 自建服务：写 baseURL，按通用 OpenAI 兼容协议接入
+    // "qwen": { "baseURL": "https://dashscope.aliyuncs.com/compatible-mode/v1", "apiKeyEnv": "DASHSCOPE_API_KEY", "models": ["qwen-plus"] },
+    // "vllm": { "baseURL": "http://localhost:8000/v1", "keyless": true, "models": ["Qwen/Qwen3-32B"] },
+    // "ollama": { "baseURL": "http://localhost:11434/v1", "keyless": true, "models": ["qwen3"] }
+
+    // 同一厂商多个账号：用 driver 指定驱动，密钥按 provider id 存（leo auth set deepseek-work）
+    // "deepseek-work": { "driver": "deepseek" }
+  },
+
+  // 已安装的子插件自动接入，不用写进 providers；没有密钥时 leo models 会提示
+  "autoDetect": true
+
+  // 0.1.x 写在 .leo/config.json 的 "providers" 仍然有效（优先级低于本文件）
+}
