@@ -42,7 +42,7 @@
   "devDependencies": {
     "@types/node": "^22.10.0",
     "esbuild": "^0.28.0",
-    "leo-agents": "github:CherryKingOne/leo-agents#f73f7c9",
+    "leo-agents": "github:CherryKingOne/leo-agents#921b284",
     "typescript": "^5.9.0",
     "vitest": "^3.2.0"
   }
