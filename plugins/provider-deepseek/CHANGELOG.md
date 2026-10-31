@@ -1,6 +1,6 @@
 # 更新日志
 
-## 0.3.0 — 未发布
+## 0.3.0 — 2026-10-31
 
 - 提供 provider.json 默认条目（需要 leo-plugin-provider ≥ 0.3.0）：`defaultModel: deepseek-flash`、`thinking: enabled`、`reasoningEffort: high`；交互中 `/model`、`/think`、`/effort` 切换后同步写回。DeepSeek 用自己的 `reasoning_effort`，没有思考预算
 
