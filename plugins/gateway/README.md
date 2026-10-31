@@ -31,7 +31,7 @@ leo plugin add gateway          # 全局安装，自动生成 ~/.leo/gateway.jso
 leo serve                       # 后台常驻运行网关（Ctrl+C 停止）
 ```
 
-- `leo serve` 只加载配置与插件并保持在线，不进入对话；需要 leo-agents `feat/gateway-host` 分支及以后。
+- `leo serve` 只加载配置与插件并保持在线，不进入对话；需要 leo-agents main `921b284` 及以后。
 - 启动后会打印控制面地址和每个渠道的连接状态，例如：
 
   ```text
@@ -240,6 +240,6 @@ const r = await gw.chat({ sessionKey: 'cron', text: '总结今天的邮件' })
 
 ## 兼容性
 
-- leo-agents `>=0.1.0`；`leo serve` 与 `agentFactory` 需要 `feat/gateway-host` 分支及以后，旧版本可在交互式 `leo` 中运行并写 `agent.model`。
+- leo-agents `>=0.1.0`；`leo serve` 与 `agentFactory` 需要 leo-agents main `921b284` 及以后，旧版本可在交互式 `leo` 中运行并写 `agent.model`。
 - Node.js `>=22`（WebSocket 客户端、`AbortSignal.any`）。
 - 支持热加载：卸载时停止所有平台连接、取消进行中的任务、关闭端口；改 `gateway.json` 自动重启。

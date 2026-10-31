@@ -107,7 +107,7 @@ myPlugin.watch = ['my-plugin.json']   // 可选
 | `credentials` | 可选（CLI / `createLeoFromConfig` 提供） | 密钥查找，`describe()` 不返回明文 |
 | `providerKinds` | 可选（同上） | 注册自定义模型协议类型 |
 | `leoPaths` | 可选（同上） | 当前目录、项目根、项目 `.leo`、用户 `~/.leo` |
-| `agentFactory` | 可选（同上，leo-agents `feat/gateway-host` 起） | 按宿主配置（默认模型、系统提示词、限额）创建 Agent；自己起 Agent 的插件（网关、定时任务）用它，缺失时应能降级 |
+| `agentFactory` | 可选（同上，leo-agents `921b284` 起） | 按宿主配置（默认模型、系统提示词、限额）创建 Agent；自己起 Agent 的插件（网关、定时任务）用它，缺失时应能降级 |
 
 ### 4.2 内置事件
 
@@ -125,7 +125,7 @@ myPlugin.watch = ['my-plugin.json']   // 可选
 | `usage/recorded` | emit | 每次模型调用的用量 |
 | `session/appended` | emit | 会话日志追加 |
 | `plugin/loaded` / `plugin/unloaded` / `plugin/failed` | emit | 宿主热加载、热卸载插件，或热加载失败（`createLeoFromConfig` 提供） |
-| `plugin/notice` | emit | 插件**发出**的给用户看的一行提示 `{ plugin, message, level? }`（监听地址、渠道状态等）；`leo serve` / 交互式 `leo` 打印为 `[plugin] message`。宿主日志默认只显示 warn 以上，要让用户看到的信息用它而不是 `ctx.logger.info`。旧版宿主没人订阅，发了无害（leo-agents `feat/gateway-host` 起支持） |
+| `plugin/notice` | emit | 插件**发出**的给用户看的一行提示 `{ plugin, message, level? }`（监听地址、渠道状态等）；`leo serve` / 交互式 `leo` 打印为 `[plugin] message`。宿主日志默认只显示 warn 以上，要让用户看到的信息用它而不是 `ctx.logger.info`。旧版宿主没人订阅，发了无害（leo-agents `921b284` 起支持） |
 
 ### 4.3 声明新的服务与事件
 
