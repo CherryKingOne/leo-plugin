@@ -205,7 +205,7 @@ Agent 每一步都会重新读取工具列表，所以热加载的工具从下�
 }
 ```
 
-- `leo plugin add <id>` 安装后**自动**把模板写进对应的 `.leo/`（全局安装写 `~/.leo/`，`--project` 写项目 `.leo/`）；插件没有模板就跳过。已存在的文件不覆盖，`--no-init` 跳过，`--init-from <路径>` 用用户自己的模板，`leo plugin init <id>` 重新生成。`leo plugin remove <id>`（默认全局，`--project` 项目，`--all` 两处）默认保留这些文件，`--purge` 才删除。
+- `leo plugin add <id>` 安装后**自动**把模板写进对应的 `.leo/`（全局安装写 `~/.leo/`，`--project` 写项目 `.leo/`）；插件没有模板就跳过。已存在的文件不覆盖，`--no-init` 跳过，`--init-from <路径>` 用用户自己的模板，`leo plugin init <id>` 重新生成。`leo plugin remove <id>`（默认全局，`--project` 项目，`--all` 两处）默认保留这些文件，`--purge` 才删除。插件写进 `credentials.json` 的凭据（如扫码绑定得到的密钥）在清单 `purge.credentials` 里声明，`--purge` 时一并删除（以 `/` 结尾按前缀匹配，例：`"purge": { "credentials": ["gateway/qq/"] }`）。
 - `path` 相对 `.leo/`，不能越出 `.leo/`。模板放在插件的 `templates/` 目录，并加入 `package.json#files`。
 - 模板**必须**开箱可用：装好后插件能正常加载，不含密钥，示例默认注释掉，不会启动任何外部进程。
 - 模板路径**应当**同时出现在插件的 `watch` 中，用户编辑后立即生效。

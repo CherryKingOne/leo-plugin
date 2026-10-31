@@ -41,6 +41,8 @@ leo serve
 { "plugins": ["leo-plugin-gateway", ["leo-plugin-gateway-qq", { "qrConsole": false }]] }
 ```
 
+> 重新扫码：`leo plugin remove gateway-qq --purge` 会一并删除 `credentials.json` 里的 `gateway/qq/*` 凭据（需要 leo-agents 支持 purge 凭据的版本），再装后重新出二维码；不想卸载就用 `gateway_qq_bind` 或控制面 `POST /v1/channels/qq/restart {"rebind":true}`。
+
 ## 配置账号（gateway.json）
 
 ### 扫码绑定

@@ -37,6 +37,11 @@
       "bundle": {
         "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/gateway-qq/0.2.2/gateway-qq.bundle.js",
         "sha256": "84979eaa5f4b0151874ee209d6c7d472afece09059c90876fb2c3cf90e7d6469"
+      },
+      "purge": {
+        "credentials": [
+          "gateway/qq/"
+        ]
       }
     },
     {

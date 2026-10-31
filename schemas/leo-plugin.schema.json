@@ -213,6 +213,21 @@
           }
         }
       }
+    },
+    "purge": {
+      "type": "object",
+      "description": "`leo plugin remove <id> --purge` 时额外清理的内容（需要 leo-agents 支持 purge 的版本；旧版忽略）",
+      "additionalProperties": false,
+      "properties": {
+        "credentials": {
+          "type": "array",
+          "description": "scope 目录 credentials.json 里由插件写入的键；以 / 结尾表示前缀（如 gateway/qq/）",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
     }
   },
   "additionalProperties": false

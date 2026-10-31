@@ -37,6 +37,11 @@
       }
     ]
   },
+  "purge": {
+    "credentials": [
+      "gateway/qq/"
+    ]
+  },
   "release": {
     "version": "0.2.2",
     "bundle": {

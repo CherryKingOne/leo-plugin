@@ -39,6 +39,7 @@ for (const id of ids) {
     if (declared !== released) throw new Error(`plugins/${id}: init.files 与已发布的模板不一致，请运行 scripts/release.mjs ${id}`)
     if (m.release.init?.files?.length) entry.init = { files: m.release.init.files }
   }
+  if (m.purge?.credentials?.length) entry.purge = { credentials: m.purge.credentials }
   plugins.push(entry)
 }
 
