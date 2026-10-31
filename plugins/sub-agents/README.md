@@ -1,13 +1,13 @@
 # leo-plugin-sub-agents
 
-> 状态：**experimental**（0.1.0）
+> 状态：**experimental**（0.1.1）
 
 让主 Agent 把一个独立的子任务（调研代码库、查资料、并行处理多个文件）交给**子 Agent** 执行。子 Agent 有自己的上下文窗口，只把最终结论返回给主 Agent，避免主对话被大量中间过程撑满。
 
 ## 安装
 
 ```bash
-leo plugin add sub-agents --init     # 全局安装，并生成示例子 Agent ~/.leo/agents/explorer.md
+leo plugin add sub-agents            # 全局安装，自动生成示例子 Agent ~/.leo/agents/explorer.md
 leo plugin add sub-agents --project  # 只装到当前项目 .leo/plugins/
 ```
 
@@ -109,7 +109,7 @@ maxSteps: 20                           # 可选
 你是只读调研助手。只读不写，结论附上文件路径和行号。
 ```
 
-正文是系统提示（可选，不写则继承父 Agent）。优先级：内置 `general` < `~/.leo/agents` < `.leo/agents` < 配置里的 `agents`。格式有误的文件会被跳过并记录警告。需要 leo-agents 提供 `leoPaths`（`createLeoFromConfig` / CLI 启动时都有）。
+正文是系统提示（可选，不写则继承父 Agent）。优先级：内置 `general` < `~/.leo/agents` < `.leo/agents` < 配置里的 `agents`。格式有误的文件会被跳过并记录警告。新增、修改、删除 `.md` 后正在运行的 leo 会自动重新加载，不用重启。需要 leo-agents 提供 `leoPaths`（`createLeoFromConfig` / CLI 启动时都有）。
 
 ## 提供的能力
 

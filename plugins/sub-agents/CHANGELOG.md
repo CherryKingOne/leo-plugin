@@ -1,8 +1,13 @@
 # Changelog
 
+## 0.1.1
+
+- 支持 leo-agents 热加载：插件定义声明 `watch`，新增或修改 `agents/*.md` 后自动生效，不用重启
+- 安装时自动初始化配置文件模板（不再需要 `--init`）
+
 ## 0.1.0
 
-- `--init` 配置文件模板：示例子 Agent `agents/explorer.md`（`leo plugin add sub-agents --init`）（模板随 0.1.0 补充发布，bundle 未变）
+- 配置文件模板：示例子 Agent `agents/explorer.md`（模板随 0.1.0 补充发布，bundle 未变）
 
 首个发布版本（`leo plugin add sub-agents`）。
 

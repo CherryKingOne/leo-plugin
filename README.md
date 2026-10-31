@@ -15,12 +15,12 @@
 
 ```bash
 leo plugin list                    # 查看可安装的插件
-leo plugin add mcp --init          # 全局安装（~/.leo，所有项目可用），并生成 ~/.leo/mcp-servers.json
-leo plugin add sub-agents --init   # 全局安装，并生成示例子 Agent ~/.leo/agents/explorer.md
-leo plugin add mcp --project --init  # 只装到当前项目：.leo/plugins/ 与 .leo/mcp-servers.json
+leo plugin add mcp                 # 全局安装（~/.leo，所有项目可用），自动生成 ~/.leo/mcp-servers.json
+leo plugin add sub-agents          # 全局安装，自动生成示例子 Agent ~/.leo/agents/explorer.md
+leo plugin add mcp --project       # 只装到当前项目：.leo/plugins/ 与 .leo/mcp-servers.json
 ```
 
-默认全局安装；`--project`（`--local` / `-l`）装到当前项目，两处都装时项目里的生效。`--init` 把插件的配置文件模板直接初始化到对应的 `.leo/`，`--init-from <路径>` 改用你自己的模板。需要 leo-agents 支持这些参数的版本（`feat/global-plugin-install` 分支）。
+默认全局安装；`--project`（`--local` / `-l`）装到当前项目，两处都装时项目里的生效。插件带配置文件模板时安装后自动初始化到对应的 `.leo/`（已有文件保留），没有就跳过；`--no-init` 跳过，`--init-from <路径>` 用你自己的模板。正在运行的 leo 会自动热加载新装、更新或删除的插件，修改 `mcp-servers.json`、`agents/*.md` 也立即生效，不用重启。需要 leo-agents `feat/global-plugin-install` 分支及以后。
 
 四种安装方式（一条命令、npm、复制单文件、代码中传入）见 [docs/install.md](docs/install.md)。
 

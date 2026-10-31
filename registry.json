@@ -7,19 +7,19 @@
       "id": "mcp",
       "package": "leo-plugin-mcp",
       "path": "plugins/mcp",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "status": "experimental",
       "description": "MCP 客户端：把外部 MCP 服务器的工具接入 Agent，兼容 MCP 2026-07-28（MCP 2.0）与 2025-11-25 及更早版本",
       "leo": ">=0.1.0",
       "bundle": {
-        "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/mcp/0.1.0/mcp.bundle.js",
-        "sha256": "ad01420f4976072cda6f64772545c70e94e7a6e62683c660b869773365df3811"
+        "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/mcp/0.1.1/mcp.bundle.js",
+        "sha256": "a57e9822ead72f5807df1b05824676d6703295e87c84c86a1c21e2566601bf27"
       },
       "init": {
         "files": [
           {
             "path": "mcp-servers.json",
-            "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/mcp/0.1.0/init/mcp-servers.json",
+            "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/mcp/0.1.1/init/mcp-servers.json",
             "sha256": "2bb14b44f84ec7c02884d51b48f1839169b2e3617dbe69520cb43fad60538cc0",
             "description": "MCP 服务器列表，取消注释或粘贴 mcpServers 即可使用"
           }
@@ -30,19 +30,19 @@
       "id": "sub-agents",
       "package": "leo-plugin-sub-agents",
       "path": "plugins/sub-agents",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "status": "experimental",
       "description": "子代理：把任务委派给独立上下文的子 Agent 执行并汇总结果",
       "leo": ">=0.1.0",
       "bundle": {
-        "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/sub-agents/0.1.0/sub-agents.bundle.js",
-        "sha256": "7cb2ea40b8f1ae34607a34ce384fef23fb97305a9f356d3121b5583a1e6ee199"
+        "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/sub-agents/0.1.1/sub-agents.bundle.js",
+        "sha256": "b875c6716cf2e1645bcd4540bb62ffe87e5ef1ed3f0682962760f3bb118a43e3"
       },
       "init": {
         "files": [
           {
             "path": "agents/explorer.md",
-            "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/sub-agents/0.1.0/init/agents/explorer.md",
+            "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/sub-agents/0.1.1/init/agents/explorer.md",
             "sha256": "4bdec2a684f3ba19b25973ed4710ddf5d3d9da70aa6c9c685a524eeb2a3d6fe9",
             "description": "示例子 Agent：只读调研（explorer），可复制改成其他角色"
           }

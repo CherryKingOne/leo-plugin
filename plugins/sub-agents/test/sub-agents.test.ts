@@ -207,3 +207,18 @@ describe('委派', () => {
     await leo.dispose()
   })
 })
+
+describe('热加载', () => {
+  it('声明 watch，卸载后可以再次加载，task 工具只注册一份', async () => {
+    expect((subAgents as { watch?: string[] }).watch).toEqual(['agents/'])
+    const leo = await createLeo({ logLevel: 'silent' })
+    const rt1 = await leo.plugin(subAgents)
+    await rt1.dispose()
+    expect(leo.ctx.get('tools').get('task')).toBeUndefined()
+    const rt2 = await leo.plugin(subAgents)
+    expect(leo.ctx.get('tools').list().filter((t) => t.name === 'task')).toHaveLength(1)
+    expect(leo.ctx.has('subAgents' as never)).toBe(true)
+    await rt2.dispose()
+    await leo.dispose()
+  })
+})

@@ -18,6 +18,8 @@ leo-agents 是“一切皆插件”的底座：内核只负责**服务注册、�
 3. 调用 `apply(ctx, config)`。
 4. 卸载插件、或它依赖的某个服务被替换时，自动撤销它通过 `ctx` 做过的所有注册；依赖被替换后会重新 `apply`。
 
+插件是**热加载**的：leo 运行中（对话、`leo api`），插件被安装、移除、更新，或插件声明的数据文件被修改时，宿主会在不重启的情况下卸载旧实例、加载新实例（见第 7 节）。因此每个插件都**必须**能被随时加载、卸载、重复加载。
+
 ## 2. 插件的导出形式
 
 插件模块（构建产物 `dist/index.js`）**必须**是 ESM，并用以下任一方式导出插件（加载器按 `default` → `plugin` → 模块本身 的顺序查找）：
@@ -46,6 +48,7 @@ export default plugin
 | `name` | 是 | 插件名，官方插件**必须**等于 npm 包名（`leo-plugin-<id>`），用于日志与诊断 |
 | `inject` | 否 | 依赖的服务键。全部就绪才会 `apply`；任一被替换会自动重新 `apply` |
 | `config` | 否 | zod schema。**应当**为每个字段提供默认值，使插件在无配置时也能运行 |
+| `watch` | 否 | 热加载要关注的数据文件，相对 `.leo/` 的路径，`/` 结尾表示目录，如 `['mcp-servers.json']`、`['agents/']`。宿主同时监听 `~/.leo/` 与项目 `.leo/` 下这些路径，变化时重新加载插件（leo-agents `feat/global-plugin-install` 起支持，旧版本忽略） |
 | `apply` | 是 | 入口，可以是 async |
 
 ### 写法 B：函数插件
@@ -54,6 +57,7 @@ export default plugin
 export default function myPlugin(ctx, config) { /* ... */ }
 myPlugin.pluginName = 'leo-plugin-example'
 myPlugin.inject = ['tools']
+myPlugin.watch = ['my-plugin.json']   // 可选
 ```
 
 函数插件没有 config 校验，官方插件**应当**使用写法 A。
@@ -118,6 +122,7 @@ myPlugin.inject = ['tools']
 | `agent/event` | emit | 所有 AgentEvent 的旁路广播 |
 | `usage/recorded` | emit | 每次模型调用的用量 |
 | `session/appended` | emit | 会话日志追加 |
+| `plugin/loaded` / `plugin/unloaded` / `plugin/failed` | emit | 宿主热加载、热卸载插件，或热加载失败（`createLeoFromConfig` 提供） |
 
 ### 4.3 声明新的服务与事件
 
@@ -163,18 +168,58 @@ declare module 'leo-agents' {
 - 配置中**不得**要求明文密钥。需要密钥时：读取 `credentials` 服务（`ctx.has('credentials')` 判断），或接受 `$ENV` / `!command` 引用并在使用时解析。
 - 日志、错误信息、工具输出中**不得**出现密钥明文。
 
-## 7. 安全基线
+## 7. 热加载与配置文件
+
+### 7.1 热加载
+
+宿主（`createLeoFromConfig`，包括 `leo` 对话和 `leo api`）监听 `~/.leo/` 与项目 `.leo/` 下的 `config.json`、`plugins/`，以及已加载插件 `watch` 声明的路径。发生变化时：
+
+| 变化 | 宿主的处理 |
+| --- | --- |
+| 新安装插件 | 加载，发 `plugin/loaded`（`added`） |
+| 删除插件 | 卸载：撤销它通过 `ctx` 做的全部注册，发 `plugin/unloaded`（`removed`） |
+| 更新插件文件、修改插件选项、修改 `watch` 文件 | 先卸载旧实例，再加载新实例（`changed`）；新实例失败时恢复旧实例，发 `plugin/failed` |
+
+Agent 每一步都会重新读取工具列表，所以热加载的工具从下一步起可用，卸载的工具从下一步起消失。
+
+为此插件**必须**：
+
+1. **可完整撤销**：所有注册都通过 `ctx`（`provide`、`on`、`effect`）。工具用 `await ctx.effect(() => ctx.get('tools').register(tool))` 注册，否则重新加载时会报“工具已注册”。
+2. **自己的资源自己交还**：子进程、网络连接、定时器、文件句柄放进 `ctx.effect(() => () => close())`，或监听 `ctx.signal`。**应当**先挂上清理再启动资源，这样启动过程中被卸载也能清理干净。
+3. **模块顶层无副作用**：热加载会用新的 URL 重新执行模块，顶层代码每次都会再跑一遍。
+4. **数据文件写进 `watch`**：插件运行时读取的用户文件（服务器列表、Agent 定义等）**必须**在 `apply` 里读取，并声明在 `watch` 中，用户改完即生效。插件**不应**自己再写文件监听。
+5. **可以重复加载**：不依赖“只会 apply 一次”。加载、卸载、再加载后的行为必须与首次加载一致；测试**必须**覆盖“卸载后注册被撤销、再次加载正常”。
+
+### 7.2 配置文件模板（安装时自动初始化）
+
+插件需要用户编辑的配置文件（如 mcp 的 `mcp-servers.json`）**必须**提供模板，在清单 `leo-plugin.json` 中声明：
+
+```jsonc
+"init": {
+  "files": [
+    { "path": "mcp-servers.json", "template": "templates/mcp-servers.json", "description": "MCP 服务器列表" }
+  ]
+}
+```
+
+- `leo plugin add <id>` 安装后**自动**把模板写进对应的 `.leo/`（全局安装写 `~/.leo/`，`--project` 写项目 `.leo/`）；插件没有模板就跳过。已存在的文件不覆盖，`--no-init` 跳过，`--init-from <路径>` 用用户自己的模板，`leo plugin init <id>` 重新生成。
+- `path` 相对 `.leo/`，不能越出 `.leo/`。模板放在插件的 `templates/` 目录，并加入 `package.json#files`。
+- 模板**必须**开箱可用：装好后插件能正常加载，不含密钥，示例默认注释掉，不会启动任何外部进程。
+- 模板路径**应当**同时出现在插件的 `watch` 中，用户编辑后立即生效。
+- `scripts/release.mjs` 把模板随 bundle 发布到 `bundles` 分支的 `<id>/<version>/init/`，并把地址和 sha256 写进 registry；安装器下载时校验 sha256。
+
+## 8. 安全基线
 
 - 默认 fail closed：缺少审批服务、权限不明、配置不完整时拒绝执行，而不是放行。
 - 不绕过核心工具管线：插件内部执行别的工具时**必须**通过 `tools.executeBatch()`，使审批、守卫、审计事件照常生效。
 - 不扩大权限：插件创建的子 Agent、子任务**不得**拥有超过父 Agent 的工具与权限。
 - 资源有上限：任何循环、递归、并发都**必须**有可配置的上限与合理默认值。
 
-## 8. 插件清单 `leo-plugin.json`
+## 9. 插件清单 `leo-plugin.json`
 
 每个插件目录**必须**包含 `leo-plugin.json`，描述插件的元信息与安装方式，供索引生成与安装器读取。字段规范见 [docs/manifest.md](docs/manifest.md)，JSON Schema 见 [schemas/leo-plugin.schema.json](schemas/leo-plugin.schema.json)。
 
-## 9. 目录与文件约定
+## 10. 目录与文件约定
 
 ```text
 plugins/<id>/
@@ -183,26 +228,28 @@ plugins/<id>/
 ├── README.md            用途、安装、配置、提供的能力、安全说明（必须）
 ├── CHANGELOG.md         版本记录（发布后必须）
 ├── tsconfig.json        继承根目录 tsconfig.base.json
+├── templates/           init.files 声明的配置文件模板（有需要用户编辑的配置时）
 ├── src/
 │   └── index.ts         默认导出插件
 └── test/
-    └── *.test.ts        至少覆盖：加载、无配置运行、卸载后注册被撤销
+    └── *.test.ts        至少覆盖：加载、无配置运行、卸载后注册被撤销、再次加载正常
 ```
 
 - `<id>` 用 kebab-case，与目录名、清单 `id`、包名后缀一致。
 - 插件之间**不得**互相 import 源码；需要协作时通过服务与事件。
 
-## 10. 版本与兼容
+## 11. 版本与兼容
 
 - 插件遵循 semver。清单中的 `leo` 字段声明兼容的 leo-agents 版本范围，并与 `peerDependencies.leo-agents` 保持一致。
 - 改变工具名、参数、服务接口、事件载荷或配置字段语义属于破坏性变更，必须升主版本。
 
-## 11. 合并检查清单
+## 12. 合并检查清单
 
 - [ ] 目录、清单 `id`、包名、插件 `name` 一致
 - [ ] 对 `leo-agents` 只有 `import type`，且列在 `peerDependencies`
 - [ ] 无配置可运行，配置有 zod 校验
-- [ ] 所有注册通过 `ctx`，副作用在 `ctx.effect` 中
+- [ ] 所有注册通过 `ctx`，副作用在 `ctx.effect` 中，可以热卸载、重复加载
+- [ ] 运行时读取的数据文件声明在 `watch`；需要用户编辑的配置文件提供了 `init.files` 模板
 - [ ] 有副作用的工具声明了 `permissions`，遵守 `signal`
 - [ ] 不泄露密钥，不绕过工具管线，有资源上限
 - [ ] README 写明安装、配置、提供的服务/事件/工具、安全说明
