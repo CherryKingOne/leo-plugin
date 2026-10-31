@@ -106,6 +106,8 @@ myPlugin.watch = ['my-plugin.json']   // 可选
 | `approval` | 可选 | 人工审批；不存在时 `ask` 决策一律拒绝 |
 | `credentials` | 可选（CLI / `createLeoFromConfig` 提供） | 密钥查找，`describe()` 不返回明文 |
 | `providerKinds` | 可选（同上） | 注册自定义模型协议类型 |
+| `leoPaths` | 可选（同上） | 当前目录、项目根、项目 `.leo`、用户 `~/.leo` |
+| `agentFactory` | 可选（同上，leo-agents `feat/gateway-host` 起） | 按宿主配置（默认模型、系统提示词、限额）创建 Agent；自己起 Agent 的插件（网关、定时任务）用它，缺失时应能降级 |
 
 ### 4.2 内置事件
 

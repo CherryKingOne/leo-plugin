@@ -1,0 +1,64 @@
+// leo 消息网关配置（leo-plugin-gateway）。由 `leo plugin add gateway` 生成。
+// 支持注释与尾逗号。在 ~/.leo/ 时所有项目共用；在项目 .leo/ 时只对该项目生效（按段覆盖全局）。
+// 修改后正在运行的 leo / leo serve 会自动重启网关，不用手动重启。
+// 密钥不要写明文：用 "$ENV_NAME" 引用环境变量，或 "!command" 从命令输出读取，
+// 也可以用 `leo auth set gateway/<账号>/<字段>` 存进 credentials.json。
+// 完整说明：https://github.com/CherryKingOne/leo-plugin/tree/main/plugins/gateway
+{
+  // 聊天平台机器人：键是账号 id（kebab-case），channel 是平台；其余字段是该平台的机器人配置。
+  "channels": {
+    // Telegram：@BotFather 创建机器人拿 token；默认长轮询，不需要公网地址
+    // "telegram": {
+    //   "channel": "telegram",
+    //   "botToken": "$TELEGRAM_BOT_TOKEN",
+    //   "allowFrom": [],                 // 直接放行的 Telegram 用户 id；也可以留空，走配对
+    //   "home": ""                       // 主动消息默认发到的 chat id（gateway_send 的 home）
+    // },
+
+    // 飞书 / Lark：自建应用，开启机器人能力；默认长连接，不需要公网地址
+    // "feishu": {
+    //   "channel": "feishu",
+    //   "appId": "cli_xxx",
+    //   "appSecret": "$FEISHU_APP_SECRET",
+    //   "domain": "feishu"               // 国际版写 "lark"
+    // },
+
+    // QQ 开放平台官方机器人；默认 WebSocket 长连接
+    // "qq": {
+    //   "channel": "qq",
+    //   "appId": "102xxxxx",
+    //   "appSecret": "$QQ_BOT_SECRET"
+    // }
+  },
+
+  // 谁可以和网关对话（默认谁都不行）
+  "auth": {
+    // 管理员：自动有权限，并能在聊天里用 /pair <配对码> 批准新用户。格式 "<平台>:<用户 id>"，
+    // 不知道自己的 id？私聊机器人发 /whoami
+    "admins": [],
+    // 直接放行的用户，格式同上
+    "allowFrom": [],
+    // 陌生人私聊时发给他配对码，管理员批准后即可对话
+    "pairing": true
+  },
+
+  // 会话策略
+  "sessions": {
+    "busy": "queue",                     // 正在回复时又来消息：queue 排队 / steer 插话 / interrupt 打断
+    "groupPerUser": true                 // 群里每个人一个独立上下文；false = 整个群共用
+  },
+
+  // 网关里的 Agent（默认用 leo 的默认模型和全部工具，副作用工具会在聊天里请求 /approve）
+  "agent": {
+    // "model": "deepseek/deepseek-chat",
+    // "tools": "all",                   // "all" | "none" | ["read_file", "web_fetch"]
+    // "systemPrompt": "你是我的私人助理。"
+  },
+
+  // 控制面：HTTP API、WebSocket、OpenAI 兼容接口、平台 webhook 回调都在这个端口
+  "server": {
+    "host": "127.0.0.1",                 // 对外监听前必须设置 token
+    "port": 18790
+    // "token": "$LEO_GATEWAY_TOKEN"
+  }
+}
