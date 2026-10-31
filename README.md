@@ -2,6 +2,9 @@
 
 [leo-agents](https://github.com/CherryKingOne/leo-agents) 官方插件仓库。**一个插件一个目录**，各自独立发布为 npm 包 `leo-plugin-<id>`。
 
+
+> 各插件版本与 leo-agents 版本的对应关系、发布时间和更新说明见 [COMPATIBILITY.md](COMPATIBILITY.md)。
+
 ## 插件列表
 
 | 插件 | 包名 | 状态 | 说明 |
