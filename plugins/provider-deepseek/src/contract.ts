@@ -23,7 +23,9 @@ export interface ProviderDriver {
   sendReasoning?: boolean
   headers?: Record<string, string>
   protocol?: string
-  prepare?(body: Record<string, unknown>, input: { request: LlmRequest; settings: ProviderSettings }): Record<string, unknown>
+  prepare?(body: Record<string, unknown>, input: { request: LlmRequest; settings: ProviderSettings; model?: ModelInfo }): Record<string, unknown>
+  fetchModels?: boolean
+  mapModel?(raw: Record<string, unknown> & { id: string }, builtin?: ModelInfo): ModelInfo | undefined
 }
 
 export interface ProviderRegistryLike {

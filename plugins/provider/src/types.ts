@@ -4,6 +4,9 @@
  */
 import type { Disposer, LlmProvider, LlmRequest, ModelInfo } from 'leo-agents'
 
+/** `GET /models` 返回的一项（原样，字段因厂商而异） */
+export type RawModel = Record<string, unknown> & { id: string }
+
 /** provider.json 里一个 provider 的配置（合并、校验后）。驱动特有的字段（如 DeepSeek 的 thinking）原样保留 */
 export interface ProviderSettings {
   /** 用哪个驱动；默认等于 provider id（`"deepseek": {}` 用 deepseek 驱动） */
@@ -23,6 +26,8 @@ export interface ProviderSettings {
   defaultModel?: string
   maxTokensField?: 'max_tokens' | 'max_completion_tokens'
   sendReasoning?: boolean
+  /** 是否向 GET /models 实时获取模型列表与详情，默认 true */
+  fetchModels?: boolean
   connectTimeoutMs?: number
   idleTimeoutMs?: number
   /** 本地服务（Ollama、vLLM）不需要密钥 */
@@ -55,8 +60,11 @@ export interface ResolvedProvider {
   headers?: Record<string, string>
   connectTimeoutMs?: number
   idleTimeoutMs?: number
-  /** 驱动的厂商参数钩子 */
-  prepare?: (body: Record<string, unknown>, request: LlmRequest) => Record<string, unknown>
+  /** 驱动的厂商参数钩子；model 为该模型当前已知的元信息（实时获取的优先） */
+  prepare?: (body: Record<string, unknown>, request: LlmRequest, model?: ModelInfo) => Record<string, unknown>
+  fetchModels: boolean
+  /** 驱动的模型解析钩子 */
+  mapModel?: (raw: RawModel, builtin?: ModelInfo) => ModelInfo | undefined
   /** 由谁提供：驱动所在插件名，或 “provider（通用）” */
   via: string
 }
@@ -82,8 +90,19 @@ export interface ProviderDriver {
   headers?: Record<string, string>
   /** 协议，默认 openai-compatible */
   protocol?: string
-  /** 厂商参数：拿到通用请求体与该 provider 的配置，返回改写后的请求体（在用户 providerOptions 之前） */
-  prepare?(body: Record<string, unknown>, input: { request: LlmRequest; settings: ProviderSettings }): Record<string, unknown>
+  /**
+   * 厂商参数：拿到通用请求体与该 provider 的配置，返回改写后的请求体（在用户 providerOptions 之前）。
+   * `request.reasoning` 是宿主统一的思考设置（leo-agents ≥ 0.3.0），驱动负责翻译成厂商参数；
+   * `model` 是该模型当前已知的元信息（实时获取的优先），可用来校验推理强度档位
+   */
+  prepare?(body: Record<string, unknown>, input: { request: LlmRequest; settings: ProviderSettings; model?: ModelInfo }): Record<string, unknown>
+  /** 是否支持 GET /models 实时获取模型，默认 true */
+  fetchModels?: boolean
+  /**
+   * 把 GET /models 的一项解析成 ModelInfo（厂商扩展字段，如 DeepSeek 的 effort）。
+   * 返回 undefined 时用通用解析；`builtin` 是驱动内置的同名模型信息（可沿用价格等接口不给的字段）
+   */
+  mapModel?(raw: RawModel, builtin?: ModelInfo): ModelInfo | undefined
   /** 完全自定义实现（不走协议）。注册层会补上 name / defaultModel / status */
   create?(input: DriverInput): LlmProvider
 }

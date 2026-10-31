@@ -1,6 +1,6 @@
 {
   "name": "leo-plugin-provider",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "leo 模型供应商注册层：子插件（provider-deepseek 等）注册驱动，统一读配置、取密钥、接入 llm 服务；自带通用 OpenAI 兼容协议",
   "type": "module",
   "license": "Apache-2.0",
@@ -42,7 +42,7 @@
   "devDependencies": {
     "@types/node": "^22.10.0",
     "esbuild": "^0.28.0",
-    "leo-agents": "github:CherryKingOne/leo-agents#46c3e32",
+    "leo-agents": "github:CherryKingOne/leo-agents#26a3b6b",
     "typescript": "^5.9.0",
     "vitest": "^3.2.0"
   }
