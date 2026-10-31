@@ -43,6 +43,8 @@ leo models                   # 实时列出 DeepSeek 的真实模型及详情
 
 ## 配置（provider.json，可选）
 
+装了 leo-plugin-provider ≥ 0.3.0 时，会自动写入 `"deepseek": { "defaultModel": "deepseek-flash", "thinking": "enabled", "reasoningEffort": "high" }`，交互中 `/model`、`/think`、`/effort` 切换后同步更新。DeepSeek 直接用 `reasoning_effort`，没有思考预算。
+
 ```jsonc
 {
   "providers": {

@@ -26,6 +26,8 @@ export interface ProviderDriver {
   prepare?(body: Record<string, unknown>, input: { request: LlmRequest; settings: ProviderSettings; model?: ModelInfo }): Record<string, unknown>
   fetchModels?: boolean
   mapModel?(raw: Record<string, unknown> & { id: string }, builtin?: ModelInfo): ModelInfo | undefined
+  /** provider.json 条目的默认内容（provider ≥ 0.3.0 写入；旧版本忽略） */
+  settingsTemplate?: Record<string, string | number | boolean>
 }
 
 export interface ProviderRegistryLike {

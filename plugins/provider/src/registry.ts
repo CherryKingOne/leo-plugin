@@ -31,6 +31,8 @@ export interface RegistryDeps {
   notify?(message: string, level?: 'info' | 'warn' | 'error'): void
   /** 提示合并的等待时间（毫秒），默认 200 */
   noticeDelayMs?: number
+  /** 驱动注册后（写 provider.json 的默认条目） */
+  onDriver?(driver: ProviderDriver): void
   /** 测试用 */
   env?: NodeJS.ProcessEnv
   fetch?: typeof fetch
@@ -40,6 +42,8 @@ export interface ProviderRegistry extends ProviderRegistryService {
   /** 立即同步（平时由注册 / 撤销自动触发，合并到一个微任务里） */
   sync(): void
   dispose(): void
+  /** provider id 对应的驱动（配置里的 driver 字段或同名驱动） */
+  driverOf(id: string): ProviderDriver | undefined
 }
 
 /** 字符串模型 → ModelInfo（上下文窗口未知时按 128K） */
@@ -239,7 +243,7 @@ export function createProviderRegistry(deps: RegistryDeps): ProviderRegistry {
         live.set(e.id, () => ({ state: 'error', reason }))
         continue
       }
-      const wrapped = decorate(provider, e.id, resolved, status)
+      const wrapped = decorate(provider, e.id, resolved, status, s)
       built.push({ provider: wrapped, ready: key.desc.configured || resolved.keyless, id: e.id })
       statuses.push({
         ...base,
@@ -310,6 +314,11 @@ export function createProviderRegistry(deps: RegistryDeps): ProviderRegistry {
       if (drivers.has(driver.id)) throw new Error(`provider driver "${driver.id}" is already registered`)
       drivers.set(driver.id, driver)
       schedule()
+      try {
+        deps.onDriver?.(driver)
+      } catch (err) {
+        deps.logger?.warn({ err }, 'provider: onDriver failed')
+      }
       return () => {
         if (drivers.get(driver.id) !== driver) return
         drivers.delete(driver.id)
@@ -329,6 +338,10 @@ export function createProviderRegistry(deps: RegistryDeps): ProviderRegistry {
     drivers: (): DriverInfo[] =>
       [...drivers.values()].map((d) => ({ id: d.id, name: d.name, ...(d.plugin ? { plugin: d.plugin } : {}), ...(d.defaultModel ? { defaultModel: d.defaultModel } : {}) })),
     protocols: () => [...protocols.keys()],
+    driverOf(id) {
+      const s = deps.config.providers[id]
+      return drivers.get((s?.driver as string | undefined) ?? id)
+    },
     status,
     sync,
     dispose() {
@@ -344,8 +357,28 @@ function toSettings(s: ProviderSettingsParsed): ProviderSettings {
 }
 
 /** 给任意 LlmProvider 补上 name / defaultModel / listModels / status（不改原对象） */
-function decorate(p: LlmProvider, id: string, r: ResolvedProvider, status: () => ProviderStatusInfo): LlmProvider {
-  const info = (model: string) => p.getModelInfo?.(model) ?? r.models.find((m) => m.id === model)
+/**
+ * provider.json 里该厂商的 `thinking` / `reasoningEffort` 就是它的默认思考设置：反映到模型信息的
+ * `reasoning.defaultEnabled` / `defaultEffort`，宿主的状态行与 /models 显示的“默认”才和实际请求一致
+ */
+export function withSettingsDefaults(m: ModelInfo, s: ProviderSettings): ModelInfo {
+  const r = m.reasoning
+  if (!r?.supported) return m
+  const next = { ...r }
+  if (s.thinking === 'disabled' || s.thinking === false || s.reasoningEffort === 'none') next.defaultEnabled = false
+  else if (s.thinking === 'enabled' || s.thinking === true) next.defaultEnabled = true
+  const e = s.reasoningEffort
+  if (typeof e === 'string' && e !== 'none' && r.efforts?.includes(e as never)) next.defaultEffort = e as never
+  return next.defaultEnabled === r.defaultEnabled && next.defaultEffort === r.defaultEffort ? m : { ...m, reasoning: next }
+}
+
+function decorate(p: LlmProvider, id: string, r: ResolvedProvider, status: () => ProviderStatusInfo, s: ProviderSettings = { enabled: true }): LlmProvider {
+  const adjust = (m: ModelInfo) => withSettingsDefaults(m, s)
+  const raw = (model: string) => p.getModelInfo?.(model) ?? r.models.find((m) => m.id === model)
+  const info = (model: string) => {
+    const m = raw(model)
+    return m ? adjust(m) : m
+  }
   const defaultModel = r.defaultModel ?? p.defaultModel
   return {
     id,
@@ -354,8 +387,8 @@ function decorate(p: LlmProvider, id: string, r: ResolvedProvider, status: () =>
     stream: (req, opts) => p.stream(req, opts),
     ...(p.countTokens ? { countTokens: (req: Parameters<NonNullable<LlmProvider['countTokens']>>[0]) => p.countTokens!(req) } : {}),
     getModelInfo: info,
-    listModels: () => (p.listModels?.().length ? p.listModels() : r.models),
-    ...(p.refreshModels ? { refreshModels: (o?: { signal?: AbortSignal }) => p.refreshModels!(o) } : {}),
+    listModels: () => (p.listModels?.().length ? p.listModels() : r.models).map(adjust),
+    ...(p.refreshModels ? { refreshModels: async (o?: { signal?: AbortSignal }) => (await p.refreshModels!(o)).map(adjust) } : {}),
     status: () => {
       const own = p instanceof OpenAICompatibleProvider ? undefined : p.status?.()
       const base = status()

@@ -2,7 +2,7 @@
   "$schema": "../../schemas/leo-plugin.schema.json",
   "id": "provider",
   "package": "leo-plugin-provider",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "status": "experimental",
   "description": "模型供应商注册层：子插件（provider-deepseek 等）注册驱动，统一读配置、取密钥、接入 Agent；自带通用 OpenAI 兼容协议，任意兼容端点写 baseURL 即可（需要 leo ≥ 0.2.0）",
   "keywords": [

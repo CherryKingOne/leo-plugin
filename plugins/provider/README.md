@@ -77,6 +77,14 @@ npm install -g github:CherryKingOne/leo-agents#feat/provider-plugin
 
 密钥优先级（由宿主 credentials 服务决定）：`--api-key` > 项目 `credentials.json` > 用户 `credentials.json` > 配置的 `apiKey` > 环境变量。
 
+## provider.json 跟着用的东西走（0.3.0）
+
+- **安装即填充**：装了子插件，provider.json 里该厂商没有条目或是 `{}` 时，自动写入默认模型、思考模式、推理强度，例如
+  `"longcat": { "defaultModel": "LongCat-2.5-Preview", "thinking": "enabled", "reasoningEffort": "high" }`。写过字段的条目不动
+- **切换即同步**：交互中 `/model` 写回顶层 `model` 与该厂商的 `defaultModel`；`/think on|off`、`/effort` 写回 `thinking` / `reasoningEffort`。命令行 `-m`、`--effort` 只作用于本次，不写回
+- **写到哪**：项目里有 `.leo/provider.json` 就写它，否则写 `~/.leo/provider.json`。只改涉及的字段，注释保留
+- `.leo/config.json` 里写了 `"model"` 时它仍然优先；不想自动写回：插件配置 `{ "persist": false }`
+
 ## 开发子插件（驱动）
 
 子插件只用 `import type`，通过服务 `providers` 注册驱动；大多数 OpenAI 兼容厂商只需声明默认值：

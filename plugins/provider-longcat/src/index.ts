@@ -8,12 +8,13 @@
  * - 模型：`LongCat-2.5-Preview`，上下文 1048576（1M），`max_tokens` 上限 262144（256K）；
  *   `GET /models` 只给 id / owned_by，下面的内置信息补上限与价格
  * - 思考模式：`thinking: { type: enabled | disabled }`，默认开启；思考内容在 `reasoning_content`；
- *   Chat Completions 没有推理强度参数（`reasoning_effort`），只有思考预算 `thinking_budget`（最大 262144）
+ *   Chat Completions 没有推理强度参数（`reasoning_effort`），只有思考预算 `thinking_budget`（最大 262144），
+ *   所以推理强度在这里换算成思考预算：low 8192 / medium 32768 / high 131072（默认）/ max 262144（拉满）
  * - `temperature` 由服务端固定（思考 1.0 / 非思考 0.7），传入会被覆盖 → 不发送
  * - `messages[].content` 必须是纯文本字符串 → 助手消息的 `null` 内容改成空字符串
  *
  * 思考设置的优先级：宿主每次请求的 `reasoning`（--thinking / --effort none、/think、配置 agent.reasoning）
- * > provider.json 的 `thinking` > 默认开启。推理强度除 none（关闭思考）外不生效，可用 provider.json 的 `thinkingBudget` 限制思考长度
+ * > provider.json 的 `thinking` / `reasoningEffort` > 默认开启；预算见 prepareLongCatBody
  *
  * 依赖服务 `providers`（inject），注册层先加载、后加载都可以；注册层热重载时本插件自动重新注册
  */
@@ -27,7 +28,20 @@ export const LONGCAT_DEFAULT_MODEL = 'LongCat-2.5-Preview'
 /** thinking_budget 的上限（文档：最大 262144） */
 export const LONGCAT_MAX_THINKING_BUDGET = 262_144
 
-const REASONING = { supported: true, canDisable: true, defaultEnabled: true, efforts: [] } satisfies ModelInfo['reasoning']
+/** 推理强度 → thinking_budget（LongCat Chat Completions 没有强度参数，用思考预算实现；max 拉满到上限） */
+export const LONGCAT_THINKING_BUDGETS = { low: 8_192, medium: 32_768, high: 131_072, max: LONGCAT_MAX_THINKING_BUDGET } as const
+export type LongCatEffort = keyof typeof LONGCAT_THINKING_BUDGETS
+const EFFORTS: LongCatEffort[] = ['low', 'medium', 'high', 'max']
+const ALL_EFFORTS = ['none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max'] as const
+/** 宿主的 7 档 → LongCat 的 4 档：minimal → low，xhigh → max */
+export function normalizeLongCatEffort(e: string | undefined): LongCatEffort | 'none' | undefined {
+  if (e === 'none') return 'none'
+  if (e === 'minimal') return 'low'
+  if (e === 'xhigh') return 'max'
+  return EFFORTS.includes(e as LongCatEffort) ? (e as LongCatEffort) : undefined
+}
+
+const REASONING = { supported: true, canDisable: true, defaultEnabled: true, efforts: EFFORTS, defaultEffort: 'high' } satisfies ModelInfo['reasoning']
 
 /**
  * 内置模型信息（离线、没密钥、/models 获取失败时用，也给实时列表补上限与价格）。
@@ -55,7 +69,9 @@ const configError = (message: string) =>
 export interface LongCatSettings {
   /** 思考模式默认值；不写默认开启。true / false 与 "enabled" / "disabled" 同义 */
   thinking?: 'enabled' | 'disabled'
-  /** 思考预算（token），1 ~ 262144，只在思考开启时发送 */
+  /** 推理强度：none（关闭思考）/ low / medium / high（默认）/ max，翻译成 thinking_budget；兼容 minimal、xhigh */
+  reasoningEffort?: LongCatEffort | 'none'
+  /** 思考预算（token），1 ~ 262144：写了就不按强度换算（交互中 /effort 仍然优先） */
   thinkingBudget?: number
 }
 
@@ -64,6 +80,11 @@ function settingsOf(s: ProviderSettings): LongCatSettings {
   if (s.thinking === 'enabled' || s.thinking === true) out.thinking = 'enabled'
   else if (s.thinking === 'disabled' || s.thinking === false) out.thinking = 'disabled'
   else if (s.thinking !== undefined) throw configError('longcat: "thinking" must be "enabled" / "disabled" (or true / false) in provider.json')
+  if (s.reasoningEffort !== undefined) {
+    const e = ALL_EFFORTS.includes(s.reasoningEffort as never) ? normalizeLongCatEffort(s.reasoningEffort as string) : undefined
+    if (!e) throw configError(`longcat: "reasoningEffort" must be one of none / low / medium / high / max in provider.json, got "${String(s.reasoningEffort)}"`)
+    out.reasoningEffort = e
+  }
   if (s.thinkingBudget !== undefined) {
     const b = s.thinkingBudget
     if (typeof b !== 'number' || !Number.isInteger(b) || b < 1 || b > LONGCAT_MAX_THINKING_BUDGET) {
@@ -79,18 +100,25 @@ export function prepareLongCatBody(body: Record<string, unknown>, input: { reque
   const s = settingsOf(input.settings)
   const out = { ...body }
 
-  // 1) 宿主每次请求的 reasoning；2) provider.json；3) 默认开启
+  // 开关：1) 宿主每次请求的 reasoning；2) provider.json 的 thinking / reasoningEffort: none；3) 默认开启
   const r = (input.request as LlmRequest & { reasoning?: { enabled?: boolean; effort?: string } }).reasoning
+  const reqEffort = normalizeLongCatEffort(r?.effort)
   let enabled: boolean | undefined
   if (r?.enabled !== undefined) enabled = r.enabled
-  else if (r?.effort === 'none') enabled = false
+  else if (reqEffort === 'none') enabled = false
   if (enabled === undefined && s.thinking) enabled = s.thinking === 'enabled'
+  if (enabled === undefined && s.reasoningEffort === 'none') enabled = false
   enabled ??= true
 
   out.thinking = { type: enabled ? 'enabled' : 'disabled' }
   delete out.reasoning_effort
   delete out.thinking_budget
-  if (enabled && s.thinkingBudget) out.thinking_budget = s.thinkingBudget
+  if (enabled) {
+    // 预算：1) 宿主的推理强度（/effort、--effort）；2) provider.json 的 thinkingBudget；3) provider.json 的 reasoningEffort；4) 默认 high
+    const fileEffort = s.reasoningEffort && s.reasoningEffort !== 'none' ? s.reasoningEffort : undefined
+    out.thinking_budget =
+      reqEffort && reqEffort !== 'none' ? LONGCAT_THINKING_BUDGETS[reqEffort] : (s.thinkingBudget ?? LONGCAT_THINKING_BUDGETS[fileEffort ?? 'high'])
+  }
   // 服务端固定 temperature，传了也会被覆盖
   delete out.temperature
 
@@ -146,6 +174,8 @@ export function createLongCatDriver(): ProviderDriver {
     fetchModels: true,
     mapModel: mapLongCatModel,
     prepare: prepareLongCatBody,
+    // provider ≥ 0.3.0：provider.json 里没有 longcat 条目时写入，/think、/effort 切换后同步这些字段
+    settingsTemplate: { defaultModel: LONGCAT_DEFAULT_MODEL, thinking: 'enabled', reasoningEffort: 'high' },
   }
 }
 

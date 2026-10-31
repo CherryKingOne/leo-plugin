@@ -20,6 +20,7 @@ describe('prepareLongCatBody', () => {
     expect(prepareLongCatBody({ model: 'LongCat-2.5-Preview', temperature: 0.2, reasoning_effort: 'high' }, { request: req, settings: on })).toEqual({
       model: 'LongCat-2.5-Preview',
       thinking: { type: 'enabled' },
+      thinking_budget: 131072,
     })
   })
 
@@ -31,10 +32,25 @@ describe('prepareLongCatBody', () => {
     expect(run({ effort: 'none' }).thinking).toEqual({ type: 'disabled' })
     expect(run({ effort: 'max' }, { thinking: 'disabled' })).toEqual({ model: 'm', thinking: { type: 'disabled' } })
     expect(run(undefined, { thinking: 'disabled' }).thinking).toEqual({ type: 'disabled' })
+    expect(run(undefined, { reasoningEffort: 'none' }).thinking).toEqual({ type: 'disabled' })
+  })
+
+  it('maps reasoning effort to thinking_budget; max fills the 262144 budget', () => {
+    const budget = (reasoning: unknown, settings: Record<string, unknown> = {}) =>
+      prepareLongCatBody({ model: 'm' }, { request: { ...req, reasoning } as never, settings: { ...on, ...settings } }).thinking_budget
+    expect([budget({ effort: 'low' }), budget({ effort: 'medium' }), budget({ effort: 'high' }), budget({ effort: 'max' })]).toEqual([8192, 32768, 131072, 262144])
+    expect([budget({ effort: 'minimal' }), budget({ effort: 'xhigh' })]).toEqual([8192, 262144])
+    expect(budget(undefined)).toBe(131072)
+    expect(budget(undefined, { reasoningEffort: 'max' })).toBe(262144)
+    expect(budget(undefined, { reasoningEffort: 'low', thinkingBudget: 5000 })).toBe(5000)
+    // 交互中 /effort 优先于 provider.json
+    expect(budget({ enabled: true, effort: 'max' }, { thinkingBudget: 5000 })).toBe(262144)
+    expect(() => budget(undefined, { reasoningEffort: 'ultra' })).toThrow(/reasoningEffort/)
   })
 
   it('sends thinking_budget only while thinking, and validates provider.json', () => {
     expect(prepareLongCatBody({ model: 'm' }, { request: req, settings: { ...on, thinkingBudget: 4096 } })).toEqual({ model: 'm', thinking: { type: 'enabled' }, thinking_budget: 4096 })
+    expect(prepareLongCatBody({ model: 'm', thinking_budget: 1 }, { request: req, settings: { ...on, thinking: 'disabled' } })).toEqual({ model: 'm', thinking: { type: 'disabled' } })
     expect(prepareLongCatBody({ model: 'm' }, { request: req, settings: { ...on, thinking: 'disabled', thinkingBudget: 4096 } })).toEqual({ model: 'm', thinking: { type: 'disabled' } })
     expect(() => prepareLongCatBody({}, { request: req, settings: { ...on, thinkingBudget: 300000 } })).toThrow(/thinkingBudget/)
     expect(() => prepareLongCatBody({}, { request: req, settings: { ...on, thinking: 'maybe' } })).toThrow(/thinking/)
@@ -111,7 +127,7 @@ describe('provider-longcat with the provider registry', () => {
     const r = await app.createAgent().run('2+3?')
     expect(r.text).toBe('5')
     expect(calls.filter((c) => c.includes('chat/completions'))).toEqual([`POST ${BASE}/chat/completions Bearer sk-lc`, `POST ${BASE}/chat/completions Bearer sk-lc`])
-    expect(bodies[0]).toMatchObject({ model: 'LongCat-2.5-Preview', thinking: { type: 'enabled' }, stream: true })
+    expect(bodies[0]).toMatchObject({ model: 'LongCat-2.5-Preview', thinking: { type: 'enabled' }, thinking_budget: 131072, stream: true })
     expect(bodies[0].temperature).toBeUndefined()
     expect(bodies[1].messages.find((m: any) => m.role === 'assistant')).toMatchObject({ content: '', reasoning_content: '先算一下', tool_calls: [{ id: 'c1' }] })
     await app.dispose()
@@ -122,7 +138,7 @@ describe('provider-longcat with the provider registry', () => {
     const [g] = await app.leo.ctx.get('llm').models({ refresh: true })
     expect(g!.error).toBeUndefined()
     expect(calls).toContain(`GET ${BASE}/models Bearer sk-lc`)
-    expect(g!.models.map((m) => [m.id, m.contextWindow, m.maxOutputTokens, m.reasoning?.supported, m.source])).toEqual([['LongCat-2.5-Preview', 1048576, 262144, true, 'remote']])
+    expect(g!.models.map((m) => [m.id, m.contextWindow, m.maxOutputTokens, m.reasoning?.efforts, m.source])).toEqual([['LongCat-2.5-Preview', 1048576, 262144, ['low', 'medium', 'high', 'max'], 'remote']])
     await app.dispose()
 
     const bad = await setup({ models: () => new Response('{"error":{"message":"invalid api key"}}', { status: 401 }), chat: () => sse([]) })
@@ -139,7 +155,8 @@ describe('provider-longcat with the provider registry', () => {
     })
     await app.createAgent({ tools: false }).run('a')
     await app.createAgent({ tools: false, reasoning: { enabled: true } }).run('b')
-    expect(bodies.map((b) => b.thinking)).toEqual([{ type: 'disabled' }, { type: 'enabled' }])
+    await app.createAgent({ tools: false, reasoning: { enabled: true, effort: 'max' } }).run('c')
+    expect(bodies.map((b) => [b.thinking.type, b.thinking_budget])).toEqual([['disabled', undefined], ['enabled', 131072], ['enabled', 262144]])
     await app.dispose()
   })
 })
