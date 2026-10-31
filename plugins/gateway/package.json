@@ -1,0 +1,49 @@
+{
+  "name": "leo-plugin-gateway",
+  "version": "0.1.0",
+  "description": "leo 消息网关：常驻接入 Telegram / 飞书 / QQ 等聊天平台，按会话路由给 leo Agent，带授权配对、聊天内审批、主动投递，以及 HTTP / SSE / WebSocket / OpenAI 兼容控制面",
+  "type": "module",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/CherryKingOne/leo-plugin.git",
+    "directory": "plugins/gateway"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "templates",
+    "leo-plugin.json",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json && esbuild src/index.ts --bundle --platform=node --format=esm --target=node22 --external:leo-agents --outfile=dist/gateway.bundle.js --log-level=warning",
+    "typecheck": "tsc -p tsconfig.test.json --noEmit",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "leo-agents": ">=0.1.0"
+  },
+  "dependencies": {
+    "zod": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "esbuild": "^0.28.0",
+    "leo-agents": "github:CherryKingOne/leo-agents#f73f7c9",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.0"
+  }
+}

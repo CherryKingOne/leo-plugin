@@ -4,6 +4,29 @@
   "version": 1,
   "plugins": [
     {
+      "id": "gateway",
+      "package": "leo-plugin-gateway",
+      "path": "plugins/gateway",
+      "version": "0.1.0",
+      "status": "experimental",
+      "description": "消息网关：常驻接入 Telegram / 飞书 / QQ，按会话路由给 Agent，授权配对、聊天内审批、主动投递，HTTP / WebSocket / OpenAI 兼容控制面",
+      "leo": ">=0.1.0",
+      "bundle": {
+        "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/gateway/0.1.0/gateway.bundle.js",
+        "sha256": "ea8d7df33abc85c44321812f7cbe4a7afabc26dc9d1a2044baa707d75fc2602f"
+      },
+      "init": {
+        "files": [
+          {
+            "path": "gateway.json",
+            "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/gateway/0.1.0/init/gateway.json",
+            "sha256": "878603e710e41489e89cf225abaad369bf8f060f3ed1c293bf3e71ea170a0fde",
+            "description": "网关配置：聊天平台机器人、授权、会话策略、控制面端口；取消注释并填入机器人凭证即可"
+          }
+        ]
+      }
+    },
+    {
       "id": "mcp",
       "package": "leo-plugin-mcp",
       "path": "plugins/mcp",
