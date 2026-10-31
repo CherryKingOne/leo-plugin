@@ -39,10 +39,12 @@ declare module 'leo-agents' {
   }
 }
 
-const plugin: PluginDefinition<SubAgentsConfig> = {
+// watch：leo-agents 热加载时监听的数据文件（相对 .leo/），变化后重新加载本插件；旧版宿主忽略此字段
+const plugin: PluginDefinition<SubAgentsConfig> & { watch?: readonly string[] } = {
   name: 'leo-plugin-sub-agents',
   inject: ['agentLoop', 'tools'],
   config: SubAgentsConfigSchema,
+  watch: ['agents/'],
   async apply(ctx, config) {
     // 优先级：内置 general < ~/.leo/agents/*.md < 项目 .leo/agents/*.md < 配置中的 agents
     const paths = config.loadAgentFiles ? ctx.maybe('leoPaths') : undefined

@@ -1,6 +1,6 @@
 {
   "name": "leo-plugin-mcp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "MCP 客户端：把外部 MCP 服务器的工具接入 leo Agent，同时兼容 MCP 2026-07-28（无状态，俗称 MCP 2.0）与 2025-11-25 及更早的握手版本",
   "type": "module",
   "license": "Apache-2.0",
@@ -23,6 +23,7 @@
   },
   "files": [
     "dist",
+    "templates",
     "leo-plugin.json",
     "README.md",
     "CHANGELOG.md"

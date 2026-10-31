@@ -2,7 +2,7 @@
   "$schema": "../../schemas/leo-plugin.schema.json",
   "id": "sub-agents",
   "package": "leo-plugin-sub-agents",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "status": "experimental",
   "description": "子代理：把任务委派给独立上下文的子 Agent 执行并汇总结果",
   "keywords": [
@@ -41,11 +41,30 @@
       }
     ]
   },
+  "init": {
+    "files": [
+      {
+        "path": "agents/explorer.md",
+        "template": "templates/agents/explorer.md",
+        "description": "示例子 Agent：只读调研（explorer），可复制改成其他角色"
+      }
+    ]
+  },
   "release": {
-    "version": "0.1.0",
+    "version": "0.1.1",
     "bundle": {
-      "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/sub-agents/0.1.0/sub-agents.bundle.js",
-      "sha256": "7cb2ea40b8f1ae34607a34ce384fef23fb97305a9f356d3121b5583a1e6ee199"
+      "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/sub-agents/0.1.1/sub-agents.bundle.js",
+      "sha256": "b875c6716cf2e1645bcd4540bb62ffe87e5ef1ed3f0682962760f3bb118a43e3"
+    },
+    "init": {
+      "files": [
+        {
+          "path": "agents/explorer.md",
+          "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/sub-agents/0.1.1/init/agents/explorer.md",
+          "sha256": "4bdec2a684f3ba19b25973ed4710ddf5d3d9da70aa6c9c685a524eeb2a3d6fe9",
+          "description": "示例子 Agent：只读调研（explorer），可复制改成其他角色"
+        }
+      ]
     }
   }
 }

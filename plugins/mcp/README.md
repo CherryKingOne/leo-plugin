@@ -2,20 +2,21 @@
 
 让 leo Agent 使用外部 [MCP（Model Context Protocol）](https://modelcontextprotocol.io) 服务器提供的工具。服务器写在 `mcp-servers.json` 里，格式与 Claude Desktop / Claude Code / Cursor 的 `mcpServers` 相同，可以直接复制过来用。
 
-> 状态：实验性（0.1.0）。需要 leo-agents 支持 `Permission.sideEffect`（`f73f7c9` 及以后），否则 MCP 工具不会触发审批。
+> 状态：实验性（0.1.1）。需要 leo-agents 支持 `Permission.sideEffect`（`f73f7c9` 及以后），否则 MCP 工具不会触发审批。
 
 ## 安装
 
 ```bash
-leo plugin add mcp          # 装到当前项目 .leo/plugins/
-leo plugin add mcp -g       # 装到 ~/.leo/plugins/，所有项目可用
+leo plugin add mcp             # 全局安装，自动生成 ~/.leo/mcp-servers.json（所有项目共用）
+leo plugin add mcp --project   # 只装到当前项目，自动生成 .leo/mcp-servers.json
+leo plugin init mcp [--project]  # 重新生成配置文件（已有的保留）
 ```
 
 其他方式（npm、复制单文件、代码中加载）见仓库的 [docs/install.md](../../docs/install.md)。
 
 ## 配置 MCP 服务器
 
-新建 `.leo/mcp-servers.json`（项目级）或 `~/.leo/mcp-servers.json`（用户级）：
+编辑安装时生成的 `~/.leo/mcp-servers.json`（全局）或 `.leo/mcp-servers.json`（项目）。两处都有时合并，同名服务器项目覆盖全局。保存后正在运行的 leo 会自动重新连接，不用重启：
 
 ```jsonc
 {

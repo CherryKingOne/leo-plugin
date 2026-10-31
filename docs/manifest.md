@@ -52,6 +52,8 @@ JSON Schema：[`schemas/leo-plugin.schema.json`](../schemas/leo-plugin.schema.js
 | `permissions` | 否 | 工具声明的权限类型（`fs.write`、`process.exec`、`net.fetch`、`agent.spawn` 等），安装器据此提示审批配置 |
 | `install.config` | 是 | 写入 `.leo/config.json` `plugins` 数组的默认条目 |
 | `install.example` | 否 | 带配置的示例条目，显示在 README 与安装提示中 |
+| `init.files[]` | 否 | `leo plugin add <id>` 安装后自动初始化的配置文件：`path` 为相对 `.leo/` 的目标路径（如 `mcp-servers.json`、`agents/explorer.md`），`template` 为插件目录内的模板文件（通常放在 `templates/`，并加进 `package.json#files`），`description` 为安装时打印的说明。模板必须开箱可用：不含密钥，示例默认注释掉，不启动任何外部进程；路径应当同时写进插件定义的 `watch`，用户编辑后热加载 |
+| `release` | 否 | 由 `scripts/release.mjs` 写入：bundle 与 `init` 模板已发布的地址和 sha256，请勿手改 |
 
 ## 一致性检查
 

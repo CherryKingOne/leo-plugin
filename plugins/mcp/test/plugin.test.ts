@@ -204,3 +204,28 @@ describe('工具函数', () => {
     expect(resolveValue('plain', env)).toBe('plain')
   })
 })
+
+describe('--init 模板', () => {
+  it('templates/mcp-servers.json 能被读取，默认不启用任何服务器', async () => {
+    const { readServerFile } = await import('../src/files.js')
+    const servers = await readServerFile(new URL('../templates/mcp-servers.json', import.meta.url).pathname)
+    expect(servers).toEqual({})
+  })
+})
+
+describe('热加载', () => {
+  it('声明 watch，卸载后可以再次加载（重新连接，工具只注册一份）', async () => {
+    expect((mcp as { watch?: string[] }).watch).toEqual(['mcp-servers.json', 'mcp-server.json'])
+    const leo = await createLeo({ logLevel: 'silent' })
+    const cfg = { servers: { fake: server('modern') } } as never
+    const rt1 = await leo.plugin(mcp, cfg)
+    await rt1.dispose()
+    const rt2 = await leo.plugin(mcp, cfg)
+    const reg = leo.ctx.get('tools')
+    expect(reg.list().filter((t) => t.name === 'mcp__fake__echo')).toHaveLength(1)
+    expect(leo.ctx.get('mcp').servers()[0]).toMatchObject({ status: 'connected' })
+    await rt2.dispose()
+    expect(reg.get('mcp__fake__echo')).toBeUndefined()
+    await leo.dispose()
+  })
+})

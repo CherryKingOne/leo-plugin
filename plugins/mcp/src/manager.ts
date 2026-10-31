@@ -45,7 +45,7 @@ interface Entry {
   disposers: Disposer[]
 }
 
-const PKG_VERSION = '0.1.0'
+const PKG_VERSION = '0.1.1'
 
 export function createManager(ctx: Context<any>, config: McpConfig, sources: Record<string, ServerSource>) {
   const entries = new Map<string, Entry>()

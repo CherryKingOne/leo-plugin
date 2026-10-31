@@ -34,10 +34,12 @@ declare module 'leo-agents' {
   }
 }
 
-const plugin: PluginDefinition<McpConfig> = {
+// watch：leo-agents 热加载时监听的数据文件（相对 .leo/），变化后重新加载本插件；旧版宿主忽略此字段
+const plugin: PluginDefinition<McpConfig> & { watch?: readonly string[] } = {
   name: 'leo-plugin-mcp',
   inject: ['tools'],
   config: McpConfigSchema,
+  watch: ['mcp-servers.json', 'mcp-server.json'],
   async apply(ctx, config) {
     // 优先级：~/.leo/mcp-servers.json < 项目 .leo/mcp-servers.json < 插件配置 servers
     const paths = ctx.maybe('leoPaths')
