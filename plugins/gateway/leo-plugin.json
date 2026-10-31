@@ -67,17 +67,17 @@
     ]
   },
   "release": {
-    "version": "0.1.1",
+    "version": "0.2.0",
     "bundle": {
-      "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/gateway/0.1.1/gateway.bundle.js",
-      "sha256": "b17ce091b71f02b604ff57268dde70e9582460e75bb49f608a2adbd0730c1f2b"
+      "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/gateway/0.2.0/gateway.bundle.js",
+      "sha256": "3ea7d7e3bc3bd1bae5f437d39e839c28d00a149f070468362eaecbca0a1344e0"
     },
     "init": {
       "files": [
         {
           "path": "gateway.json",
-          "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/gateway/0.1.1/init/gateway.json",
-          "sha256": "878603e710e41489e89cf225abaad369bf8f060f3ed1c293bf3e71ea170a0fde",
+          "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/gateway/0.2.0/init/gateway.json",
+          "sha256": "999e4d0825edcdbf2b84a8d07f36516bd292f220bd1265fa7de79d736455571d",
           "description": "网关配置：聊天平台机器人、授权、会话策略、控制面端口；取消注释并填入机器人凭证即可"
         }
       ]

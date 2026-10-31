@@ -36,5 +36,12 @@
         "qrConsole": true
       }
     ]
+  },
+  "release": {
+    "version": "0.2.0",
+    "bundle": {
+      "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/gateway-qq/0.2.0/gateway-qq.bundle.js",
+      "sha256": "11eba5e7c3116e003a8fb72dcc67bb26287931064796be8a5813e32f694dcf61"
+    }
   }
 }
