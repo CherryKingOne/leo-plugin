@@ -52,9 +52,32 @@ export function controlPlaneLines(addr: { host: string; port: number }, tokenSet
 }
 
 /** 账号状态变化 → 一行提示；同一状态不重复提示（长轮询重连不刷屏） */
-export function accountNotifier(notify: Notify, webhookBase: () => string | undefined): (s: AccountStatus) => void {
+export function accountNotifier(
+  notify: Notify,
+  webhookBase: () => string | undefined,
+  opts: { driverGraceMs?: number } = {},
+): (s: AccountStatus) => void {
   const last = new Map<string, string>()
+  // waiting_driver 先等一会儿再提示：插件驱动（如 gateway-qq）通常紧跟网关加载，期间账号短暂处于 waiting_driver
+  const graceMs = opts.driverGraceMs ?? 3000
+  const pending = new Map<string, ReturnType<typeof setTimeout>>()
   return (s) => {
+    const timer = pending.get(s.account)
+    if (timer) {
+      clearTimeout(timer)
+      pending.delete(s.account)
+    }
+    if (s.state === 'waiting_driver' && graceMs > 0) {
+      const t = setTimeout(() => {
+        pending.delete(s.account)
+        if (last.get(s.account) === 'waiting_driver') return
+        last.set(s.account, 'waiting_driver')
+        notify(waitingDriverMessage(s), 'warn')
+      }, graceMs)
+      t.unref?.()
+      pending.set(s.account, t)
+      return
+    }
     const prev = last.get(s.account)
     // waiting_bind 带上 bindUrl 一起去重：二维码过期刷新后再提示一次
     const key = s.state === 'waiting_bind' ? `waiting_bind ${s.bindUrl ?? ''}` : s.state
@@ -72,7 +95,7 @@ export function accountNotifier(notify: Notify, webhookBase: () => string | unde
         notify(`${name} 连接失败：${s.error ?? '未知错误'}`, 'error')
         break
       case 'waiting_driver':
-        notify(`${name} 等待渠道驱动 "${s.channel}"：内置只有 telegram / feishu / qq，其他渠道需要安装对应插件`, 'warn')
+        notify(waitingDriverMessage(s), 'warn')
         break
       case 'waiting_bind':
         notify(`${name} 等待绑定${s.detail ? `：${s.detail}` : ''}${s.bindUrl ? ` ${s.bindUrl}` : ''}`, 'warn')
@@ -83,4 +106,11 @@ export function accountNotifier(notify: Notify, webhookBase: () => string | unde
       // stopped：卸载/重启时会出现，不提示
     }
   }
+}
+
+function waitingDriverMessage(s: AccountStatus): string {
+  const name = s.account === s.channel ? s.account : `${s.account}（${s.channel}）`
+  if (s.channel === 'qq')
+    return `${name} 等待 QQ 驱动：扫码绑定请安装 QQ 子插件（leo plugin add gateway-qq）；用 appId / appSecret 的旧版写法请在 gateway.json 的 builtin 里加上 "qq"`
+  return `${name} 等待渠道驱动 "${s.channel}"：内置只有 telegram / feishu / qq（需在 builtin 中启用），其他渠道需要安装对应插件`
 }

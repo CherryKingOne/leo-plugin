@@ -1,6 +1,6 @@
 {
   "name": "leo-plugin-gateway-qq",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "leo 消息网关的 QQ 子插件：QQ 官方机器人渠道驱动（WebSocket / webhook），支持手机 QQ 扫码绑定，替代网关内置的 QQ 驱动",
   "type": "module",
   "license": "Apache-2.0",

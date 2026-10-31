@@ -290,3 +290,13 @@ describe('凭据文件', () => {
     expect(await store.get('b')).toEqual({ appId: '2', appSecret: 's2' })
   })
 })
+
+describe('qrConsole auto', () => {
+  it('leo serve 下打印二维码，交互式 leo 不打印', async () => {
+    const { isLeoServe } = await import('../src/index.js')
+    expect(isLeoServe(['serve'])).toBe(true)
+    expect(isLeoServe(['-y', 'serve'])).toBe(true)
+    expect(isLeoServe([])).toBe(false)
+    expect(isLeoServe(['-p', 'hi'])).toBe(false)
+  })
+})

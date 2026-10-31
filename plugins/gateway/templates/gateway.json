@@ -23,14 +23,25 @@
     //   "domain": "feishu"               // 国际版写 "lark"
     // },
 
-    // QQ 开放平台官方机器人；默认 WebSocket 长连接。
-    // 想用手机 QQ 扫码绑定：安装 QQ 子插件（leo plugin add gateway-qq），appId / appSecret 不填即可
+    // QQ 开放平台官方机器人；默认 WebSocket 长连接，不需要公网地址。
+    // 默认扫码绑定（需要 QQ 子插件：leo plugin add gateway-qq）：appId / appSecret 不填，
+    // 启动后终端打印绑定链接（leo serve 下还会直接打印二维码），用手机 QQ 扫码即可，凭据自动存进 credentials.json。
+    "qq": {
+      "channel": "qq"
+    }
+
+    // 旧版写法（0.1.x，网关内置 QQ 驱动，不装 gateway-qq）：到 QQ 开放平台拿 AppID / AppSecret 填进来，
+    // 并把下面 builtin 里加上 "qq"
     // "qq": {
     //   "channel": "qq",
     //   "appId": "102xxxxx",
     //   "appSecret": "$QQ_BOT_SECRET"
     // }
   },
+
+  // 注册哪些内置渠道驱动。QQ 由子插件 gateway-qq 提供（扫码绑定），所以默认不含内置 "qq"；
+  // 用旧版 appId / appSecret 写法时改成 ["telegram", "feishu", "qq"]
+  "builtin": ["telegram", "feishu"],
 
   // 谁可以和网关对话（默认谁都不行）
   "auth": {

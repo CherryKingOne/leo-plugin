@@ -1,5 +1,10 @@
 # 更新日志
 
+## 0.2.1 — 2026-10-31
+
+- 配置模板 `gateway.json` 按 0.2.0 起的用法重写：默认声明 QQ 账号 `"qq": { "channel": "qq" }`（不填 appId / appSecret，配合 gateway-qq 扫码绑定），`builtin` 默认 `["telegram", "feishu"]`；0.1.x 的 appId / appSecret 写法保留在注释里，说明需要在 `builtin` 加上 `"qq"`。
+- 账号缺驱动的提示更具体：QQ 账号会提示安装 `gateway-qq` 或在 `builtin` 启用内置 qq；并有 3 秒宽限期，插件驱动紧跟网关注册时不再误报。
+
 ## 0.2.0 — 2026-10-31（未发布）
 
 网关改为**注册层**：授权、会话、路由、审批、控制面归网关，聊天平台是注册进来的驱动。

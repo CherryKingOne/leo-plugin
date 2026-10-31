@@ -31,8 +31,10 @@ export const Config = z
     credentialsFile: z.string().optional(),
     /** 二维码页面显示的接入来源 */
     source: z.string().default('leo'),
-    /** 同时在终端打印二维码（leo serve 时可以直接扫）；交互式 leo 下会打乱界面，默认关 */
-    qrConsole: z.boolean().default(false),
+    /**
+     * 同时在终端打印二维码。默认 `auto`：`leo serve` 下打印（可以直接扫），交互式 leo 下不打印（会打乱界面，只提示绑定链接）
+     */
+    qrConsole: z.union([z.boolean(), z.literal('auto')]).default('auto'),
     /** 注册 gateway_qq_bind 工具 */
     tools: z.boolean().default(true),
   })
@@ -42,6 +44,11 @@ export type GatewayQqConfig = z.infer<typeof Config>
 export interface GatewayQqPluginOptions {
   /** 测试用：替换扫码 SDK */
   connector?: QrConnector
+}
+
+/** 当前进程是不是 `leo serve`：命令行里第一个非选项参数是 serve */
+export function isLeoServe(argv: readonly string[] = process.argv.slice(2)): boolean {
+  return argv.find((a) => !a.startsWith('-')) === 'serve'
 }
 
 /** 等价于 leo-agents 的 toolOutput()；插件不运行时依赖 leo-agents */
@@ -94,7 +101,7 @@ export function createGatewayQqPlugin(opts: GatewayQqPluginOptions = {}): Plugin
         store,
         connector: opts.connector ?? (qqbotConnector as QrConnector),
         source: config.source,
-        qrConsole: config.qrConsole,
+        qrConsole: config.qrConsole === 'auto' ? isLeoServe() : config.qrConsole,
         bound,
         notify,
       })

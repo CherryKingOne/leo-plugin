@@ -2,7 +2,7 @@
   "$schema": "../../schemas/leo-plugin.schema.json",
   "id": "gateway",
   "package": "leo-plugin-gateway",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "status": "experimental",
   "description": "消息网关：常驻接入 Telegram / 飞书 / QQ，按会话路由给 Agent，授权配对、聊天内审批、主动投递，HTTP / WebSocket / OpenAI 兼容控制面",
   "keywords": [
@@ -62,23 +62,23 @@
       {
         "path": "gateway.json",
         "template": "templates/gateway.json",
-        "description": "网关配置：聊天平台机器人、授权、会话策略、控制面端口；取消注释并填入机器人凭证即可"
+        "description": "网关配置：聊天平台机器人、授权、会话策略、控制面端口；QQ 默认扫码绑定（配合 gateway-qq），其他渠道取消注释并填入凭证"
       }
     ]
   },
   "release": {
-    "version": "0.2.0",
+    "version": "0.2.1",
     "bundle": {
-      "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/gateway/0.2.0/gateway.bundle.js",
-      "sha256": "3ea7d7e3bc3bd1bae5f437d39e839c28d00a149f070468362eaecbca0a1344e0"
+      "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/gateway/0.2.1/gateway.bundle.js",
+      "sha256": "baaaf7cf298263a6248ef9a5b692ea51ceb8dfda254b94d830d28d1f1374045b"
     },
     "init": {
       "files": [
         {
           "path": "gateway.json",
-          "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/gateway/0.2.0/init/gateway.json",
-          "sha256": "999e4d0825edcdbf2b84a8d07f36516bd292f220bd1265fa7de79d736455571d",
-          "description": "网关配置：聊天平台机器人、授权、会话策略、控制面端口；取消注释并填入机器人凭证即可"
+          "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/gateway/0.2.1/init/gateway.json",
+          "sha256": "2d5a902f7531158b580f013ae45e45edfec1b4dd17e6c22f0cf325c948081cf4",
+          "description": "网关配置：聊天平台机器人、授权、会话策略、控制面端口；QQ 默认扫码绑定（配合 gateway-qq），其他渠道取消注释并填入凭证"
         }
       ]
     }

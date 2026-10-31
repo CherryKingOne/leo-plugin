@@ -1,6 +1,6 @@
 # leo-plugin-gateway-qq
 
-> 实验性 0.2.0 · 需要 [leo-plugin-gateway](../gateway/) ≥ 0.2.0
+> 实验性 0.2.1 · 需要 [leo-plugin-gateway](../gateway/) ≥ 0.2.0
 
 ## 用途
 
@@ -30,19 +30,21 @@ leo serve
 
 | 选项 | 默认 | 说明 |
 | --- | --- | --- |
-| `qrConsole` | `false` | 同时在终端打印二维码（`leo serve` 时直接扫）；交互式 `leo` 下会打乱界面 |
+| `qrConsole` | `"auto"` | 在终端打印二维码：`auto` 时 `leo serve` 下打印、交互式 `leo` 下不打印（会打乱界面，只提示链接）；也可写 `true` / `false` |
 | `source` | `"leo"` | 二维码页面上的接入来源标识 |
 | `credentialsFile` | leo 的 `credentials.json` | 扫码凭据写到哪个文件 |
 | `tools` | `true` | 注册 `gateway_qq_bind` 工具 |
 
 ```jsonc
 // .leo/config.json
-{ "plugins": ["leo-plugin-gateway", ["leo-plugin-gateway-qq", { "qrConsole": true }]] }
+{ "plugins": ["leo-plugin-gateway", ["leo-plugin-gateway-qq", { "qrConsole": false }]] }
 ```
 
 ## 配置账号（gateway.json）
 
 ### 扫码绑定
+
+`leo plugin add gateway`（0.2.1 起）生成的 `gateway.json` 默认就是下面这样，直接 `leo serve` 即可扫码：
 
 ```jsonc
 {

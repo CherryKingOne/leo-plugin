@@ -209,7 +209,7 @@ describe('启动提示', () => {
     expect(lines[1]).toContain('http://192.168.1.5:18790/v1')
     expect(lines[2]).toContain('Bearer')
     const out: [string, string | undefined][] = []
-    const on = accountNotifier((m, l) => void out.push([m, l]), () => 'https://gw.example.com')
+    const on = accountNotifier((m, l) => void out.push([m, l]), () => 'https://gw.example.com', { driverGraceMs: 0 })
     const st = (state: string, extra = {}) => ({ account: 'tg', channel: 'telegram', state, received: 0, sent: 0, ...extra }) as never
     on(st('starting'))
     on(st('running', { webhookPath: '/hooks/tg' }))
@@ -217,13 +217,30 @@ describe('启动提示', () => {
     on(st('failed', { error: '401 Unauthorized' }))
     on(st('running'))
     on({ account: 'x', channel: 'slack', state: 'waiting_driver', received: 0, sent: 0 } as never)
+    on({ account: 'qq', channel: 'qq', state: 'waiting_driver', received: 0, sent: 0 } as never)
     expect(out.map((o) => o[0])).toEqual([
       '已连接 tg（telegram），webhook https://gw.example.com/hooks/tg（平台要能从公网访问到）',
       'tg（telegram） 连接失败：401 Unauthorized',
       '已恢复 tg（telegram）',
-      'x（slack） 等待渠道驱动 "slack"：内置只有 telegram / feishu / qq，其他渠道需要安装对应插件',
+      'x（slack） 等待渠道驱动 "slack"：内置只有 telegram / feishu / qq（需在 builtin 中启用），其他渠道需要安装对应插件',
+      'qq 等待 QQ 驱动：扫码绑定请安装 QQ 子插件（leo plugin add gateway-qq）；用 appId / appSecret 的旧版写法请在 gateway.json 的 builtin 里加上 "qq"',
     ])
-    expect(out.map((o) => o[1])).toEqual([undefined, 'error', undefined, 'warn'])
+    expect(out.map((o) => o[1])).toEqual([undefined, 'error', undefined, 'warn', 'warn'])
+  })
+
+  it('waiting_driver 有宽限期：插件驱动紧跟着注册上来时不提示', async () => {
+    const { accountNotifier } = await import('../src/notice.js')
+    const out: string[] = []
+    const on = accountNotifier((m) => void out.push(m), () => undefined, { driverGraceMs: 30 })
+    const st = (state: string) => ({ account: 'qq', channel: 'qq', state, received: 0, sent: 0 }) as never
+    on(st('waiting_driver'))
+    on(st('starting'))
+    on(st('running'))
+    await new Promise((r) => setTimeout(r, 60))
+    expect(out).toEqual(['已连接 qq'])
+    on(st('waiting_driver'))
+    await new Promise((r) => setTimeout(r, 60))
+    expect(out[1]).toContain('gateway-qq')
   })
 })
 
