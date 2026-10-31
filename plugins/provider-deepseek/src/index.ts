@@ -214,6 +214,8 @@ export function createDeepSeekDriver(): ProviderDriver {
     fetchModels: true,
     mapModel: mapDeepSeekModel,
     prepare: prepareDeepSeekBody,
+    // provider ≥ 0.3.0：provider.json 里没有 deepseek 条目时写入，/think、/effort 切换后同步这些字段
+    settingsTemplate: { defaultModel: 'deepseek-flash', thinking: 'enabled', reasoningEffort: 'high' },
   }
 }
 

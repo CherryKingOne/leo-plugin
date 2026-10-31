@@ -6,12 +6,13 @@
 //   leo auth set deepseek               保存密钥（或 export DEEPSEEK_API_KEY）
 // 装了子插件的厂商会自动接入（autoDetect），有密钥即可用。
 {
-  // 默认模型 <provider>/<model>；.leo/config.json 里的 "model" 优先
+  // 默认模型 <provider>/<model>；.leo/config.json 里的 "model" 优先。
+  // 交互中 /model 切换后会自动写到这里（项目里有 .leo/provider.json 时写项目的）
   // "model": "deepseek/deepseek-flash",
 
   "providers": {
-    // 有子插件的厂商：写 id 即可，只填要改的字段
-    "deepseek": {}
+    // 装了子插件的厂商会自动写入默认条目（默认模型、思考模式、推理强度），可以直接改；
+    // 交互中 /model、/think、/effort 切换后也会同步到对应条目
 
     // 还没有子插件的厂商 / 自建服务：写 baseURL，按通用 OpenAI 兼容协议接入
     // "qwen": { "baseURL": "https://dashscope.aliyuncs.com/compatible-mode/v1", "apiKeyEnv": "DASHSCOPE_API_KEY", "models": ["qwen-plus"] },

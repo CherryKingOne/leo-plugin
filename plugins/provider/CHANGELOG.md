@@ -1,5 +1,16 @@
 # 更新日志
 
+## 0.3.0 — 未发布
+
+provider.json 跟着用的东西走：
+
+- **安装即填充**：子插件注册驱动时，provider.json 里该厂商没有条目或是 `{}`，自动写入驱动给的默认值（默认模型、思考模式、推理强度）；用户写过字段的条目不动。驱动新增 `settingsTemplate`
+- **切换即同步**：交互中 `/model` 写回顶层 `model` 与该厂商的 `defaultModel`；`/think on|off`、`/effort` 写回 `thinking` / `reasoningEffort`（只写驱动模板里有的字段），下次启动沿用。命令行 `-m`、`--effort` 只作用于本次
+- 写到哪：项目里有 `.leo/provider.json` 就写它，否则写 `~/.leo/provider.json`；只改动涉及的字段，注释与排版保留；多个子插件同时注册时写入串行
+- 自己写的不触发热加载（宿主 `plugin/data-written`，leo-agents 0.2.0（main））；插件配置 `persist: false` 关闭写回
+- provider.json 的 `thinking` / `reasoningEffort` 反映到模型信息的默认值，状态行、`leo models` 显示的“默认”与实际请求一致
+- 模板不再预置 `"deepseek": {}`，改为由已安装的子插件写入
+
 ## 0.2.0 — 2026-10-31
 
 - 实时模型列表：`refreshModels()` 调用 `GET {baseURL}/models`，解析真实模型 id 与常见详情字段（展示名、上下文、最大输出、输入 / 输出模态、`effort` 档位、owned_by），内置信息里接口不给的字段（价格）沿用；第一次调用模型时后台获取一次。leo-agents 0.2.0（main） 的 `leo models` / `/models` 用它展示

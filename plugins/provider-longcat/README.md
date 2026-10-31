@@ -27,20 +27,29 @@ leo -m longcat/LongCat-2.5-Preview
 
 价格按[官方限时折扣价](https://longcat.chat/platform/docs/zh/pricing/longcat-2.5)（美元 / 百万 token：输入 0.30、缓存命中 0.006、输出 1.20）用于预算估算，可在 provider.json 的 `models` 里覆盖。
 
-## 思考模式
+## 思考模式与思考预算
 
 按 [Chat Completion 文档](https://longcat.chat/platform/docs/zh/api/chat) 与[模型参数参考](https://longcat.chat/platform/docs/zh/api/model-params)：
 
 - **默认开启**：每个请求都明确发送 `thinking: { "type": "enabled" | "disabled" }`，思考内容（`reasoning_content`）在 leo 里以 💭 显示
-- **没有推理强度档位**：Chat Completions 不支持 `reasoning_effort`。`--effort none` / `/effort none` 等同关闭思考，其他档位不生效；要限制思考长度用 provider.json 的 `thinkingBudget`（发送为 `thinking_budget`，最大 262144）
+- **推理强度 → 思考预算**：LongCat 的 Chat Completions 没有 `reasoning_effort`，插件把强度换算成 `thinking_budget`（只在思考开启时发送）：
+
+| 强度 | thinking_budget |
+| --- | --- |
+| `none` | 关闭思考 |
+| `low`（兼容 `minimal`） | 8192 |
+| `medium` | 32768 |
+| `high`（默认） | 131072 |
+| `max`（兼容 `xhigh`） | 262144（上限，拉满） |
+
 - 调整方式，优先级从高到低：
 
 | 方式 | 写法 |
 | --- | --- |
-| 交互中 | `/think on` / `/think off`（保留当前会话） |
-| 命令行 | `leo --thinking off` |
-| `.leo/config.json` | `"agent": { "reasoning": { "enabled": false } }` |
-| `provider.json` | `"longcat": { "thinking": "disabled", "thinkingBudget": 8192 }`（只作用于 LongCat） |
+| 交互中 | `/think on` / `/think off`、`/effort max`（会同步写回 provider.json，下次启动沿用） |
+| 命令行 | `leo --thinking off`、`leo --effort low`（只作用于本次） |
+| `.leo/config.json` | `"agent": { "reasoning": { "enabled": true, "effort": "max" } }` |
+| `provider.json` | `"longcat": { "thinking": "enabled", "reasoningEffort": "high" }`；要精确的预算写 `"thinkingBudget": 50000`（优先于 provider.json 的强度） |
 
 ## LongCat 特有的处理
 
@@ -50,16 +59,20 @@ leo -m longcat/LongCat-2.5-Preview
 
 ## provider.json
 
+装好后自动写入 `longcat` 条目（项目里有 `.leo/provider.json` 写项目的，否则写 `~/.leo/provider.json`），交互中 `/model`、`/think`、`/effort` 切换后同步更新：
+
 ```jsonc
 {
   "providers": {
     "longcat": {
-      "thinking": "enabled",       // 或 "disabled"、true / false；不写默认开启
-      "thinkingBudget": 8192,      // 可选，思考预算
+      "defaultModel": "LongCat-2.5-Preview",
+      "thinking": "enabled",       // 或 "disabled"、true / false
+      "reasoningEffort": "high",   // none / low / medium / high / max，换算成思考预算
+      // "thinkingBudget": 50000,  // 可选，精确的思考预算（1 ~ 262144）
       "baseURL": "https://api.longcat.chat/openai/v1"  // 可选，走代理时改
     }
   }
 }
 ```
 
-需要 leo-agents ≥ 0.2.0、leo-plugin-provider ≥ 0.2.0。
+需要 leo-agents ≥ 0.2.0、leo-plugin-provider ≥ 0.2.0；自动写入与同步需要 leo-plugin-provider ≥ 0.3.0 与 leo-agents main（2026-10-31 之后）。

@@ -14,6 +14,7 @@
 import { join } from 'node:path'
 import type { Context, PluginDefinition } from 'leo-agents'
 import { type ProviderConfig, ProviderConfigSchema } from './config.js'
+import { persistSelection, scaffoldEntry, type SelectionWrite } from './persist.js'
 import { CONFIG_FILE_NAME, type Obj, isObj, mergeConfig, readConfigFile } from './files.js'
 import { createProviderRegistry, type ProviderRegistry } from './registry.js'
 import type { ProviderRegistryService } from './types.js'
@@ -23,8 +24,9 @@ export { ProviderConfigSchema, ProviderSettingsSchema, type ProviderConfig } fro
 export { CONFIG_FILE_NAME, mergeConfig, stripJsonc } from './files.js'
 export { OpenAICompatibleProvider, type OpenAICompatibleOptions } from './openai.js'
 export { parseSSE } from './sse.js'
+export { getJsonc, parseJsoncTree, persistSelection, scaffoldEntry, setJsonc, targetFile, type PersistPaths, type SelectionWrite } from './persist.js'
 export { providerError, isProviderError, LEO_ERROR_MARK, type ProviderError, type ProviderErrorCode } from './errors.js'
-export { createProviderRegistry, normalizeModels, openaiCompatibleProtocol, OPENAI_COMPATIBLE, type ProviderRegistry, type RegistryDeps } from './registry.js'
+export { createProviderRegistry, normalizeModels, withSettingsDefaults, openaiCompatibleProtocol, OPENAI_COMPATIBLE, type ProviderRegistry, type RegistryDeps } from './registry.js'
 
 declare module 'leo-agents' {
   interface Services {
@@ -54,6 +56,12 @@ export function createProviderPlugin(opts: ProviderPluginOptions = {}): PluginDe
         void ctx.emit('plugin/notice' as never, { plugin: 'provider', message, ...(level === 'info' ? {} : { level }) } as never)
       const config = await loadConfig(ctx, isObj(raw) ? raw : {})
       const host = ctx.maybe('leoConfig' as never) as { model?: string } | undefined
+      // 写回 provider.json：读配置文件时才写（loadConfigFiles: false 或 persist: false 时不写）
+      const paths = ctx.maybe('leoPaths')
+      const persistTo = paths && config.loadConfigFiles && !(isObj(raw) && raw.persist === false) ? paths : undefined
+      // 告诉宿主这是自己写的，不要因此重新加载本插件（leo-agents 0.2.0 main 起支持；旧版本会重新加载一次，结果相同）
+      const written = (w: boolean) => void (w && ctx.emit('plugin/data-written' as never, { plugin: 'leo-plugin-provider' } as never))
+      const writeFailed = (err: unknown) => ctx.logger.warn({ err: (err as Error).message }, 'provider: failed to update provider.json')
       const registry: ProviderRegistry = createProviderRegistry({
         llm: () => ctx.get('llm'),
         credentials: () => ctx.maybe('credentials' as never) as never,
@@ -61,11 +69,21 @@ export function createProviderPlugin(opts: ProviderPluginOptions = {}): PluginDe
         ...(host?.model ? { hostModel: host.model } : {}),
         logger: ctx.logger,
         notify,
+        onDriver: (d) => {
+          if (persistTo && d.settingsTemplate) void scaffoldEntry(persistTo, d.id, d.settingsTemplate).then(written, writeFailed)
+        },
         ...(opts.env ? { env: opts.env } : {}),
         ...(opts.fetch ? { fetch: opts.fetch } : {}),
       })
       await ctx.effect(() => () => registry.dispose())
       ctx.provide('providers' as never, registry as never)
+      // 交互中 /model、/think、/effort → 写回 provider.json，下次启动沿用
+      if (persistTo) {
+        ctx.on('llm/selected' as never, ((sel: LlmSelectionLike) => {
+          const w = selectionWrite(sel, registry.driverOf(sel.model.split('/')[0]!)?.settingsTemplate)
+          if (w) void persistSelection(persistTo, w).then(written, writeFailed)
+        }) as never)
+      }
       // 没有任何驱动时也要接入通用端点 / 报告状态
       registry.sync()
     },
@@ -99,6 +117,26 @@ export async function loadConfig(ctx: Context<any>, raw: Obj): Promise<ProviderC
     throw new Error(`provider: invalid configuration${where}: ${issues}`)
   }
   return parsed.data
+}
+
+/** 宿主 `llm/selected` 事件（leo-agents 0.2.0 main 起） */
+export interface LlmSelectionLike {
+  model: string
+  reasoning?: { enabled?: boolean; effort?: string }
+  changed: 'model' | 'thinking' | 'effort'
+}
+
+/** 选择 → 要写回的字段：换模型写顶层 model 与 defaultModel；思考设置只写驱动模板里有的字段 */
+export function selectionWrite(sel: LlmSelectionLike, template: Record<string, unknown> = {}): SelectionWrite | undefined {
+  const i = sel.model.indexOf('/')
+  if (i <= 0) return undefined
+  if (sel.changed === 'model') return { model: sel.model, topModel: true, fields: { defaultModel: sel.model.slice(i + 1) } }
+  const r = sel.reasoning ?? {}
+  const off = r.enabled === false || r.effort === 'none'
+  const fields: SelectionWrite['fields'] = {}
+  if ('thinking' in template && (off || r.enabled === true)) fields.thinking = off ? 'disabled' : 'enabled'
+  if ('reasoningEffort' in template && sel.changed === 'effort' && r.effort && !off) fields.reasoningEffort = r.effort
+  return Object.keys(fields).length ? { model: sel.model, topModel: false, fields } : undefined
 }
 
 const plugin = createProviderPlugin()

@@ -105,6 +105,12 @@ export interface ProviderDriver {
   mapModel?(raw: RawModel, builtin?: ModelInfo): ModelInfo | undefined
   /** 完全自定义实现（不走协议）。注册层会补上 name / defaultModel / status */
   create?(input: DriverInput): LlmProvider
+  /**
+   * provider.json 里该厂商条目的默认内容（leo-plugin-provider ≥ 0.3.0）：注册时条目不存在或为 `{}` 就写入，
+   * 如 `{ defaultModel, thinking: 'enabled', reasoningEffort: 'high' }`。
+   * 也决定交互中切换思考设置时写回哪些字段：有 `thinking` 才写 thinking，有 `reasoningEffort` 才写强度
+   */
+  settingsTemplate?: Record<string, string | number | boolean>
 }
 
 /** 协议实现：把合并后的配置变成 LlmProvider。内置 openai-compatible，第三方插件可以注册 anthropic 等 */
