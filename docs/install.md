@@ -24,7 +24,10 @@ leo plugin add mcp --project             # 装到项目，并自动生成 .leo/m
 leo plugin add mcp --init-from ./my-tpl   # 用你自己的模板目录（按相对路径复制进 .leo/）或单个文件
 leo plugin init mcp [--project] [--force] # 重新生成配置文件；已存在的文件默认保留
 leo plugin add sub-agents --npm           # 改用 npm 安装（插件发布到 npm 后）
-leo plugin remove sub-agents [--project]  # 默认移除全局安装
+leo plugin remove sub-agents              # 卸载全局安装（默认）
+leo plugin remove sub-agents --project    # 只卸载当前项目里的（--local / -l）
+leo plugin remove sub-agents --all        # 全局和项目都卸载
+leo plugin remove sub-agents --purge      # 连同自动生成的配置文件一起删除
 ```
 
 `leo plugin add <id>` 做了什么：
@@ -138,6 +141,6 @@ leo 运行中（`leo` 对话、`leo api`）会监听 `~/.leo/` 与项目 `.leo/`
 
 ## 卸载
 
-- 方式 A：`leo plugin remove <id>`（默认全局；`--project` 对应项目里的安装）。自动生成的配置文件不会被删除，需要时手动删除
+- 方式 A：`leo plugin remove <id>`：默认卸载全局安装，`--project` 卸载当前项目里的，`--all` 两处都卸载。只卸一处时，若另一处还装着会提示（卸掉全局后项目那份仍在该项目生效；卸掉项目那份后改用全局的）。自动生成的配置文件默认保留，加 `--purge` 一起删除。正在运行的 leo 会自动卸载，不用重启
 - 方式 B：从 `config.json` 删除条目，然后 `npm uninstall <package>`
 - 方式 C：删除 `.leo/plugins/` 下的文件
