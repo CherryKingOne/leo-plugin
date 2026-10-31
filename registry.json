@@ -89,20 +89,20 @@
       "id": "provider",
       "package": "leo-plugin-provider",
       "path": "plugins/provider",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "status": "experimental",
       "description": "模型供应商注册层：子插件（provider-deepseek 等）注册驱动，统一读配置、取密钥、接入 Agent；自带通用 OpenAI 兼容协议，任意兼容端点写 baseURL 即可（需要 leo ≥ 0.2.0）",
       "leo": ">=0.2.0",
       "bundle": {
-        "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/provider/0.2.0/provider.bundle.js",
-        "sha256": "2ed49cab76b0daf6bca57c2f3d38bc330b33c01982a4079fc47c2c3753d261fd"
+        "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/provider/0.3.0/provider.bundle.js",
+        "sha256": "5f06de697559050e1ec83f9364c360cd92cab965b7dccb246c655b614187f41e"
       },
       "init": {
         "files": [
           {
             "path": "provider.json",
-            "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/provider/0.2.0/init/provider.json",
-            "sha256": "52a5f4601d6e82b27254e285c36cc90d1b579fc21ad8f07c815df2c1d4e87037",
+            "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/provider/0.3.0/init/provider.json",
+            "sha256": "25b594bdc54843991698cda0ef6a1874d4ef2e29ffd759310103d0341c8466ec",
             "description": "模型供应商配置：默认模型、各厂商的 baseURL / 模型 / 密钥引用；装了子插件并保存密钥的厂商会自动接入"
           }
         ]
@@ -112,13 +112,13 @@
       "id": "provider-deepseek",
       "package": "leo-plugin-provider-deepseek",
       "path": "plugins/provider-deepseek",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "status": "experimental",
       "description": "模型供应商注册层的 DeepSeek 子插件：deepseek-flash / deepseek-v4-pro，保存密钥即自动接入，思考模式与工具调用开箱可用，旧模型名 deepseek-chat / deepseek-reasoner 自动改写（需要 provider ≥ 0.1.0）",
       "leo": ">=0.2.0",
       "bundle": {
-        "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/provider-deepseek/0.2.0/provider-deepseek.bundle.js",
-        "sha256": "ea557942d91949fbc026658f60533ef756a9c4d2286a5ada12c55d08a3bc79a1"
+        "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/provider-deepseek/0.3.0/provider-deepseek.bundle.js",
+        "sha256": "9f5defbe5c32934a27fb2237d7839d4d4a0c767b1ad377facc220dcbddd17dd7"
       }
     },
     {
@@ -128,7 +128,11 @@
       "version": "0.1.0",
       "status": "experimental",
       "description": "模型供应商注册层的 LongCat（美团）子插件：LongCat-2.5-Preview，1M 上下文，保存密钥即自动接入，思考模式与工具调用开箱可用（需要 provider ≥ 0.2.0）",
-      "leo": ">=0.2.0"
+      "leo": ">=0.2.0",
+      "bundle": {
+        "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/provider-longcat/0.1.0/provider-longcat.bundle.js",
+        "sha256": "e6e795f0d287d03d615aeb71590a2ca77c06e1e0d08475a195fa646425f1f7d6"
+      }
     },
     {
       "id": "sub-agents",

@@ -31,5 +31,12 @@
       "leo-plugin-provider-longcat",
       {}
     ]
+  },
+  "release": {
+    "version": "0.1.0",
+    "bundle": {
+      "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/provider-longcat/0.1.0/provider-longcat.bundle.js",
+      "sha256": "e6e795f0d287d03d615aeb71590a2ca77c06e1e0d08475a195fa646425f1f7d6"
+    }
   }
 }

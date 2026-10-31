@@ -32,10 +32,10 @@
     ]
   },
   "release": {
-    "version": "0.2.0",
+    "version": "0.3.0",
     "bundle": {
-      "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/provider-deepseek/0.2.0/provider-deepseek.bundle.js",
-      "sha256": "ea557942d91949fbc026658f60533ef756a9c4d2286a5ada12c55d08a3bc79a1"
+      "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/provider-deepseek/0.3.0/provider-deepseek.bundle.js",
+      "sha256": "9f5defbe5c32934a27fb2237d7839d4d4a0c767b1ad377facc220dcbddd17dd7"
     }
   }
 }
