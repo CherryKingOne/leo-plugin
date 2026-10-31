@@ -1,6 +1,6 @@
 # 更新日志
 
-## 0.1.0 — 未发布（feat/provider-plugin 分支）
+## 0.1.0 — 2026-10-31
 
 首个版本：DeepSeek 子插件，注册驱动 `deepseek`（需要 leo-plugin-provider ≥ 0.1.0）。
 

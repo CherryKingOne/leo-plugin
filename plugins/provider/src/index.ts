@@ -48,7 +48,7 @@ export function createProviderPlugin(opts: ProviderPluginOptions = {}): PluginDe
     watch: [CONFIG_FILE_NAME, 'credentials.json'],
     async apply(ctx, raw) {
       if (ctx.maybe('providerKinds' as never)) {
-        throw new Error('provider: 当前 leo-agents 仍内置模型供应商（0.1.x），与本插件冲突。需要 leo-agents ≥ 0.2.0（开发中：feat/provider-plugin 分支）')
+        throw new Error('provider: 当前 leo-agents 仍内置模型供应商（0.1.x），与本插件冲突。需要 leo-agents ≥ 0.2.0（npm install -g github:CherryKingOne/leo-agents#feat/provider-plugin）')
       }
       const notify = (message: string, level: 'info' | 'warn' | 'error' = 'info') =>
         void ctx.emit('plugin/notice' as never, { plugin: 'provider', message, ...(level === 'info' ? {} : { level }) } as never)

@@ -11,7 +11,7 @@ Agent ⇄ llm 服务（底座，只有接口）
         └── openai-compatible   内置通用协议：没有子插件的兼容端点写 baseURL 即可
 ```
 
-> 需要 leo-agents ≥ 0.2.0（开发中：`feat/provider-plugin` 分支）。在 0.1.x 上加载会直接报错：0.1.x 自带的供应商会和本插件冲突。
+> 需要 leo-agents ≥ 0.2.0（目前在 leo-agents 的 `feat/provider-plugin` 分支，尚未合并 main）。在 0.1.x 上加载会直接报错：0.1.x 自带的供应商会和本插件冲突。
 
 ## 安装
 
@@ -24,15 +24,10 @@ leo models                         # ● deepseek  DeepSeek  默认模型 deepse
 
 装了子插件的厂商自动接入（`autoDetect`），不用改配置：有密钥即可用；没密钥时 `leo models` / `leo doctor` 会列出来并提示 `leo auth set <id>`。
 
-### 本地测试（未发布时）
+安装 leo-agents 0.2.0：
 
 ```bash
-# leo-agents：git checkout feat/provider-plugin && npm install && npm link
-# leo-plugin：git checkout feat/provider-plugin && npm install && npm run build -w plugins/provider -w plugins/provider-deepseek
-mkdir -p ~/.leo/plugins
-cp plugins/provider/dist/provider.bundle.js plugins/provider-deepseek/dist/provider-deepseek.bundle.js ~/.leo/plugins/
-cp plugins/provider/templates/provider.json ~/.leo/provider.json   # 可选
-leo auth set deepseek && leo models
+npm install -g github:CherryKingOne/leo-agents#feat/provider-plugin
 ```
 
 ## 配置 `provider.json`

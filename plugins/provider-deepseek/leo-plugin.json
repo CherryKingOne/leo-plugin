@@ -30,5 +30,12 @@
       "leo-plugin-provider-deepseek",
       {}
     ]
+  },
+  "release": {
+    "version": "0.1.0",
+    "bundle": {
+      "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/provider-deepseek/0.1.0/provider-deepseek.bundle.js",
+      "sha256": "780d6468de0457372dc40a9d3ab3936e6ad0c1671f2ce902ac0c5f7c581075d5"
+    }
   }
 }
