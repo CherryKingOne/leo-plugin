@@ -9,7 +9,8 @@
 | [mcp](plugins/mcp) | `leo-plugin-mcp` | 实验性 0.1.0 | 接入外部 MCP 服务器的工具（stdio / HTTP），兼容 MCP 2026-07-28（MCP 2.0）与旧版握手协议 |
 | [sub-agents](plugins/sub-agents) | `leo-plugin-sub-agents` | 实验性 0.1.0 | 把任务委派给独立上下文的子 Agent 执行并汇总结果 |
 | [gateway](plugins/gateway) | `leo-plugin-gateway` | 实验性 0.2.0（已发布 0.1.1） | 消息网关（注册层）：接入 Telegram / 飞书 / QQ，按会话路由给 Agent，授权配对、聊天内审批、主动投递，HTTP / WebSocket / OpenAI 兼容控制面（配合 `leo serve` 常驻运行） |
-| [gateway-qq](plugins/gateway-qq) | `leo-plugin-gateway-qq` | 实验性 0.2.0（未发布） | 网关的 QQ 子插件：QQ 官方机器人驱动，手机 QQ 扫码绑定，顶替网关内置 QQ 驱动 |
+| [gateway-qq](plugins/gateway-qq) | `leo-plugin-gateway-qq` | 实验性 0.2.2 | 网关的 QQ 子插件：QQ 官方机器人驱动，手机 QQ 扫码绑定，顶替网关内置 QQ 驱动 |
+| [gateway-feishu](plugins/gateway-feishu) | `leo-plugin-gateway-feishu` | 实验性 0.2.3 | 网关的飞书子插件：飞书扫码一键创建应用，扫码人自动成为管理员，顶替网关内置飞书驱动 |
 
 机器可读的索引见 [`registry.json`](registry.json)。
 
@@ -56,7 +57,8 @@ leo-plugin/
     ├── mcp/                  MCP 客户端插件
     ├── sub-agents/           子代理插件
     ├── gateway/              消息网关插件
-    └── gateway-qq/           网关的 QQ 子插件（扫码绑定）
+    ├── gateway-qq/           网关的 QQ 子插件（扫码绑定）
+    └── gateway-feishu/       网关的飞书子插件（扫码创建应用）
 ```
 
 ## 许可

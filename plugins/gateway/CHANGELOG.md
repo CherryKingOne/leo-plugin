@@ -1,5 +1,10 @@
 # 更新日志
 
+## 0.2.3 — 2026-10-31
+
+- `gateway.json` 模板：飞书默认声明 `"feishu": { "channel": "feishu" }`，由新的飞书子插件 gateway-feishu 扫码创建应用；`builtin` 默认改为 `["telegram"]`（QQ、飞书都由子插件提供），旧版 `appId` / `appSecret` 写法保留在注释里，并说明要在 `builtin` 加上对应渠道。
+- 缺飞书驱动时提示安装 `gateway-feishu`（或启用内置飞书 / 删除该账号）。
+
 ## 0.2.2 — 2026-10-31
 
 - 驱动可直接授权用户：`ChannelInit.authorize(userId, { admin?, name? })`，不经过配对码；授权持久化在网关状态里，`admin: true` 的用户与 `auth.admins` 等效（可 `/pair` 批准他人），`/unpair` / `revokeUser()` 可撤销。gateway-qq 用它把扫码绑定机器人的人设为管理员。

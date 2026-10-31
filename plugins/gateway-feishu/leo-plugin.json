@@ -1,0 +1,52 @@
+{
+  "$schema": "../../schemas/leo-plugin.schema.json",
+  "id": "gateway-feishu",
+  "package": "leo-plugin-gateway-feishu",
+  "version": "0.2.3",
+  "status": "experimental",
+  "description": "消息网关的飞书子插件：飞书 / Lark 机器人渠道驱动，支持飞书扫码一键创建应用、扫码人自动成为管理员，替代网关内置飞书驱动（需要 gateway ≥ 0.2.0，自动授权需要 ≥ 0.2.2）",
+  "keywords": [
+    "gateway",
+    "feishu",
+    "lark",
+    "qr",
+    "chatbot"
+  ],
+  "leo": ">=0.1.0",
+  "entry": "./dist/index.js",
+  "bundle": "./dist/gateway-feishu.bundle.js",
+  "inject": [
+    "gateway",
+    "tools"
+  ],
+  "provides": {
+    "tools": [
+      "gateway_feishu_bind"
+    ]
+  },
+  "permissions": [
+    "gateway.bind",
+    "net.connect"
+  ],
+  "install": {
+    "config": "leo-plugin-gateway-feishu",
+    "example": [
+      "leo-plugin-gateway-feishu",
+      {
+        "qrConsole": true
+      }
+    ]
+  },
+  "purge": {
+    "credentials": [
+      "gateway/feishu/"
+    ]
+  },
+  "release": {
+    "version": "0.2.3",
+    "bundle": {
+      "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/gateway-feishu/0.2.3/gateway-feishu.bundle.js",
+      "sha256": "db0929eff2a608f856678979914d9c4e3720edaa3c3f464c67f720a5232bfe41"
+    }
+  }
+}

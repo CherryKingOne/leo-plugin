@@ -111,6 +111,8 @@ export function accountNotifier(
 function waitingDriverMessage(s: AccountStatus): string {
   const name = s.account === s.channel ? s.account : `${s.account}（${s.channel}）`
   if (s.channel === 'qq')
-    return `${name} 等待 QQ 驱动：扫码绑定请安装 QQ 子插件（leo plugin add gateway-qq）；用 appId / appSecret 的旧版写法请在 gateway.json 的 builtin 里加上 "qq"`
+    return `${name} 等待 QQ 驱动：扫码绑定请安装 QQ 子插件（leo plugin add gateway-qq）；用 appId / appSecret 的旧版写法请在 gateway.json 的 builtin 里加上 "qq"；不用 QQ 就删掉 channels.qq`
+  if (s.channel === 'feishu')
+    return `${name} 等待飞书驱动：扫码创建应用请安装飞书子插件（leo plugin add gateway-feishu）；用 appId / appSecret 的旧版写法请在 gateway.json 的 builtin 里加上 "feishu"；不用飞书就删掉 channels.feishu`
   return `${name} 等待渠道驱动 "${s.channel}"：内置只有 telegram / feishu / qq（需在 builtin 中启用），其他渠道需要安装对应插件`
 }

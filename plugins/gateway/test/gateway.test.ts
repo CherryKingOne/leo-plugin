@@ -223,7 +223,7 @@ describe('启动提示', () => {
       'tg（telegram） 连接失败：401 Unauthorized',
       '已恢复 tg（telegram）',
       'x（slack） 等待渠道驱动 "slack"：内置只有 telegram / feishu / qq（需在 builtin 中启用），其他渠道需要安装对应插件',
-      'qq 等待 QQ 驱动：扫码绑定请安装 QQ 子插件（leo plugin add gateway-qq）；用 appId / appSecret 的旧版写法请在 gateway.json 的 builtin 里加上 "qq"',
+      'qq 等待 QQ 驱动：扫码绑定请安装 QQ 子插件（leo plugin add gateway-qq）；用 appId / appSecret 的旧版写法请在 gateway.json 的 builtin 里加上 "qq"；不用 QQ 就删掉 channels.qq',
     ])
     expect(out.map((o) => o[1])).toEqual([undefined, 'error', undefined, 'warn', 'warn'])
   })
