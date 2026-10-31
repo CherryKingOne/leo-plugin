@@ -11,7 +11,7 @@ Agent ⇄ llm 服务（底座，只有接口）
         └── openai-compatible   内置通用协议：没有子插件的兼容端点写 baseURL 即可
 ```
 
-> 需要 leo-agents ≥ 0.2.0；实时模型列表的展示、思考与推理强度调整需要 leo-agents ≥ 0.3.0（目前在 leo-agents 的 `feat/provider-plugin` 分支）。在 0.1.x 上加载会直接报错：0.1.x 自带的供应商会和本插件冲突。
+> 需要 leo-agents ≥ 0.2.0；实时模型列表的展示、思考与推理强度调整需要 leo-agents main 上的 0.2.0（2026-10-31 之后的提交）。在 0.1.x 上加载会直接报错：0.1.x 自带的供应商会和本插件冲突。
 
 ## 安装
 
@@ -69,7 +69,7 @@ npm install -g github:CherryKingOne/leo-agents#feat/provider-plugin
 
 **模型列表**：`leo models` / 交互 `/models` 会调用每个 provider 的 `GET {baseURL}/models`，显示真实模型 id 与接口给出的详情（认识 `name` / `display_name`、`context_window` / `context_length`、`max_output_tokens`、`input_modalities`、`effort.supported_levels` 等常见字段，驱动可用 `mapModel` 解析厂商扩展）；第一次调用模型时也会在后台获取一次，让上下文窗口按真实值计算。获取失败时退回内置列表并显示原因。
 
-**思考与推理强度**：宿主统一的 `reasoning`（`--thinking` / `--effort`、`/think` / `/effort`、配置 `agent.reasoning`，leo-agents ≥ 0.3.0）交给驱动的 `prepare` 翻译；通用端点只在明确指定强度时发送 OpenAI 的 `reasoning_effort`。
+**思考与推理强度**：宿主统一的 `reasoning`（`--thinking` / `--effort`、`/think` / `/effort`、配置 `agent.reasoning`，leo-agents 0.2.0（main））交给驱动的 `prepare` 翻译；通用端点只在明确指定强度时发送 OpenAI 的 `reasoning_effort`。
 
 **0.1.x 兼容**：写在 `.leo/config.json` 里的 `"providers"` 与 `"model"` 照常生效（优先级低于 provider.json）。0.1.x 内置的预设现在由子插件提供：例如 `"deepseek": {}` 需要装 `provider-deepseek`，没装时会提示安装，或给它写 `baseURL` 当作通用端点。
 

@@ -2,7 +2,7 @@
 
 ## 0.2.0 — 2026-10-31
 
-- 实时模型列表：`refreshModels()` 调用 `GET {baseURL}/models`，解析真实模型 id 与常见详情字段（展示名、上下文、最大输出、输入 / 输出模态、`effort` 档位、owned_by），内置信息里接口不给的字段（价格）沿用；第一次调用模型时后台获取一次。leo-agents ≥ 0.3.0 的 `leo models` / `/models` 用它展示
+- 实时模型列表：`refreshModels()` 调用 `GET {baseURL}/models`，解析真实模型 id 与常见详情字段（展示名、上下文、最大输出、输入 / 输出模态、`effort` 档位、owned_by），内置信息里接口不给的字段（价格）沿用；第一次调用模型时后台获取一次。leo-agents 0.2.0（main） 的 `leo models` / `/models` 用它展示
 - 新配置项 `fetchModels`（默认 true）；驱动新增 `fetchModels`、`mapModel`（解析厂商扩展字段）；`prepare` 多拿到该模型的元信息 `model`
 - 宿主统一的 `request.reasoning` 交给驱动翻译；通用端点只在明确指定强度时发送 `reasoning_effort`
 - 模型配置可写 `name`、`inputModalities`、`outputModalities`、`reasoning`；别名（`alias`）不出现在模型列表里

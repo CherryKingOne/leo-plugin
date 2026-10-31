@@ -26,7 +26,7 @@ leo models                   # 实时列出 DeepSeek 的真实模型及详情
 
 - **思考模式默认开启**：每个请求都明确发送 `thinking: { "type": "enabled" | "disabled" }`
 - **推理强度** `reasoning_effort`：`none` / `low` / `high` / `max`，默认 `high`；`none` 即关闭思考。兼容写法 `minimal` → `low`，`medium` / `xhigh` → `high`；模型不支持的档位取最接近的一档
-- 调整方式（需要 leo-agents ≥ 0.3.0），优先级从高到低：
+- 调整方式（需要 leo-agents 0.2.0（main）），优先级从高到低：
 
 | 方式 | 写法 |
 | --- | --- |

@@ -8,7 +8,7 @@
 - 修正内置模型信息：上下文 1048576、最大输出 393216（之前写成 1,000,000 / 384,000），补上展示名、输入模态与思考能力
 - 模型列表只展示官方模型；`deepseek-chat` / `deepseek-reasoner` / `deepseek-v4-flash` 等旧名字改为别名，请求时仍自动改写
 - 思考模式默认开启，每个请求明确发送 `thinking`；推理强度支持 `none` / `low` / `high` / `max` 与兼容写法（minimal → low，medium / xhigh → high），并按模型支持的档位取最接近的一档
-- 支持宿主统一的思考设置（leo-agents ≥ 0.3.0 的 `--thinking` / `--effort`、`/think` / `/effort`、`agent.reasoning`），优先于 provider.json
+- 支持宿主统一的思考设置（leo-agents 0.2.0（main） 的 `--thinking` / `--effort`、`/think` / `/effort`、`agent.reasoning`），优先于 provider.json
 - 关闭思考时不再回传历史 `reasoning_content`；思考模式下 `tool_choice` 为 required / 指定工具时自动关闭思考（明确开启思考时报错）
 - provider.json 的 `thinking` 也接受 true / false
 
