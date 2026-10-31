@@ -46,16 +46,16 @@
     ]
   },
   "release": {
-    "version": "0.3.0",
+    "version": "0.3.1",
     "bundle": {
-      "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/provider/0.3.0/provider.bundle.js",
-      "sha256": "5f06de697559050e1ec83f9364c360cd92cab965b7dccb246c655b614187f41e"
+      "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/provider/0.3.1/provider.bundle.js",
+      "sha256": "b0aadde29667213dd86c2e704db09c4a6e62ae34c39c5e9aa991c695b8ab4066"
     },
     "init": {
       "files": [
         {
           "path": "provider.json",
-          "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/provider/0.3.0/init/provider.json",
+          "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/provider/0.3.1/init/provider.json",
           "sha256": "25b594bdc54843991698cda0ef6a1874d4ef2e29ffd759310103d0341c8466ec",
           "description": "模型供应商配置：默认模型、各厂商的 baseURL / 模型 / 密钥引用；装了子插件并保存密钥的厂商会自动接入"
         }

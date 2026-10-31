@@ -89,19 +89,19 @@
       "id": "provider",
       "package": "leo-plugin-provider",
       "path": "plugins/provider",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "status": "experimental",
       "description": "模型供应商注册层：子插件（provider-deepseek 等）注册驱动，统一读配置、取密钥、接入 Agent；自带通用 OpenAI 兼容协议，任意兼容端点写 baseURL 即可（需要 leo ≥ 0.2.0）",
       "leo": ">=0.2.0",
       "bundle": {
-        "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/provider/0.3.0/provider.bundle.js",
-        "sha256": "5f06de697559050e1ec83f9364c360cd92cab965b7dccb246c655b614187f41e"
+        "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/provider/0.3.1/provider.bundle.js",
+        "sha256": "b0aadde29667213dd86c2e704db09c4a6e62ae34c39c5e9aa991c695b8ab4066"
       },
       "init": {
         "files": [
           {
             "path": "provider.json",
-            "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/provider/0.3.0/init/provider.json",
+            "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/provider/0.3.1/init/provider.json",
             "sha256": "25b594bdc54843991698cda0ef6a1874d4ef2e29ffd759310103d0341c8466ec",
             "description": "模型供应商配置：默认模型、各厂商的 baseURL / 模型 / 密钥引用；装了子插件并保存密钥的厂商会自动接入"
           }
@@ -141,7 +141,11 @@
       "version": "0.1.0",
       "status": "experimental",
       "description": "模型供应商注册层的讯飞星火子插件：Spark-X2.6 / X2.5 系列（讯飞自研），最长 1M 上下文，保存 APIKey 即自动接入，思考模式（enabled / disabled / auto）与工具调用（需要 provider ≥ 0.2.0）",
-      "leo": ">=0.2.0"
+      "leo": ">=0.2.0",
+      "bundle": {
+        "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/provider-spark/0.1.0/provider-spark.bundle.js",
+        "sha256": "0e1d102d99279773df6eac685c4e1dc3c721ca81725be4a90f710c609999ee39"
+      }
     },
     {
       "id": "sub-agents",

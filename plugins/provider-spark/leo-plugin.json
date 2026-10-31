@@ -5,12 +5,39 @@
   "version": "0.1.0",
   "status": "experimental",
   "description": "模型供应商注册层的讯飞星火子插件：Spark-X2.6 / X2.5 系列（讯飞自研），最长 1M 上下文，保存 APIKey 即自动接入，思考模式（enabled / disabled / auto）与工具调用（需要 provider ≥ 0.2.0）",
-  "keywords": ["provider", "spark", "xfyun", "iflytek", "llm"],
+  "keywords": [
+    "provider",
+    "spark",
+    "xfyun",
+    "iflytek",
+    "llm"
+  ],
   "leo": ">=0.2.0",
   "entry": "./dist/index.js",
   "bundle": "./dist/provider-spark.bundle.js",
-  "inject": ["providers"],
-  "provides": { "services": [], "tools": [], "events": [] },
-  "permissions": ["net.connect"],
-  "install": { "config": "leo-plugin-provider-spark", "example": ["leo-plugin-provider-spark", {}] }
+  "inject": [
+    "providers"
+  ],
+  "provides": {
+    "services": [],
+    "tools": [],
+    "events": []
+  },
+  "permissions": [
+    "net.connect"
+  ],
+  "install": {
+    "config": "leo-plugin-provider-spark",
+    "example": [
+      "leo-plugin-provider-spark",
+      {}
+    ]
+  },
+  "release": {
+    "version": "0.1.0",
+    "bundle": {
+      "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/provider-spark/0.1.0/provider-spark.bundle.js",
+      "sha256": "0e1d102d99279773df6eac685c4e1dc3c721ca81725be4a90f710c609999ee39"
+    }
+  }
 }
