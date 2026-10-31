@@ -2,6 +2,8 @@
 
 ## 0.1.0
 
+- `--init` 配置文件模板：示例子 Agent `agents/explorer.md`（`leo plugin add sub-agents --init`）（模板随 0.1.0 补充发布，bundle 未变）
+
 首个发布版本（`leo plugin add sub-agents`）。
 
 - `task` 工具、`subAgents` 服务、`sub-agents/started` / `sub-agents/finished` 事件

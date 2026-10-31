@@ -30,6 +30,10 @@ for (const id of ids) {
   if (m.release?.bundle) {
     if (m.release.version !== m.version) throw new Error(`plugins/${id}: release.version (${m.release.version}) 与 version (${m.version}) 不一致，请先运行 scripts/release.mjs ${id}`)
     entry.bundle = { url: m.release.bundle.url, sha256: m.release.bundle.sha256 }
+    const declared = (m.init?.files ?? []).map((f) => f.path).join('\n')
+    const released = (m.release.init?.files ?? []).map((f) => f.path).join('\n')
+    if (declared !== released) throw new Error(`plugins/${id}: init.files 与已发布的模板不一致，请运行 scripts/release.mjs ${id}`)
+    if (m.release.init?.files?.length) entry.init = { files: m.release.init.files }
   }
   plugins.push(entry)
 }

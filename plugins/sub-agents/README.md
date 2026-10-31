@@ -7,12 +7,16 @@
 ## 安装
 
 ```bash
-leo plugin add sub-agents        # 装到当前项目；-g 装到 ~/.leo，所有项目可用
+leo plugin add sub-agents --init     # 全局安装，并生成示例子 Agent ~/.leo/agents/explorer.md
+leo plugin add sub-agents --project  # 只装到当前项目 .leo/plugins/
 ```
 
-要改配置，在 `.leo/config.json` 里显式引用安装好的文件：
+要改配置，在 `config.json` 里显式引用安装好的文件：
 
 ```jsonc
+// ~/.leo/config.json（全局安装，路径相对 ~/.leo）
+{ "plugins": [["./plugins/sub-agents.bundle.js", { "maxConcurrent": 2 }]] }
+// .leo/config.json（--project 安装）
 { "plugins": [["./.leo/plugins/sub-agents.bundle.js", { "maxConcurrent": 2 }]] }
 ```
 

@@ -71,3 +71,14 @@ describe('从 .leo/agents 与 ~/.leo/agents 加载', () => {
     await app.dispose()
   })
 })
+
+describe('--init 模板', () => {
+  it('templates/agents/explorer.md 是合法的子 Agent 定义', async () => {
+    const { readFile } = await import('node:fs/promises')
+    const text = await readFile(new URL('../templates/agents/explorer.md', import.meta.url), 'utf8')
+    const { name, profile } = parseAgentMarkdown(text, 'explorer')
+    expect(name).toBe('explorer')
+    expect(profile.tools).toEqual(['read_file', 'list_dir', 'grep'])
+    expect(profile.systemPrompt).not.toContain('leo plugin add')
+  })
+})

@@ -204,3 +204,11 @@ describe('工具函数', () => {
     expect(resolveValue('plain', env)).toBe('plain')
   })
 })
+
+describe('--init 模板', () => {
+  it('templates/mcp-servers.json 能被读取，默认不启用任何服务器', async () => {
+    const { readServerFile } = await import('../src/files.js')
+    const servers = await readServerFile(new URL('../templates/mcp-servers.json', import.meta.url).pathname)
+    expect(servers).toEqual({})
+  })
+})

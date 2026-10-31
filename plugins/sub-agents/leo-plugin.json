@@ -41,11 +41,30 @@
       }
     ]
   },
+  "init": {
+    "files": [
+      {
+        "path": "agents/explorer.md",
+        "template": "templates/agents/explorer.md",
+        "description": "示例子 Agent：只读调研（explorer），可复制改成其他角色"
+      }
+    ]
+  },
   "release": {
     "version": "0.1.0",
     "bundle": {
       "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/sub-agents/0.1.0/sub-agents.bundle.js",
       "sha256": "7cb2ea40b8f1ae34607a34ce384fef23fb97305a9f356d3121b5583a1e6ee199"
+    },
+    "init": {
+      "files": [
+        {
+          "path": "agents/explorer.md",
+          "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/sub-agents/0.1.0/init/agents/explorer.md",
+          "sha256": "4bdec2a684f3ba19b25973ed4710ddf5d3d9da70aa6c9c685a524eeb2a3d6fe9",
+          "description": "示例子 Agent：只读调研（explorer），可复制改成其他角色"
+        }
+      ]
     }
   }
 }

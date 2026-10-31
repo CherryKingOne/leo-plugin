@@ -69,6 +69,44 @@
               }
             },
             "additionalProperties": false
+          },
+          "init": {
+            "type": "object",
+            "description": "`leo plugin add --init` 下载的配置文件模板",
+            "required": [
+              "files"
+            ],
+            "properties": {
+              "files": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "path"
+                  ],
+                  "properties": {
+                    "path": {
+                      "type": "string",
+                      "description": "相对 .leo/ 的目标路径"
+                    },
+                    "url": {
+                      "type": "string",
+                      "description": "模板地址，可相对 registry.json"
+                    },
+                    "sha256": {
+                      "type": "string"
+                    },
+                    "content": {
+                      "type": "string",
+                      "description": "内联模板内容（与 url 二选一）"
+                    },
+                    "description": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }

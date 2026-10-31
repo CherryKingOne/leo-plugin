@@ -23,6 +23,7 @@
   },
   "files": [
     "dist",
+    "templates",
     "leo-plugin.json",
     "README.md",
     "CHANGELOG.md"

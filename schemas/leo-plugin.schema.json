@@ -146,6 +146,71 @@
               "pattern": "^[a-f0-9]{64}$"
             }
           }
+        },
+        "init": {
+          "type": "object",
+          "description": "由 scripts/release.mjs 写入：已发布模板的地址与 sha256",
+          "properties": {
+            "files": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "path",
+                  "url",
+                  "sha256"
+                ],
+                "properties": {
+                  "path": {
+                    "type": "string"
+                  },
+                  "url": {
+                    "type": "string"
+                  },
+                  "sha256": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "init": {
+      "type": "object",
+      "description": "`leo plugin add <id> --init` 时写进 .leo/（全局 ~/.leo 或项目 .leo）的配置文件模板",
+      "required": [
+        "files"
+      ],
+      "properties": {
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "path",
+              "template"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "path": {
+                "type": "string",
+                "description": "相对 .leo/ 的目标路径，如 mcp-servers.json、agents/explorer.md；不能越出 .leo/"
+              },
+              "template": {
+                "type": "string",
+                "description": "插件目录内的模板文件，如 templates/mcp-servers.json（npm 包需在 files 中包含）"
+              },
+              "description": {
+                "type": "string",
+                "description": "安装时打印的说明"
+              }
+            }
+          }
         }
       }
     }

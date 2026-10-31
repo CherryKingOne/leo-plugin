@@ -7,15 +7,16 @@
 ## 安装
 
 ```bash
-leo plugin add mcp          # 装到当前项目 .leo/plugins/
-leo plugin add mcp -g       # 装到 ~/.leo/plugins/，所有项目可用
+leo plugin add mcp --init             # 全局安装，并生成 ~/.leo/mcp-servers.json（所有项目共用）
+leo plugin add mcp --project --init   # 只装到当前项目，并生成 .leo/mcp-servers.json
+leo plugin init mcp [--project]       # 已经装好时补生成配置文件
 ```
 
 其他方式（npm、复制单文件、代码中加载）见仓库的 [docs/install.md](../../docs/install.md)。
 
 ## 配置 MCP 服务器
 
-新建 `.leo/mcp-servers.json`（项目级）或 `~/.leo/mcp-servers.json`（用户级）：
+编辑 `--init` 生成的 `~/.leo/mcp-servers.json`（全局）或 `.leo/mcp-servers.json`（项目），没用 `--init` 时手动新建。两处都有时合并，同名服务器项目覆盖全局：
 
 ```jsonc
 {
