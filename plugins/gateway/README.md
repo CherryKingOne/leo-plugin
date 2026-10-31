@@ -1,6 +1,6 @@
 # leo-plugin-gateway
 
-> 实验性 0.1.1
+> 实验性 0.2.0
 
 ## 用途
 
@@ -21,6 +21,46 @@ Telegram ─┐                                   ┌─ HTTP / SSE  /v1/chat、
 QQ ───────┘   授权 → 指令 → 会话路由 → 车道      └─ OpenAI 兼容 /v1/chat/completions
                          ↓
                  leo Agent（工具、审批、会话存储）
+```
+
+### 注册层架构（0.2.0）
+
+网关是**注册层**：授权、会话、路由、审批、控制面都归网关；聊天平台只是**驱动**（`ChannelDriver`），注册进网关后由网关管理账号的启动、重启、状态与出站分段。
+
+```text
+                 ┌──────────── leo-plugin-gateway（注册层）────────────┐
+ 内置驱动 ───────→│ registerChannel  →  账号生命周期 / 状态 / 分段发送    │
+ telegram / feishu│                     授权 · 指令 · 会话路由 · 车道     │
+ / qq（旧版）      │                     聊天内审批 · 控制面              │
+ 插件驱动 ───────→│                                                    │
+ leo-plugin-gateway-qq（qq，扫码绑定）……                                 │
+                 └────────────────────────────────────────────────────┘
+```
+
+- 内置驱动：`telegram`、`feishu`、`qq`（0.1.x 的 QQ 驱动，保留为旧版），由 `gateway.json` 的 `builtin` 决定注册哪些。
+- 插件驱动：其他插件在 `apply` 里 `ctx.get('gateway').registerChannel(driver)` 注册（`inject: ['gateway']`，网关先加载、后加载都行，网关热重载后自动重新注册）。
+- **同 id 二选一**：插件驱动与某个内置驱动 id 相同时，插件驱动生效、内置驱动停用，该渠道的账号自动改由插件驱动重启，并提示一行“渠道 qq 改用插件提供的驱动……”；插件卸载后自动恢复内置驱动。两个插件注册同一 id 时后者报错。
+- `enabled: false` 时网关仍提供一个空的 `gateway` 服务（不连平台、不开端口），依赖它的渠道插件不会卡住 leo 启动。
+
+### QQ：内置旧版 vs 子插件
+
+| | 内置 `qq`（旧版，0.1.x） | [leo-plugin-gateway-qq](../gateway-qq/)（0.2.0） |
+| --- | --- | --- |
+| 凭证 | 必须配置 `appId` / `appSecret` | 同左，**或手机 QQ 扫码绑定**（不填凭证即可） |
+| 收消息 | WebSocket / webhook | 同左（代码移植自内置驱动） |
+| 启用方式 | 默认（`builtin` 含 `"qq"`） | 安装子插件；建议同时从 `builtin` 去掉 `"qq"` |
+
+两者只能有一个生效，账号配置（`"channel": "qq"`）不用改：
+
+```jsonc
+// (a) 旧版：内置 QQ 驱动
+{ "channels": { "qq": { "channel": "qq", "appId": "102xxxxx", "appSecret": "$QQ_BOT_SECRET" } } }
+
+// (b) 子插件：leo plugin add gateway-qq（或 npm 安装），扫码绑定
+{
+  "builtin": ["telegram", "feishu"],          // 可选：不注册内置 qq，避免子插件加载前内置驱动先试连
+  "channels": { "qq": { "channel": "qq" } }  // 不填 appId / appSecret → 启动时给出二维码链接
+}
 ```
 
 ## 安装与运行
@@ -141,7 +181,7 @@ webhook 模式的回调地址是 `<公网地址><server.hooksPath>/<账号>`，�
 | `server.hooksPath` | `/hooks` | 平台 webhook 回调路径前缀 |
 | `server.corsOrigins` | `[]` | 允许浏览器跨域访问的来源 |
 
-其他：`enabled`（总开关）、`builtin`（要注册的内置平台）、`tools`（是否注册网关工具）、`stateDir`、`loadConfigFiles`。
+其他：`enabled`（总开关）、`builtin`（要注册的内置平台，默认三个都注册；同 id 的插件驱动会顶替内置驱动）、`tools`（是否注册网关工具）、`stateDir`、`loadConfigFiles`。
 
 ## 聊天里的用法
 
@@ -165,8 +205,8 @@ webhook 模式的回调地址是 `<公网地址><server.hooksPath>/<账号>`，�
 | --- | --- | --- |
 | GET | `/health` | 存活检查 |
 | GET | `/v1/status` | 账号状态、会话数、配对数 |
-| GET | `/v1/channels` | 平台驱动与账号 |
-| POST | `/v1/channels/{account}/restart` | 重启账号 |
+| GET | `/v1/channels` | 平台驱动（`builtin`、`overridesBuiltin`）与账号（`state`，等待绑定时带 `bindUrl`） |
+| POST | `/v1/channels/{account}/restart` | 重启账号；body `{"rebind": true}` 要求驱动重新绑定（如 QQ 重新扫码）。账号进入 `waiting_bind` 时立即返回绑定链接 |
 | GET | `/v1/sessions` | 会话列表（含运行中、排队、待审批） |
 | GET | `/v1/sessions/{key}/messages` | 会话历史 |
 | POST | `/v1/sessions/{key}/reset` \| `abort` \| `approve` \| `deny` | 新会话 / 停止 / 审批 |
@@ -197,7 +237,7 @@ JSON 文本帧，第一帧必须是 `connect`：
 ← {"type":"event","event":"chat","payload":{"runId":"run-...","type":"result","text":"你好！",...}}
 ```
 
-方法：`health` `status` `channels.list` `channels.restart` `sessions.list` `sessions.history` `sessions.reset` `sessions.abort` `approval.resolve` `chat.send` `chat.abort` `send` `pairing.list` `pairing.approve` `pairing.revoke` `subscribe` `unsubscribe`。
+方法：`health` `status` `channels.list` `channels.restart`（`{account, rebind?}`） `sessions.list` `sessions.history` `sessions.reset` `sessions.abort` `approval.resolve` `chat.send` `chat.abort` `send` `pairing.list` `pairing.approve` `pairing.revoke` `subscribe` `unsubscribe`。
 `subscribe` 后会收到 `gateway` 事件（平台消息、任务开始 / 结束、发送、账号状态、配对）。
 
 ## 工具
@@ -212,7 +252,8 @@ JSON 文本帧，第一帧必须是 `connect`：
 
 ```ts
 const gw = ctx.get('gateway')
-gw.registerChannel(myDriver)                 // 接入新平台（ChannelDriver，见 src/types.ts）
+gw.registerChannel(myDriver)                 // 接入新平台（ChannelDriver，见 src/types.ts）；同 id 顶替内置驱动
+await gw.restartAccount('qq', { rebind: true }) // 要求驱动重新绑定
 await gw.send('telegram:home', '每日简报…')  // 主动投递
 const r = await gw.chat({ sessionKey: 'cron', text: '总结今天的邮件' })
 ```
@@ -228,13 +269,24 @@ const r = await gw.chat({ sessionKey: 'cron', text: '总结今天的邮件' })
 
 ## 新增平台
 
-实现一个 `ChannelDriver`（zod 配置 schema + `create(init)` 返回 `{ start, send, stop }`），放进 `src/channels/<id>/` 并登记到 `BUILTIN_DRIVERS` 与 `BUILTIN_CHANNELS`；或者在你自己的插件里 `ctx.get('gateway').registerChannel(driver)`。驱动只负责平台协议，授权、路由、排队、分段、重试、审批都由网关完成。
+推荐写成独立的渠道插件：`inject: ['gateway']`，在 `apply` 里 `await ctx.effect(() => ctx.get('gateway').registerChannel(driver))`（参考 [gateway-qq](../gateway-qq/)）。驱动是 zod 配置 schema + `create(init)` 返回 `{ start, send, stop }`；只负责平台协议，授权、路由、排队、分段、重试、审批都由网关完成。
+
+`create(init)` 拿到的 `init`（0.2.0 新增的部分）：
+
+| 字段 | 说明 |
+| --- | --- |
+| `report({ state: 'waiting_bind', bindUrl, detail })` / `report()` | 启动过程中等待用户绑定（扫码）：账号进入 `waiting_bind`，链接出现在状态、`GET /v1/channels`、启动提示里；`report()` 回到 `starting` |
+| `notify(message, level?)` | 给用户的一行提示（自动带账号名） |
+| `rebind` | 运维要求重新绑定，应忽略已保存的凭据 |
+| `signal` | 账号停止、重启、驱动被顶替、插件卸载时 abort；等待扫码这类长时间启动必须监听它 |
+
+也可以作为内置驱动放进 `src/channels/<id>/` 并登记到 `BUILTIN_DRIVERS` 与 `BUILTIN_CHANNELS`。
 
 ## 安全
 
 - 默认拒绝所有人；默认只监听 127.0.0.1；对外监听必须设置令牌。
 - 网关会话的副作用工具按 leo 的审批模式处理：`ask` 时在聊天里问，`auto`（或 `leo serve -y`）直接执行，`deny` 一律拒绝。
-- 聊天内容视为不可信输入写进系统提示词说明；聊天里的 Agent 不能自己批准配对。
+- 聊天内容视为不可信输入写进系统提示词说明；聊天里的 Agent 不能自己批准配对。渠道插件可以用 `gateway.sessionOfAgent(agentId)` 判断调用者是不是聊天里的 Agent（gateway-qq 用它禁止聊天里发起重新绑定）。
 - 日志不记录消息正文与密钥；状态文件权限 600。
 - **这不是沙箱**：给外部用户开放工具前，请在容器里运行 leo。
 

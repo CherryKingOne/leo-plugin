@@ -111,11 +111,34 @@ export interface ChannelInit<O> {
   WebSocket: typeof WebSocket
   /** 不可恢复的错误（机器人被封禁、凭证失效）时调用：账号进入 failed 并释放资源。可恢复的断线应自行重连 */
   fail(error: string): void
+  /**
+   * 启动过程中（create / start 返回之前）汇报中间状态，例如等待用户扫码绑定：
+   * `report({ state: 'waiting_bind', bindUrl })` 让账号进入 `waiting_bind` 并在状态、`GET /v1/channels`、启动提示里带上 bindUrl；
+   * `report()` 回到 `starting`。账号已运行或已停止时调用无效。（0.2.0 起）
+   */
+  report(update?: ChannelReport): void
+  /** 给用户看的一行提示（宿主 `plugin/notice`，自动带上账号名）。不要写密钥（0.2.0 起） */
+  notify(message: string, level?: 'info' | 'warn' | 'error'): void
+  /**
+   * 运维要求重新绑定（`restartAccount(id, { rebind: true })`、`POST /v1/channels/<account>/restart {"rebind":true}`）。
+   * 支持交互式绑定的驱动应忽略已保存的凭据、重新走绑定流程；其他驱动忽略即可（0.2.0 起）
+   */
+  rebind: boolean
   /** 账号停止时 abort：长轮询、重连循环必须监听它 */
   signal: AbortSignal
   logger: Logger
   /** 网关插件作用域的 Context（一般不需要） */
   ctx: Context<any>
+}
+
+/** 驱动在启动过程中汇报的中间状态（0.2.0 起） */
+export interface ChannelReport {
+  /** 等待用户完成绑定（如手机 QQ 扫码）；绑定完成后驱动继续启动 */
+  state: 'waiting_bind'
+  /** 绑定链接 / 二维码内容，展示给用户 */
+  bindUrl?: string
+  /** 一句话说明，如“用手机 QQ 扫码” */
+  detail?: string
 }
 
 /** 一个运行中的机器人连接 */
@@ -146,12 +169,17 @@ export interface ChannelDriver<O = any> {
   create(init: ChannelInit<O>): ChannelConnection | Promise<ChannelConnection>
 }
 
-export type AccountState = 'waiting_driver' | 'starting' | 'running' | 'stopped' | 'failed' | 'disabled'
+/** `waiting_bind`：驱动在等待用户完成绑定（如扫码），见 {@link ChannelReport}（0.2.0 起） */
+export type AccountState = 'waiting_driver' | 'starting' | 'waiting_bind' | 'running' | 'stopped' | 'failed' | 'disabled'
 
 export interface AccountStatus {
   account: string
   channel: string
   state: AccountState
+  /** waiting_bind 时的绑定链接 / 二维码内容 */
+  bindUrl?: string
+  /** waiting_bind 时的说明 */
+  detail?: string
   webhookPath?: string
   error?: string
   received: number
@@ -164,7 +192,10 @@ export interface ChannelInfo {
   description?: string
   receive?: ChannelDriver['receive']
   textLimit?: number
+  /** 当前生效的是网关内置驱动（false = 其他插件注册的驱动） */
   builtin: boolean
+  /** 插件注册的驱动顶替了同 id 的内置驱动（如 leo-plugin-gateway-qq 顶替内置 qq）（0.2.0 起） */
+  overridesBuiltin?: boolean
 }
 
 // ———————————————————————————————————————————— 网关 ————————————————————————————————————————————
@@ -224,11 +255,19 @@ export type DeliveryTarget = string | { account: string; chatId: string; chatTyp
 /** `ctx.get('gateway')` */
 export interface GatewayService {
   // —— 渠道 ——
-  /** 注册一个平台驱动（内置的 telegram / feishu / qq 由网关自己注册）。返回撤销函数 */
+  /**
+   * 注册一个平台驱动（内置的 telegram / feishu / qq 由网关自己注册）。返回撤销函数。
+   * id 与某个内置驱动相同时，插件驱动顶替内置驱动（该渠道的账号改由插件驱动重启）；撤销后恢复内置驱动。
+   * 两个插件注册同一 id 时后者报错。
+   */
   registerChannel(driver: ChannelDriver): Disposer
   channels(): ChannelInfo[]
   accounts(): AccountStatus[]
-  restartAccount(account: string): Promise<AccountStatus>
+  /**
+   * 重启账号。`rebind: true` 要求驱动重新绑定（见 {@link ChannelInit.rebind}）。
+   * 账号进入 waiting_bind 时立即返回（带 bindUrl），不等用户扫码
+   */
+  restartAccount(account: string, opts?: { rebind?: boolean }): Promise<AccountStatus>
 
   // —— 会话 ——
   sessions(): GatewaySessionInfo[]
@@ -251,6 +290,12 @@ export interface GatewayService {
   approvePairing(code: string): PairingRequest | undefined
   revokeUser(user: string): boolean
   pairedUsers(): string[]
+
+  /**
+   * 该 Agent（或它的子 Agent）是否在为某个聊天会话工作：返回会话键，否则 undefined。
+   * 渠道插件用它在 tools/guard 里禁止聊天里的 Agent 调用只给运维用的工具（0.2.0 起）
+   */
+  sessionOfAgent(agentId: string): string | undefined
 
   /** 控制面监听地址（未启动时 undefined） */
   address(): { host: string; port: number } | undefined

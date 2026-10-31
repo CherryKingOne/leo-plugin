@@ -1,5 +1,18 @@
 # 更新日志
 
+## 0.2.0 — 2026-10-31（未发布）
+
+网关改为**注册层**：授权、会话、路由、审批、控制面归网关，聊天平台是注册进来的驱动。
+
+- 插件驱动顶替内置驱动：其他插件 `registerChannel()` 的驱动与内置驱动同 id 时，插件驱动生效、内置驱动停用，该渠道账号自动改由插件驱动重启；插件卸载后自动恢复内置驱动。注册顺序任意（渠道插件 `inject: ['gateway']` 即可），网关热重载后插件驱动自动重新注册。两个插件注册同一 id 时后者报错。
+- QQ 二选一：内置 `qq` 驱动保留为旧版；新的 [leo-plugin-gateway-qq](../gateway-qq/) 子插件（支持手机 QQ 扫码绑定）安装后自动顶替它，也可以在 `builtin` 里去掉 `"qq"` 只用子插件。账号配置不用改。
+- 等待绑定：新账号状态 `waiting_bind`，驱动通过 `init.report()` 汇报绑定链接（`bindUrl`），出现在账号状态、`GET /v1/channels`、`gateway/status` 事件与启动提示里；二维码刷新后再提示一次。
+- 驱动可用 `init.notify()` 发提示、读 `init.rebind`；`restartAccount(id, { rebind: true })` / `POST /v1/channels/<账号>/restart {"rebind":true}` / WebSocket `channels.restart` 要求重新绑定，账号进入 `waiting_bind` 时立即返回。
+- 重启、驱动切换、卸载会立即取消账号正在进行的启动（如等待扫码），不再排在它后面卡住。
+- `gateway.sessionOfAgent(agentId)`：判断调用者是不是聊天会话里的 Agent，供渠道插件在 `tools/guard` 里保护运维工具。
+- `GET /v1/channels` 的驱动多了 `overridesBuiltin`；`builtin` 表示当前生效的是不是内置驱动。
+- `enabled: false` 时仍提供空的 `gateway` 服务（不连平台、不开端口），依赖它的渠道插件不会卡住 leo 启动。
+
 ## 0.1.1 — 2026-10-31
 
 - 启动时显示控制面地址：`[gateway] 控制面 http://127.0.0.1:18790`，以及 HTTP / WebSocket / OpenAI 兼容接口地址和是否需要令牌；监听 `0.0.0.0` 时列出本机各网卡地址。

@@ -167,13 +167,17 @@ describe('基础', () => {
     await leo.dispose()
   })
 
-  it('非法配置在加载时报错；enabled=false 时不监听端口', async () => {
+  it('非法配置在加载时报错；enabled=false 时不监听端口、只提供空注册层', async () => {
     const leo = await createLeo({ logLevel: 'silent' })
     await expect(leo.plugin(plugin, { sessions: { busy: 'nope' } } as never)).rejects.toThrow(/invalid configuration/)
     await leo.dispose()
     port++
     const leo2 = await createLeo({ logLevel: 'silent', plugins: [[plugin, { enabled: false, server: { port } }]] })
-    expect(leo2.ctx.has('gateway')).toBe(false)
+    // 0.2.0：停用时仍提供空的注册层，依赖 gateway 的渠道插件不会卡住宿主
+    const off = leo2.ctx.get('gateway')
+    expect(off.channels()).toEqual([])
+    expect(typeof off.registerChannel(fakeDriver().driver)).toBe('function')
+    await expect(off.restartAccount('x')).rejects.toThrow(/disabled/)
     await expect(fetch(`http://127.0.0.1:${port}/health`)).rejects.toThrow()
     await leo2.dispose()
   })

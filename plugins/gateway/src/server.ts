@@ -192,7 +192,10 @@ export class GatewayServer {
 
     if (method === 'GET' && path === '/v1/status') return json(res, 200, this.status())
     if (method === 'GET' && path === '/v1/channels') return json(res, 200, { channels: s.channels(), accounts: s.accounts() })
-    if (method === 'POST' && /^\/v1\/channels\/[^/]+\/restart$/.test(path)) return json(res, 200, await s.restartAccount(decodeURIComponent(path.split('/')[3]!)))
+    if (method === 'POST' && /^\/v1\/channels\/[^/]+\/restart$/.test(path)) {
+      const b = await this.body(req)
+      return json(res, 200, await s.restartAccount(decodeURIComponent(path.split('/')[3]!), b.rebind === true ? { rebind: true } : {}))
+    }
     if (method === 'GET' && path === '/v1/sessions') return json(res, 200, { sessions: s.sessions() })
     if (sessionMatch) {
       const key = decodeURIComponent(sessionMatch[1]!)
@@ -362,7 +365,7 @@ export class GatewayServer {
         case 'channels.list':
           return reply({ channels: s.channels(), accounts: s.accounts() })
         case 'channels.restart':
-          return reply(await s.restartAccount(String(p.account)))
+          return reply(await s.restartAccount(String(p.account), p.rebind === true ? { rebind: true } : {}))
         case 'sessions.list':
           return reply({ sessions: s.sessions() })
         case 'sessions.history':
