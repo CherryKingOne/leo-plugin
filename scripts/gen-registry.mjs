@@ -28,7 +28,11 @@ for (const id of ids) {
     leo: m.leo,
   }
   if (m.release?.bundle) {
-    if (m.release.version !== m.version) throw new Error(`plugins/${id}: release.version (${m.release.version}) 与 version (${m.version}) 不一致，请先运行 scripts/release.mjs ${id}`)
+    // 已提升版本但还没发布（开发分支上）：索引继续指向最近一次发布的版本，发布后再更新
+    if (m.release.version !== m.version) {
+      console.warn(`plugins/${id}: version ${m.version} 尚未发布，registry 仍指向已发布的 ${m.release.version}（发布请运行 scripts/release.mjs ${id}）`)
+      entry.version = m.release.version
+    }
     entry.bundle = { url: m.release.bundle.url, sha256: m.release.bundle.sha256 }
     const declared = (m.init?.files ?? []).map((f) => f.path).join('\n')
     const released = (m.release.init?.files ?? []).map((f) => f.path).join('\n')
