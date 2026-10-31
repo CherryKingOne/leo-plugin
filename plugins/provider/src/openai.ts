@@ -33,6 +33,8 @@ export interface OpenAICompatibleOptions {
   maxTokensField?: 'max_tokens' | 'max_completion_tokens'
   /** 是否把历史中的 reasoning 以 reasoning_content 回传（部分 DeepSeek 思考+工具模式需要） */
   sendReasoning?: boolean
+  /** 厂商业务错误码 → 错误类别，优先于按 HTTP 状态 / 文本的判断 */
+  errorCodes?: Record<string, 'invalid_request' | 'auth' | 'rate_limit' | 'overloaded' | 'context_overflow'>
   /** 自定义 fetch（测试或代理用） */
   fetch?: typeof fetch
   /** 显示名（leo models / doctor） */
@@ -210,7 +212,9 @@ export class OpenAICompatibleProvider implements LlmProvider {
           } catch {
             continue
           }
-          if (chunk.error) throw mapErrorPayload(chunk.error)
+          if (chunk.error) throw mapErrorPayload(chunk.error, this.opts.errorCodes)
+          // 部分厂商（讯飞星火等）在流里用顶层 { code, message } 报业务错误，code 0 表示成功
+          if (typeof chunk.code === 'number' && chunk.code !== 0) throw mapErrorPayload({ code: chunk.code, ...(chunk.message ? { message: chunk.message } : {}) }, this.opts.errorCodes)
           if (chunk.usage) yield { type: 'usage', usage: mapUsage(chunk.usage) }
           for (const choice of chunk.choices ?? []) {
             const d = choice.delta ?? {}
@@ -328,13 +332,16 @@ export class OpenAICompatibleProvider implements LlmProvider {
     let message = text.slice(0, 2000) || res.statusText
     let code: string | undefined
     try {
-      const j = JSON.parse(text) as { error?: { message?: string; code?: string; type?: string } }
+      const j = JSON.parse(text) as { error?: { message?: string; code?: string; type?: string }; code?: string | number; message?: string }
       if (j.error?.message) message = j.error.message
-      code = j.error?.code ?? j.error?.type
+      else if (typeof j.message === 'string' && j.message) message = j.code !== undefined ? `${j.message}（${j.code}）` : j.message
+      code = j.error?.code ?? j.error?.type ?? (j.code !== undefined ? String(j.code) : undefined)
     } catch {}
     const status = res.status
     const retryAfterMs = parseRetryAfter(res.headers.get('retry-after'))
     const base = { status, ...(retryAfterMs !== undefined ? { retryAfterMs } : {}), details: { body: text.slice(0, 2000) } }
+    const mapped = code !== undefined ? this.opts.errorCodes?.[code] : undefined
+    if (mapped) return LeoErrorCtor(mapped, message, base)
     if (status === 429) {
       // 余额/配额耗尽不是暂时性错误，不应重试
       if (code === 'insufficient_quota') return LeoErrorCtor('auth', message, base)
@@ -375,7 +382,7 @@ function userContent(blocks: ContentBlock[]): unknown {
 function isContextOverflow(message: string, code?: string): boolean {
   return (
     code === 'context_length_exceeded' ||
-    /context[_ ]length|maximum context|context window|too many tokens|prompt is too long|reduce the length/i.test(message)
+    /context[_ ]length|maximum context|context window|too many tokens|prompt is too long|reduce the length|序列过长|上下文.{0,6}(超|过)长|超出.{0,4}上下文/i.test(message)
   )
 }
 
@@ -393,8 +400,10 @@ function mapFinish(r: string): FinishReason {
   return 'other'
 }
 
-function mapErrorPayload(e: { message?: string; code?: string | number; type?: string }): LeoError {
+function mapErrorPayload(e: { message?: string; code?: string | number; type?: string }, codes?: Record<string, 'invalid_request' | 'auth' | 'rate_limit' | 'overloaded' | 'context_overflow'>): LeoError {
   const msg = e.message ?? 'Upstream stream error'
+  const mapped = e.code !== undefined ? codes?.[String(e.code)] : undefined
+  if (mapped) return LeoErrorCtor(mapped, msg, { details: { code: e.code } })
   if (isContextOverflow(msg, String(e.code ?? ''))) return LeoErrorCtor('context_overflow', msg)
   if (e.code === 429 || e.type === 'rate_limit_error') return LeoErrorCtor('rate_limit', msg)
   return LeoErrorCtor('overloaded', msg)
@@ -412,6 +421,8 @@ interface ChatChunk {
   }[]
   usage?: RawUsage
   error?: { message?: string; code?: string | number; type?: string }
+  code?: number
+  message?: string
 }
 
 interface RawUsage {

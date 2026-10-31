@@ -73,8 +73,43 @@ describe('OpenAICompatibleProvider', () => {
     expect((await run(make(503, { error: { message: 'busy' } }))).code).toBe('overloaded')
     expect((await run(make(400, { error: { message: "This model's maximum context length is 8192 tokens" } }))).code).toBe('context_overflow')
     expect((await run(make(400, { error: { message: 'bad param' } }))).code).toBe('invalid_request')
+    // 顶层 { code, message }（讯飞星火等）
+    const top = await run(make(400, { code: 10163, message: '部分参数不支持' }))
+    expect([top.code, top.message]).toEqual(['invalid_request', '部分参数不支持（10163）'])
+    expect((await run(make(400, { code: 10224, message: '序列过长' }))).code).toBe('context_overflow')
+    // 驱动声明的业务错误码优先
+    const coded = (status: number, body: unknown) =>
+      new OpenAICompatibleProvider({
+        baseURL: 'https://x.test/v1',
+        errorCodes: { '11201': 'auth', '10042': 'overloaded' },
+        fetch: (async () => new Response(JSON.stringify(body), { status })) as unknown as typeof fetch,
+      })
+    expect((await run(coded(429, { code: 11201, message: '当日使用量达到上限' }))).code).toBe('auth')
+    expect((await run(coded(400, { code: 10042, message: '服务器内部错误' }))).code).toBe('overloaded')
     // 插件抛的错误带 Symbol.for('leo.error') 标记，宿主按 code 处理
     expect((rl as unknown as Record<symbol, unknown>)[Symbol.for('leo.error')]).toBe(true)
+  })
+
+  it('throws on a top-level business error code inside the stream', async () => {
+    const p = new OpenAICompatibleProvider({
+      baseURL: 'https://x.test/v1',
+      fetch: (async () => sseResponse([{ choices: [{ delta: { content: '部分' } }] }, { code: 10014, message: '输出内容包含敏感内容' }])) as unknown as typeof fetch,
+    })
+    const seen: string[] = []
+    await expect(
+      (async () => {
+        for await (const e of p.stream({ model: 'm', messages: [] }, { signal: new AbortController().signal })) seen.push(e.type)
+      })(),
+    ).rejects.toMatchObject({ message: '输出内容包含敏感内容' })
+    expect(seen).toEqual(['text_delta'])
+    // code 0 是成功
+    const ok = new OpenAICompatibleProvider({
+      baseURL: 'https://x.test/v1',
+      fetch: (async () => sseResponse([{ code: 0, message: 'Success', choices: [{ delta: { content: 'hi' }, finish_reason: 'stop' }] }, '[DONE]'])) as unknown as typeof fetch,
+    })
+    const types: string[] = []
+    for await (const e of ok.stream({ model: 'm', messages: [] }, { signal: new AbortController().signal })) types.push(e.type)
+    expect(types).toEqual(['text_delta', 'done'])
   })
 
   it('does not retry a 401 inside the agent loop (host recognises the marked error)', async () => {

@@ -47,6 +47,9 @@ export interface DriverInput {
 }
 
 /** 驱动默认值与 provider.json 合并后的结果（协议直接用） */
+/** 宿主按类别决定是否重试：rate_limit / overloaded 会重试，其余不重试 */
+export type ErrorCategory = 'invalid_request' | 'auth' | 'rate_limit' | 'overloaded' | 'context_overflow'
+
 export interface ResolvedProvider {
   id: string
   name: string
@@ -57,6 +60,8 @@ export interface ResolvedProvider {
   keyless: boolean
   maxTokensField?: 'max_tokens' | 'max_completion_tokens'
   sendReasoning?: boolean
+  /** 厂商业务错误码 → 错误类别（顶层 { code, message } 或 error.code）：决定重试与否，如 { "10013": "invalid_request", "11202": "rate_limit" } */
+  errorCodes?: Record<string, ErrorCategory>
   headers?: Record<string, string>
   connectTimeoutMs?: number
   idleTimeoutMs?: number
@@ -87,6 +92,8 @@ export interface ProviderDriver {
   keyless?: boolean
   maxTokensField?: 'max_tokens' | 'max_completion_tokens'
   sendReasoning?: boolean
+  /** 厂商业务错误码 → 错误类别（顶层 { code, message } 或 error.code）：决定重试与否，如 { "10013": "invalid_request", "11202": "rate_limit" } */
+  errorCodes?: Record<string, ErrorCategory>
   headers?: Record<string, string>
   /** 协议，默认 openai-compatible */
   protocol?: string

@@ -107,6 +107,10 @@ export default {
         models: [{ id: '<model>', contextWindow: 128_000 }],
         // 厂商特有参数：拿到通用请求体与 provider.json 里该 provider 的配置
         prepare: (body, { settings }) => body,
+        // 可选：厂商业务错误码 → 错误类别（0.3.1），决定是否重试
+        errorCodes: { '10013': 'invalid_request', '11202': 'rate_limit' },
+        // 可选：provider.json 里没有该厂商时写入的默认条目（0.3.0）
+        settingsTemplate: { defaultModel: '<model>' },
       }),
     )
   },
@@ -114,6 +118,7 @@ export default {
 ```
 
 - 协议不兼容的厂商：驱动实现 `create({ id, settings, apiKey, resolved })` 返回自己的 `LlmProvider`；或者用 `registerProtocol(name, factory)` 注册一个新协议，供多个厂商共用
+- 通用协议认识 `error: { message, code }` 与顶层 `{ code, message }`（code 0 为成功）两种错误格式，HTTP 错误体和流里都会检查
 - 抛错时带上 `Symbol.for('leo.error')` 标记和 `code`（`rate_limit` / `overloaded` / `timeout` / `network` / `auth` / `invalid_request` / `context_overflow`），宿主据此决定是否重试；本插件导出 `providerError()`
 - 驱动注册 / 撤销、注册层热重载，都会整体重新同步，子插件先装后装都一样
 

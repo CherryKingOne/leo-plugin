@@ -1,5 +1,11 @@
 # 更新日志
 
+## 0.3.1 — 未发布
+
+- 认识顶层 `{ code, message }` 形式的业务错误（讯飞星火等）：HTTP 错误体里读出原文与错误码；流里出现非 0 的 `code` 时报错（不再静默结束）
+- 驱动新增 `errorCodes`：厂商错误码 → 错误类别（invalid_request / auth / rate_limit / overloaded / context_overflow），决定宿主是否重试
+- 上下文超限识别补充中文提示（“序列过长”等）
+
 ## 0.3.0 — 2026-10-31
 
 provider.json 跟着用的东西走：

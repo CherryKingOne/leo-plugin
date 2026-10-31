@@ -1,6 +1,6 @@
 {
   "name": "leo-plugin-provider",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "leo 模型供应商注册层：子插件（provider-deepseek 等）注册驱动，统一读配置、取密钥、接入 llm 服务；自带通用 OpenAI 兼容协议",
   "type": "module",
   "license": "Apache-2.0",

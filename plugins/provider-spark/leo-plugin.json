@@ -1,0 +1,16 @@
+{
+  "$schema": "../../schemas/leo-plugin.schema.json",
+  "id": "provider-spark",
+  "package": "leo-plugin-provider-spark",
+  "version": "0.1.0",
+  "status": "experimental",
+  "description": "模型供应商注册层的讯飞星火子插件：Spark-X2.6 / X2.5 系列（讯飞自研），最长 1M 上下文，保存 APIKey 即自动接入，思考模式（enabled / disabled / auto）与工具调用（需要 provider ≥ 0.2.0）",
+  "keywords": ["provider", "spark", "xfyun", "iflytek", "llm"],
+  "leo": ">=0.2.0",
+  "entry": "./dist/index.js",
+  "bundle": "./dist/provider-spark.bundle.js",
+  "inject": ["providers"],
+  "provides": { "services": [], "tools": [], "events": [] },
+  "permissions": ["net.connect"],
+  "install": { "config": "leo-plugin-provider-spark", "example": ["leo-plugin-provider-spark", {}] }
+}
