@@ -125,6 +125,7 @@ myPlugin.watch = ['my-plugin.json']   // 可选
 | `usage/recorded` | emit | 每次模型调用的用量 |
 | `session/appended` | emit | 会话日志追加 |
 | `plugin/loaded` / `plugin/unloaded` / `plugin/failed` | emit | 宿主热加载、热卸载插件，或热加载失败（`createLeoFromConfig` 提供） |
+| `plugin/notice` | emit | 插件**发出**的给用户看的一行提示 `{ plugin, message, level? }`（监听地址、渠道状态等）；`leo serve` / 交互式 `leo` 打印为 `[plugin] message`。宿主日志默认只显示 warn 以上，要让用户看到的信息用它而不是 `ctx.logger.info`。旧版宿主没人订阅，发了无害（leo-agents `feat/gateway-host` 起支持） |
 
 ### 4.3 声明新的服务与事件
 

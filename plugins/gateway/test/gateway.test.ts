@@ -185,6 +185,44 @@ describe('基础', () => {
   })
 })
 
+describe('启动提示', () => {
+  it('通过 plugin/notice 告诉用户控制面地址和渠道连接状态', async () => {
+    const notices: { message: string; level?: string }[] = []
+    const listener: PluginLike = { name: 'notice-listener', apply: (c: Context<any>) => void c.on('plugin/notice' as never, ((n: { message: string; level?: string }) => void notices.push(n)) as never) } as PluginLike
+    const { gw } = await boot({ extraPlugins: [listener] })
+    const port = gw.address()!.port
+    expect(notices[0]!.message).toBe(`控制面 http://127.0.0.1:${port}`)
+    expect(notices.some((n) => n.message.includes(`ws://127.0.0.1:${port}/ws`) && n.message.includes('/v1/chat/completions'))).toBe(true)
+    expect(notices.some((n) => n.message.includes('未设置令牌'))).toBe(true)
+    await until(() => notices.some((n) => n.message === '已连接 bot（fake）'))
+  })
+
+  it('通配监听列出本机地址；账号失败、恢复、缺驱动各提示一次', async () => {
+    const { accountNotifier, controlPlaneLines } = await import('../src/notice.js')
+    const ifaces = { eth0: [{ address: '192.168.1.5', family: 'IPv4', internal: false }], lo: [{ address: '127.0.0.1', family: 'IPv4', internal: true }] } as never
+    const lines = controlPlaneLines({ host: '0.0.0.0', port: 18790 }, true, ifaces)
+    expect(lines[0]).toBe('控制面监听 0.0.0.0:18790，可访问 http://127.0.0.1:18790、http://192.168.1.5:18790')
+    expect(lines[1]).toContain('http://192.168.1.5:18790/v1')
+    expect(lines[2]).toContain('Bearer')
+    const out: [string, string | undefined][] = []
+    const on = accountNotifier((m, l) => void out.push([m, l]), () => 'https://gw.example.com')
+    const st = (state: string, extra = {}) => ({ account: 'tg', channel: 'telegram', state, received: 0, sent: 0, ...extra }) as never
+    on(st('starting'))
+    on(st('running', { webhookPath: '/hooks/tg' }))
+    on(st('running'))
+    on(st('failed', { error: '401 Unauthorized' }))
+    on(st('running'))
+    on({ account: 'x', channel: 'slack', state: 'waiting_driver', received: 0, sent: 0 } as never)
+    expect(out.map((o) => o[0])).toEqual([
+      '已连接 tg（telegram），webhook https://gw.example.com/hooks/tg（平台要能从公网访问到）',
+      'tg（telegram） 连接失败：401 Unauthorized',
+      '已恢复 tg（telegram）',
+      'x（slack） 等待渠道驱动 "slack"：内置只有 telegram / feishu / qq，其他渠道需要安装对应插件',
+    ])
+    expect(out.map((o) => o[1])).toEqual([undefined, 'error', undefined, 'warn'])
+  })
+})
+
 describe('授权与配对', () => {
   it('默认拒绝；陌生人私聊拿到配对码，管理员 /pair 批准后可以对话', async () => {
     const { gw, f, mock } = await boot({ config: { auth: { admins: ['fake:boss'] } } })

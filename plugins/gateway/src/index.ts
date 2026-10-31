@@ -20,6 +20,7 @@ import { createChannelRegistry } from './channels/registry.js'
 import { type GatewayConfig, GatewayConfigSchema } from './config.js'
 import { agentFactoryOf, GatewayCore } from './core.js'
 import { CONFIG_FILE_NAME, mergeConfig, readConfigFile } from './files.js'
+import { accountNotifier, controlPlaneLines, createNotify, primaryBase } from './notice.js'
 import { resolveValue } from './secrets.js'
 import { GatewayServer } from './server.js'
 import { GatewayState } from './state.js'
@@ -73,8 +74,12 @@ export function createGatewayPlugin(opts: GatewayPluginOptions = {}): PluginDefi
     // leo-agents 热加载：gateway.json 变化后自动重新加载本插件（重启网关）；旧版宿主忽略此字段
     watch: [CONFIG_FILE_NAME],
     async apply(ctx, raw) {
+      const notify = createNotify(ctx)
       const config = await loadConfig(ctx, raw)
-      if (!config.enabled) return void ctx.logger.info('gateway: disabled (enabled=false)')
+      if (!config.enabled) {
+        notify('已停用（gateway.json 里 enabled=false）')
+        return void ctx.logger.info('gateway: disabled (enabled=false)')
+      }
 
       const paths = ctx.maybe('leoPaths')
       const base = paths?.projectRoot ?? paths?.cwd ?? process.cwd()
@@ -156,6 +161,10 @@ export function createGatewayPlugin(opts: GatewayPluginOptions = {}): PluginDefi
             ctx.logger,
           )
         : undefined
+      const onAccountStatus = accountNotifier(notify, () => {
+        const addr = server?.address()
+        return addr ? primaryBase(addr) : undefined
+      })
 
       registry = createChannelRegistry({
         ctx,
@@ -166,7 +175,10 @@ export function createGatewayPlugin(opts: GatewayPluginOptions = {}): PluginDefi
           return server.mountHook(account, handler)
         },
         onInbound: (m, a) => core.handleInbound(m, a.config),
-        onStatus: (s) => ctx.emit('gateway/status', s),
+        onStatus: (s) => {
+          ctx.emit('gateway/status', s)
+          onAccountStatus(s)
+        },
         ...(opts.fetch ? { fetch: opts.fetch } : {}),
         ...(opts.WebSocket ? { WebSocket: opts.WebSocket } : {}),
       })
@@ -175,6 +187,10 @@ export function createGatewayPlugin(opts: GatewayPluginOptions = {}): PluginDefi
       if (server) {
         await server.start()
         await ctx.effect(() => () => server.close())
+        const addr = server.address()
+        if (addr) for (const line of controlPlaneLines(addr, Boolean(token))) notify(line)
+      } else {
+        notify('控制面已关闭（server.enabled=false），只运行聊天渠道')
       }
       await ctx.effect(() => () => core.dispose())
       await ctx.effect(() => () => registry.dispose())
@@ -195,6 +211,13 @@ export function createGatewayPlugin(opts: GatewayPluginOptions = {}): PluginDefi
 
       // 最后注册驱动：注册即启动对应账号
       for (const id of config.builtin) await ctx.effect(() => registry.registerDriver(BUILTIN_DRIVERS[id]))
+
+      // 最后注册 → 卸载时最先执行
+      await ctx.effect(() => () => notify.mute())
+
+      if (!registry.accounts().length) {
+        notify(`还没有配置聊天渠道账号：编辑 ${paths ? join(paths.userDir, CONFIG_FILE_NAME) : CONFIG_FILE_NAME} 的 channels，保存后自动生效`, 'warn')
+      }
 
       const a = server?.address()
       ctx.logger.info(

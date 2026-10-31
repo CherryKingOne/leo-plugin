@@ -1,6 +1,6 @@
 # leo-plugin-gateway
 
-> 实验性 0.1.0
+> 实验性 0.1.1
 
 ## 用途
 
@@ -32,6 +32,14 @@ leo serve                       # 后台常驻运行网关（Ctrl+C 停止）
 ```
 
 - `leo serve` 只加载配置与插件并保持在线，不进入对话；需要 leo-agents `feat/gateway-host` 分支及以后。
+- 启动后会打印控制面地址和每个渠道的连接状态，例如：
+
+  ```text
+  [gateway] 控制面 http://127.0.0.1:18790
+  [gateway]   HTTP http://127.0.0.1:18790/v1 · WebSocket ws://127.0.0.1:18790/ws · OpenAI 兼容 http://127.0.0.1:18790/v1/chat/completions
+  [gateway]   未设置令牌，只接受本机访问
+  [gateway] 已连接 tg（telegram）
+  ```
 - 也可以直接用交互式 `leo`：对话的同时网关也在线。
 - 网关里的 Agent 默认使用 leo 的默认模型与系统提示词（宿主的 `agentFactory` 服务）；旧版 leo 没有这个服务时，必须在 `gateway.json` 写 `agent.model`。
 - 修改 `gateway.json` 后正在运行的 leo 会自动重启网关，不用手动重启。
