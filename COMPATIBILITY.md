@@ -66,6 +66,7 @@ leo-agents（底座）与 leo-plugin（插件）各自发版。这张表回答�
 
 | 版本 | 发布时间 | 需要 | 更新说明 |
 | --- | --- | --- | --- |
+| 0.3.1 | 2026-11-02 | 同 0.3.0 | 内置 QQ 驱动发图改为本机下载后二进制直传，修复平台拉图超时（850027） |
 | 0.3.0 | 2026-11-02 | leo-agents ≥ 0.1.0（常驻运行需要 0.1.2；转发插件命令需要 0.2.1，目前仅在 leo-agents `feat/commands-display` 分支） | 图片消息（Telegram / QQ / 飞书），Agent 发的表情发到聊天里，转发插件斜杠命令，`sendImage` |
 | 0.2.3 | 2026-10-31 | leo-agents ≥ 0.1.0（常驻运行需要 0.1.2） | 飞书默认由子插件 gateway-feishu 提供，`builtin` 默认只留 telegram；缺飞书驱动时提示安装 |
 | 0.2.2 | 2026-10-31 | 同上 | 驱动可直接授权用户（`authorize`），`/whoami` 区分管理员与已授权 |
@@ -78,6 +79,7 @@ leo-agents（底座）与 leo-plugin（插件）各自发版。这张表回答�
 
 | 版本 | 发布时间 | 需要 | 更新说明 |
 | --- | --- | --- | --- |
+| 0.3.1 | 2026-11-02 | gateway ≥ 0.2.0（发图片需要 ≥ 0.3.0） | 发图改为本机下载后二进制直传（5MB 内），失败再退回 URL 上传，修复平台拉图超时（850027） |
 | 0.3.0 | 2026-11-02 | gateway ≥ 0.2.0（发图片需要 ≥ 0.3.0） | 图片消息：单聊 / 群上传富媒体后发送，频道发图片地址 |
 | 0.2.2 | 2026-10-31 | gateway ≥ 0.2.0（扫码人自动成为管理员需要 ≥ 0.2.2） | 扫码的 QQ 号自动成为网关管理员（`authorizeScanner`，默认开） |
 | 0.2.1 | 2026-10-31 | gateway ≥ 0.2.0 | `qrConsole` 默认 `auto`：`leo serve` 下终端直接打印二维码 |
@@ -110,6 +112,7 @@ leo-agents（底座）与 leo-plugin（插件）各自发版。这张表回答�
 
 | 插件 | 版本 | 需要 | 更新说明 |
 | --- | --- | --- | --- |
+| interaction | 0.1.1 | 同 0.1.0 | 表情提示词要求必须调用 `send_sticker`，修复部分模型只写「（发送了一张……）」不调用工具 |
 | interaction | 0.1.0 | leo-agents ≥ 0.2.0（斜杠命令与终端画表情需要 0.2.1，目前仅在 leo-agents `feat/commands-display` 分支，尚未发布） | 首个版本：人设与表情包注册层，`send_sticker` 让 Agent 按语境自动发表情，`/persona`、`/sticker`、`/stickers` |
 | interaction-persona-whale | 0.1.0 | interaction ≥ 0.1.0 | 首个版本：鲸鱼娘·大肥鱼人设（移植自 dsh-whale-musume-persona，MIT） |
 | interaction-stickers-whale | 0.1.0 | interaction ≥ 0.1.0 | 首个版本：鲸鱼娘表情 24 张 × 蓝 / 黑角色，终端字符画 + 图片（移植自 dsh-stickers，BSD-3-Clause） |

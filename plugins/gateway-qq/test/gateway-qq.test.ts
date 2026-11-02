@@ -309,3 +309,46 @@ describe('qrConsole auto', () => {
     expect(isLeoServe(['-p', 'hi'])).toBe(false)
   })
 })
+
+describe('图片上传', () => {
+  it('本机下载后 file_data 直传（带 file_name），下载失败退回 URL 上传；ttl 0 长期复用', async () => {
+    const { createQqDriver, QqOptions } = await import('../src/index.js')
+    const calls: { url: string; body: any }[] = []
+    const impl = (async (input: string | URL, init?: RequestInit) => {
+      const url = String(input)
+      if (url.includes('getAppAccessToken')) return new Response(JSON.stringify({ access_token: 'QT', expires_in: '7200' }))
+      if (url.includes('img.example/a.png')) return new Response(Buffer.from('PNGDATA'), { headers: { 'content-type': 'image/png' } })
+      if (url.includes('img.example/missing.png')) return new Response('nope', { status: 404 })
+      const body = init?.body ? JSON.parse(String(init.body)) : undefined
+      calls.push({ url, body })
+      if (url.includes('/files')) return new Response(JSON.stringify({ file_uuid: 'u', file_info: body.url ? 'FI-URL' : 'FI', ttl: 0 }))
+      return new Response(JSON.stringify({ id: 'sent' }))
+    }) as typeof fetch
+    const driver = createQqDriver({ store: { get: async () => ({}) } as any, connector: {} as any, source: 't', qrConsole: false, bound: new Map(), notify: () => {}, authorizeScanner: false } as any)
+    const ac = new AbortController()
+    const silent = { info() {}, warn() {}, error() {}, debug() {} } as any
+    const conn = await driver.create({
+      account: 'q',
+      options: QqOptions.parse({ mode: 'webhook', appId: '1', appSecret: 'naOC0ocQE3shWLAfffVLB1rhYPG7' }),
+      secret: (f: string) => ({ appId: '1', appSecret: 'naOC0ocQE3shWLAfffVLB1rhYPG7' })[f],
+      dispatch() {},
+      webhook: async () => 'http://x',
+      fetch: impl,
+      WebSocket: globalThis.WebSocket,
+      fail() {},
+      signal: ac.signal,
+      logger: silent,
+      ctx: {} as any,
+    })
+    const target = { chatId: 'U', chatType: 'direct' as const, extra: { kind: 'c2c' } }
+    await conn.send(target, { image: { url: 'https://img.example/a.png' }, replyTo: 'm1' } as any, ac.signal)
+    await conn.send(target, { image: { url: 'https://img.example/a.png' }, replyTo: 'm1' } as any, ac.signal)
+    await conn.send(target, { image: { url: 'https://img.example/missing.png' }, replyTo: 'm1' } as any, ac.signal)
+    ac.abort()
+    expect(calls.filter((c) => c.url.includes('/v2/users/U/files')).map((c) => c.body)).toEqual([
+      { file_type: 1, srv_send_msg: false, file_name: 'a.png', file_data: Buffer.from('PNGDATA').toString('base64') },
+      { file_type: 1, srv_send_msg: false, url: 'https://img.example/missing.png' },
+    ])
+    expect(calls.filter((c) => c.url.includes('/v2/users/U/messages')).map((c) => c.body.media.file_info)).toEqual(['FI', 'FI', 'FI-URL'])
+  })
+})

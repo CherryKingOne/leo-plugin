@@ -7,19 +7,19 @@
       "id": "gateway",
       "package": "leo-plugin-gateway",
       "path": "plugins/gateway",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "status": "experimental",
       "description": "消息网关：常驻接入 Telegram / 飞书 / QQ，按会话路由给 Agent，授权配对、聊天内审批、主动投递，Agent 发的表情 / 图片发到聊天里，转发插件斜杠命令，HTTP / WebSocket / OpenAI 兼容控制面",
       "leo": ">=0.1.0",
       "bundle": {
-        "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/gateway/0.3.0/gateway.bundle.js",
-        "sha256": "383cbd3948c0134bc616a96b2292cc9a316b7fd151298aebb30c5e741ea82dcc"
+        "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/gateway/0.3.1/gateway.bundle.js",
+        "sha256": "1509a34e227793d1a2a625bd874f19384be91ccca66845b9a4739713b2eb20cd"
       },
       "init": {
         "files": [
           {
             "path": "gateway.json",
-            "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/gateway/0.3.0/init/gateway.json",
+            "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/gateway/0.3.1/init/gateway.json",
             "sha256": "a46f86a2ec04fdefaf49ed13da11ff839cbd2541f594fad4e042c31256231adc",
             "description": "网关配置：聊天平台机器人、授权、会话策略、控制面端口；QQ 默认扫码绑定（配合 gateway-qq），其他渠道取消注释并填入凭证"
           }
@@ -48,13 +48,13 @@
       "id": "gateway-qq",
       "package": "leo-plugin-gateway-qq",
       "path": "plugins/gateway-qq",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "status": "experimental",
       "description": "消息网关的 QQ 子插件：QQ 官方机器人渠道驱动，支持手机 QQ 扫码绑定与图片消息，替代网关内置 QQ 驱动（需要 gateway ≥ 0.2.0，发图片需要 ≥ 0.3.0）",
       "leo": ">=0.1.0",
       "bundle": {
-        "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/gateway-qq/0.3.0/gateway-qq.bundle.js",
-        "sha256": "bc244a41ed3a02f8feb24e9a70a359e6b9344f1b574c677eda53db5f31d49f63"
+        "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/gateway-qq/0.3.1/gateway-qq.bundle.js",
+        "sha256": "cb314d9c5bdd23b09b8f8286e460eada575c9084489f11aa659c2fc4576d8a0b"
       },
       "purge": {
         "credentials": [

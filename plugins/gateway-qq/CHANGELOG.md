@@ -1,5 +1,10 @@
 # 更新日志
 
+## 0.3.1 — 2026-11-02
+
+- QQ 发图：先在本机下载图片，以 `file_data` 二进制直传（带 `file_name`，5MB 以内）拿 `file_info`；本机下载失败或超过 5MB 时才退回 URL 上传。修复平台拉取图片地址（如 raw.githubusercontent.com）超时，报 `850027 富媒体文件上传超时` / `850026` 导致只发出文字说明的问题
+- 上传返回 `ttl: 0`（可长期使用）时按 1 天缓存 `file_info`，不再每次重新上传
+
 ## 0.3.0 — 2026-11-02
 
 - 图片消息（需要 gateway ≥ 0.3.0，旧版网关不会发图片给驱动）：单聊 / 群先上传富媒体（`/v2/users|groups/{id}/files`，http(s) 地址或 data URL 的 `file_data`）拿 `file_info` 再发 `msg_type 7`，ttl 内复用；频道 / 频道私信发 `image` 地址。互动层的表情包因此能在 QQ 里直接显示。

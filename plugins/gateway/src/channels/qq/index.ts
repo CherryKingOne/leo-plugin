@@ -38,6 +38,8 @@ export type QqOptions = z.infer<typeof QqOptions>
 
 const TOKEN_URL = 'https://bots.qq.com/app/getAppAccessToken'
 const ED25519_PKCS8_PREFIX = Buffer.from('302e020100300506032b657004220420', 'hex')
+/** 富媒体二进制直传上限（官方文档：file_data 需在 5MB 以内） */
+const QQ_FILE_DATA_MAX = 5 * 1024 * 1024
 
 /** 按 QQ 文档由 AppSecret 派生 Ed25519 密钥：secret 重复拼接到至少 32 字节，取前 32 字节作为种子 */
 export function qqKeys(secret: string): { privateKey: KeyObject; publicKey: KeyObject } {
@@ -140,16 +142,32 @@ async function create(init: ChannelInit<QqOptions>): Promise<ChannelConnection> 
     return n
   }
 
+  /**
+   * 上传来源：优先在本机下载后以 file_data 直传（官方建议：URL 上传可能因平台下载失败 / 超时，850026 / 850027），
+   * 二进制直传上限 5MB；本机下载失败或超限时，http(s) 地址退回 URL 上传，由平台自己去拉。
+   */
+  const mediaSource = async (url: string): Promise<Record<string, string>> => {
+    try {
+      const img = await loadImage(init.fetch, url, { timeoutMs: o.requestTimeoutMs, maxBytes: QQ_FILE_DATA_MAX })
+      return { file_name: img.fileName, file_data: img.bytes.toString('base64') }
+    } catch (err) {
+      if (/^https?:/i.test(url)) return { url }
+      throw err
+    }
+  }
+
   /** 富媒体上传缓存：同一会话同一张图在 ttl 内复用 file_info */
   const media = new Map<string, { info: string; expires: number }>()
   const uploadMedia = async (kind: string, id: string, url: string, post: <T>(url: string, body: unknown, label: string) => Promise<T>): Promise<string> => {
     const key = `${kind}:${id}:${url}`
     const hit = media.get(key)
     if (hit && hit.expires > Date.now()) return hit.info
-    const source = /^https?:/i.test(url) ? { url } : { file_data: (await loadImage(init.fetch, url, { timeoutMs: o.requestTimeoutMs })).bytes.toString('base64') }
+    const source = await mediaSource(url)
     const r = await post<{ file_info?: string; ttl?: number }>(`/v2/${kind === 'c2c' ? 'users' : 'groups'}/${id}/files`, { file_type: 1, srv_send_msg: false, ...source }, `qq upload ${kind}`)
     if (!r.file_info) throw new ChannelHttpError('qq upload: no file_info')
-    media.set(key, { info: r.file_info, expires: Date.now() + Math.max(0, (r.ttl ?? 0) - 60) * 1000 })
+    // ttl 为 0 表示可长期使用（按 1 天缓存）
+    const ttl = r.ttl === 0 ? 86_400 : Math.max(0, (r.ttl ?? 0) - 60)
+    media.set(key, { info: r.file_info, expires: Date.now() + ttl * 1000 })
     if (media.size > 500) media.delete(media.keys().next().value as string)
     return r.file_info
   }

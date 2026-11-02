@@ -1,5 +1,10 @@
 # 更新日志
 
+## 0.3.1 — 2026-11-02
+
+- QQ 发图：先在本机下载图片，以 `file_data` 二进制直传（带 `file_name`，5MB 以内）拿 `file_info`；本机下载失败或超过 5MB 时才退回 URL 上传。修复平台拉取图片地址（如 raw.githubusercontent.com）超时，报 `850027 富媒体文件上传超时` / `850026` 导致只发出文字说明的问题
+- 上传返回 `ttl: 0`（可长期使用）时按 1 天缓存 `file_info`，不再每次重新上传
+
 ## 0.3.0 — 2026-11-02
 
 - **图片消息**：`OutboundMessage.image`（`{ url, alt? }`）与驱动能力 `ChannelDriver.images`；内置 Telegram（`sendPhoto`，http(s) 直传、data URL multipart 上传）、QQ（单聊 / 群先上传富媒体拿 `file_info` 再发 `msg_type 7`，ttl 内复用；频道发 `image` 地址）、飞书（下载后上传 `im/v1/images` 拿 `image_key`，按地址缓存）都支持。驱动不支持图片或发送失败时改发图片说明，不丢消息。

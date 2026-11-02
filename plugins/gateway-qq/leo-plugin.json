@@ -2,7 +2,7 @@
   "$schema": "../../schemas/leo-plugin.schema.json",
   "id": "gateway-qq",
   "package": "leo-plugin-gateway-qq",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "status": "experimental",
   "description": "消息网关的 QQ 子插件：QQ 官方机器人渠道驱动，支持手机 QQ 扫码绑定与图片消息，替代网关内置 QQ 驱动（需要 gateway ≥ 0.2.0，发图片需要 ≥ 0.3.0）",
   "keywords": [
@@ -43,10 +43,10 @@
     ]
   },
   "release": {
-    "version": "0.3.0",
+    "version": "0.3.1",
     "bundle": {
-      "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/gateway-qq/0.3.0/gateway-qq.bundle.js",
-      "sha256": "bc244a41ed3a02f8feb24e9a70a359e6b9344f1b574c677eda53db5f31d49f63"
+      "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/gateway-qq/0.3.1/gateway-qq.bundle.js",
+      "sha256": "cb314d9c5bdd23b09b8f8286e460eada575c9084489f11aa659c2fc4576d8a0b"
     }
   }
 }

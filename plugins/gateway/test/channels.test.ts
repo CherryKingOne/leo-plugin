@@ -304,7 +304,9 @@ describe('qq', () => {
     const f = fakeFetch({
       'bots.qq.com/app/getAppAccessToken': () => ({ access_token: 'QT', expires_in: '7200' }),
       '/v2/groups/G/messages': () => ({ id: 'sent-1', timestamp: 1 }),
-      '/v2/groups/G/files': () => ({ file_uuid: 'u', file_info: 'FI', ttl: 3600 }),
+      '/v2/groups/G/files': (b) => ({ file_uuid: 'u', file_info: b.url ? 'FI-URL' : 'FI', ttl: 3600 }),
+      'img.example/a.png': () => new Response(Buffer.from('PNGDATA'), { status: 200, headers: { 'content-type': 'image/png' } }),
+      'img.example/missing.png': () => new Response('nope', { status: 404 }),
     })
     const { leo, svc, received, url } = await boot(f.impl, { qqbot: { channel: 'qq', options: { mode: 'webhook', appId: '1', appSecret: secret } } })
     cleanup.push(() => leo.dispose())
@@ -336,15 +338,20 @@ describe('qq', () => {
     ])
     expect(sends[0]!.headers.authorization).toBe('QQBot QT')
 
-    // 图片：上传富媒体拿 file_info，发 msg_type 7；ttl 内复用
+    // 图片：本机下载后 file_data 直传拿 file_info，发 msg_type 7；ttl 内复用；本机下载失败退回 URL 上传
     const target = { chatId: m.chat.id, chatType: m.chat.type, ...(m.chat.extra ? { extra: m.chat.extra } : {}) }
     await svc.sendImage('qqbot', target, { url: 'https://img.example/a.png', alt: '测试通过！' }, 'msg-1')
     await svc.sendImage('qqbot', target, { url: 'https://img.example/a.png' }, 'msg-1')
+    await svc.sendImage('qqbot', target, { url: 'https://img.example/missing.png' }, 'msg-1')
     const files = f.calls.filter((c) => c.url.includes('/v2/groups/G/files'))
-    expect(files.map((c) => c.body)).toEqual([{ file_type: 1, srv_send_msg: false, url: 'https://img.example/a.png' }])
+    expect(files.map((c) => c.body)).toEqual([
+      { file_type: 1, srv_send_msg: false, file_name: 'a.png', file_data: Buffer.from('PNGDATA').toString('base64') },
+      { file_type: 1, srv_send_msg: false, url: 'https://img.example/missing.png' },
+    ])
     expect(f.calls.filter((c) => c.url.includes('/v2/groups/G/messages')).slice(2).map((c) => c.body)).toEqual([
       { msg_type: 7, media: { file_info: 'FI' }, msg_id: 'msg-1', msg_seq: 3 },
       { msg_type: 7, media: { file_info: 'FI' }, msg_id: 'msg-1', msg_seq: 4 },
+      { msg_type: 7, media: { file_info: 'FI-URL' }, msg_id: 'msg-1', msg_seq: 5 },
     ])
   })
 })
