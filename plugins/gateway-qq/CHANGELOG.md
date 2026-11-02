@@ -1,5 +1,9 @@
 # 更新日志
 
+## 0.3.0 — 2026-11-02
+
+- 图片消息（需要 gateway ≥ 0.3.0，旧版网关不会发图片给驱动）：单聊 / 群先上传富媒体（`/v2/users|groups/{id}/files`，http(s) 地址或 data URL 的 `file_data`）拿 `file_info` 再发 `msg_type 7`，ttl 内复用；频道 / 频道私信发 `image` 地址。互动层的表情包因此能在 QQ 里直接显示。
+
 ## 0.2.2 — 2026-10-31
 
 - 扫码绑定成功后，扫码的 QQ 号自动成为网关管理员（使用 SDK 返回的扫码者 openid），私聊机器人不再需要配对码。选项 `authorizeScanner`（默认 `true`）可关闭；需要网关 ≥ 0.2.2，旧版网关会提示把 `qq:<openid>` 加进 `auth.admins`。

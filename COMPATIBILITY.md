@@ -11,7 +11,7 @@ leo-agents（底座）与 leo-plugin（插件）各自发版。这张表回答�
 
 | leo-agents | 发布时间 | 可用插件（推荐版本） | 不可用 / 受限 | 备注 |
 | --- | --- | --- | --- | --- |
-| [0.2.0](https://github.com/CherryKingOne/leo-agents/releases/tag/0.2.0) | 2026-10-31 | provider 0.3.1、provider-deepseek 0.3.0、provider-longcat 0.1.0、provider-spark 0.1.0、gateway 0.2.3、gateway-qq 0.2.2、gateway-feishu 0.2.3、mcp 0.1.1、sub-agents 0.1.1 | — | **破坏性变更**：底座不再内置模型厂商，必须装 `provider` 加至少一个厂商子插件（deepseek / longcat / spark）才能对话 |
+| [0.2.0](https://github.com/CherryKingOne/leo-agents/releases/tag/0.2.0) | 2026-10-31 | provider 0.3.1、provider-deepseek 0.3.0、provider-longcat 0.1.0、provider-spark 0.1.0、gateway 0.3.0、gateway-qq 0.3.0、gateway-feishu 0.3.0、interaction 0.1.0、interaction-persona-whale 0.1.0、interaction-stickers-whale 0.1.0、mcp 0.1.1、sub-agents 0.1.1 | — | **破坏性变更**：底座不再内置模型厂商，必须装 `provider` 加至少一个厂商子插件（deepseek / longcat / spark）才能对话 |
 | 0.1.2 | 2026-10-31 | gateway 0.2.3、gateway-qq 0.2.2、gateway-feishu 0.2.3、mcp 0.1.1、sub-agents 0.1.1 | provider 全系列（要求 ≥ 0.2.0） | 模型厂商仍内置在底座（`.leo/config.json` 的 `providers`）；`leo serve` / `agentFactory` / `plugin/notice` / `remove --purge` 从这版开始，网关常驻运行需要它 |
 | 0.1.1 | 2026-10-31 | mcp 0.1.1、sub-agents 0.1.1、gateway 0.1.1 ~ 0.2.3（仅交互式 `leo` 中运行） | provider 全系列；gateway-qq 扫码后的 `--purge` 重扫 | 新增 `leo plugin add/remove`、安装即初始化配置模板、修改配置热加载 |
 | 0.1.0 | 2026-10-30 | mcp 0.1.0、sub-agents 0.1.0（手动写进 `config.json` 的 `plugins`） | provider 全系列；`leo plugin add` 一键安装；热加载 | 首个版本：插件内核、Agent Loop、内置 OpenAI 兼容 Provider、`leo` 命令行 |
@@ -66,6 +66,7 @@ leo-agents（底座）与 leo-plugin（插件）各自发版。这张表回答�
 
 | 版本 | 发布时间 | 需要 | 更新说明 |
 | --- | --- | --- | --- |
+| 0.3.0 | 2026-11-02 | leo-agents ≥ 0.1.0（常驻运行需要 0.1.2；转发插件命令需要 0.2.1，目前仅在 leo-agents `feat/commands-display` 分支） | 图片消息（Telegram / QQ / 飞书），Agent 发的表情发到聊天里，转发插件斜杠命令，`sendImage` |
 | 0.2.3 | 2026-10-31 | leo-agents ≥ 0.1.0（常驻运行需要 0.1.2） | 飞书默认由子插件 gateway-feishu 提供，`builtin` 默认只留 telegram；缺飞书驱动时提示安装 |
 | 0.2.2 | 2026-10-31 | 同上 | 驱动可直接授权用户（`authorize`），`/whoami` 区分管理员与已授权 |
 | 0.2.1 | 2026-10-31 | 同上 | 配置模板按注册层用法重写（QQ 交给 gateway-qq 扫码）；缺驱动提示更具体，3 秒宽限期 |
@@ -77,6 +78,7 @@ leo-agents（底座）与 leo-plugin（插件）各自发版。这张表回答�
 
 | 版本 | 发布时间 | 需要 | 更新说明 |
 | --- | --- | --- | --- |
+| 0.3.0 | 2026-11-02 | gateway ≥ 0.2.0（发图片需要 ≥ 0.3.0） | 图片消息：单聊 / 群上传富媒体后发送，频道发图片地址 |
 | 0.2.2 | 2026-10-31 | gateway ≥ 0.2.0（扫码人自动成为管理员需要 ≥ 0.2.2） | 扫码的 QQ 号自动成为网关管理员（`authorizeScanner`，默认开） |
 | 0.2.1 | 2026-10-31 | gateway ≥ 0.2.0 | `qrConsole` 默认 `auto`：`leo serve` 下终端直接打印二维码 |
 | 0.2.0 | 2026-10-31 | gateway ≥ 0.2.0（`--purge` 重扫需要 leo-agents 0.1.2） | 首个版本：QQ 官方机器人驱动，手机 QQ 扫码绑定，安装后顶替内置 `qq` 驱动 |
@@ -85,6 +87,7 @@ leo-agents（底座）与 leo-plugin（插件）各自发版。这张表回答�
 
 | 版本 | 发布时间 | 需要 | 更新说明 |
 | --- | --- | --- | --- |
+| 0.3.0 | 2026-11-02 | gateway ≥ 0.2.0（发图片需要 ≥ 0.3.0） | 图片消息：上传拿 image_key 后发送，按地址缓存 |
 | 0.2.3 | 2026-10-31 | gateway ≥ 0.2.0（扫码人自动成为管理员需要 ≥ 0.2.2） | 首个版本：飞书 / Lark 驱动（长连接或 webhook），扫码一键创建智能体应用，安装后顶替内置驱动 |
 
 ### 工具扩展

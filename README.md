@@ -11,9 +11,9 @@
 | --- | --- | --- | --- |
 | [mcp](plugins/mcp) | `leo-plugin-mcp` | 实验性 0.1.0 | 接入外部 MCP 服务器的工具（stdio / HTTP），兼容 MCP 2026-07-28（MCP 2.0）与旧版握手协议 |
 | [sub-agents](plugins/sub-agents) | `leo-plugin-sub-agents` | 实验性 0.1.0 | 把任务委派给独立上下文的子 Agent 执行并汇总结果 |
-| [gateway](plugins/gateway) | `leo-plugin-gateway` | 实验性 0.2.0（已发布 0.1.1） | 消息网关（注册层）：接入 Telegram / 飞书 / QQ，按会话路由给 Agent，授权配对、聊天内审批、主动投递，HTTP / WebSocket / OpenAI 兼容控制面（配合 `leo serve` 常驻运行） |
-| [gateway-qq](plugins/gateway-qq) | `leo-plugin-gateway-qq` | 实验性 0.2.2 | 网关的 QQ 子插件：QQ 官方机器人驱动，手机 QQ 扫码绑定，顶替网关内置 QQ 驱动 |
-| [gateway-feishu](plugins/gateway-feishu) | `leo-plugin-gateway-feishu` | 实验性 0.2.3 | 网关的飞书子插件：飞书扫码一键创建应用，扫码人自动成为管理员，顶替网关内置飞书驱动 |
+| [gateway](plugins/gateway) | `leo-plugin-gateway` | 实验性 0.3.0 | 消息网关（注册层）：接入 Telegram / 飞书 / QQ，按会话路由给 Agent，授权配对、聊天内审批、主动投递，表情 / 图片消息与插件命令，HTTP / WebSocket / OpenAI 兼容控制面（配合 `leo serve` 常驻运行） |
+| [gateway-qq](plugins/gateway-qq) | `leo-plugin-gateway-qq` | 实验性 0.3.0 | 网关的 QQ 子插件：QQ 官方机器人驱动，手机 QQ 扫码绑定，顶替网关内置 QQ 驱动 |
+| [gateway-feishu](plugins/gateway-feishu) | `leo-plugin-gateway-feishu` | 实验性 0.3.0 | 网关的飞书子插件：飞书扫码一键创建应用，扫码人自动成为管理员，顶替网关内置飞书驱动 |
 | [provider](plugins/provider) | `leo-plugin-provider` | 实验性 0.3.1 | 模型供应商注册层：子插件注册驱动，统一读配置、取密钥、接入 Agent；自带通用 OpenAI 兼容协议（需要 leo-agents ≥ 0.2.0） |
 | [provider-deepseek](plugins/provider-deepseek) | `leo-plugin-provider-deepseek` | 实验性 0.3.0 | 模型供应商的 DeepSeek 子插件：deepseek-flash / deepseek-v4-pro，思考模式与工具调用，旧模型名自动改写 |
 | [provider-longcat](plugins/provider-longcat) | `leo-plugin-provider-longcat` | 实验性 0.1.0 | 模型供应商的 LongCat（美团）子插件：LongCat-2.5-Preview，思考模式与工具调用，推理强度换算成思考预算 |

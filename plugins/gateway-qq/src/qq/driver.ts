@@ -25,7 +25,7 @@ import { createPrivateKey, createPublicKey, type KeyObject, sign, verify } from 
 import { z } from 'zod'
 import type { ChannelConnection, ChannelDriver, ChannelInit, InboundMessage, WebhookRequest, WebhookResponse } from '../contract.js'
 import type { CredentialStore, QqCredentials } from '../credentials.js'
-import { ChannelHttpError, requestJson, TokenCache } from '../http.js'
+import { ChannelHttpError, loadImage, requestJson, TokenCache } from '../http.js'
 import { type QrConnector, qrBind } from './bind.js'
 import { intentsOf, QQ_INTENTS, QqGateway, type QqIntent } from './gateway.js'
 
@@ -200,6 +200,20 @@ async function create(init: ChannelInit<QqOptions>, deps: QqDriverDeps): Promise
     return n
   }
 
+  /** 富媒体上传缓存：同一会话同一张图在 ttl 内复用 file_info */
+  const media = new Map<string, { info: string; expires: number }>()
+  const uploadMedia = async (kind: string, id: string, url: string, post: <T>(url: string, body: unknown, label: string) => Promise<T>): Promise<string> => {
+    const key = `${kind}:${id}:${url}`
+    const hit = media.get(key)
+    if (hit && hit.expires > Date.now()) return hit.info
+    const source = /^https?:/i.test(url) ? { url } : { file_data: (await loadImage(init.fetch, url, { timeoutMs: o.requestTimeoutMs })).bytes.toString('base64') }
+    const r = await post<{ file_info?: string; ttl?: number }>(`/v2/${kind === 'c2c' ? 'users' : 'groups'}/${id}/files`, { file_type: 1, srv_send_msg: false, ...source }, `qq upload ${kind}`)
+    if (!r.file_info) throw new ChannelHttpError('qq upload: no file_info')
+    media.set(key, { info: r.file_info, expires: Date.now() + Math.max(0, (r.ttl ?? 0) - 60) * 1000 })
+    if (media.size > 500) media.delete(media.keys().next().value as string)
+    return r.file_info
+  }
+
   /** 两种模式共用：事件 → 统一消息 */
   const onEvent = (type: string, d: unknown) => {
     if (!d || typeof d !== 'object') return
@@ -263,26 +277,38 @@ async function create(init: ChannelInit<QqOptions>, deps: QqDriverDeps): Promise
       const id = encodeURIComponent(target.chatId)
       const path = kind === 'c2c' ? `/v2/users/${id}/messages` : kind === 'group' ? `/v2/groups/${id}/messages` : kind === 'channel' ? `/channels/${id}/messages` : `/dms/${id}/messages`
       const v2 = kind === 'c2c' || kind === 'group'
-      const body = v2
-        ? { content: message.text, msg_type: 0, ...(message.replyTo ? { msg_id: message.replyTo, msg_seq: nextSeq(message.replyTo) } : {}) }
-        : { content: message.text, ...(message.replyTo ? { msg_id: message.replyTo } : {}) }
-      const call = async () =>
-        requestJson<{ id?: string }>(init.fetch, `${base}${path}`, {
-          body,
-          headers: { authorization: `QQBot ${await tokens.get()}` },
-          timeoutMs: o.requestTimeoutMs,
-          label: `qq send ${kind}`,
-          signal,
-        })
-      let r: { id?: string }
-      try {
-        r = await call()
-      } catch (err) {
-        if (err instanceof ChannelHttpError && err.status === 401) {
-          tokens.invalidate()
-          r = await call()
-        } else throw err
+      const post = async <T>(url: string, body: unknown, label: string): Promise<T> => {
+        const call = async () =>
+          requestJson<T>(init.fetch, `${base}${url}`, {
+            body,
+            headers: { authorization: `QQBot ${await tokens.get()}` },
+            timeoutMs: o.requestTimeoutMs,
+            label,
+            signal,
+          })
+        try {
+          return await call()
+        } catch (err) {
+          if (err instanceof ChannelHttpError && err.status === 401) {
+            tokens.invalidate()
+            return call()
+          }
+          throw err
+        }
       }
+      const reply = message.replyTo ? (v2 ? { msg_id: message.replyTo, msg_seq: nextSeq(message.replyTo) } : { msg_id: message.replyTo }) : {}
+      let body: Record<string, unknown>
+      if (message.image) {
+        if (v2) {
+          // 单聊 / 群：先上传富媒体拿 file_info，再发 msg_type 7；同一张图在 ttl 内复用
+          const fileInfo = await uploadMedia(kind, id, message.image.url, post)
+          body = { msg_type: 7, media: { file_info: fileInfo }, ...(message.text ? { content: message.text } : {}), ...reply }
+        } else {
+          if (!/^https?:/i.test(message.image.url)) throw new ChannelHttpError('qq channel images must be http(s) urls')
+          body = { image: message.image.url, ...(message.text ? { content: message.text } : {}), ...reply }
+        }
+      } else body = v2 ? { content: message.text, msg_type: 0, ...reply } : { content: message.text, ...reply }
+      const r = await post<{ id?: string }>(path, body, `qq send ${kind}`)
       return { messageIds: r.id ? [r.id] : [] }
     },
   }
@@ -297,6 +323,7 @@ export function createQqDriver(deps: QqDriverDeps): ChannelDriver<QqOptions> {
     secretFields: ['appSecret'],
     textLimit: 2000,
     receive: 'websocket',
+    images: true,
     create: (init) => create(init, deps),
   }
 }

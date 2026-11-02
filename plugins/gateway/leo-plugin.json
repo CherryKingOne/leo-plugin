@@ -2,9 +2,9 @@
   "$schema": "../../schemas/leo-plugin.schema.json",
   "id": "gateway",
   "package": "leo-plugin-gateway",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "status": "experimental",
-  "description": "消息网关：常驻接入 Telegram / 飞书 / QQ，按会话路由给 Agent，授权配对、聊天内审批、主动投递，HTTP / WebSocket / OpenAI 兼容控制面",
+  "description": "消息网关：常驻接入 Telegram / 飞书 / QQ，按会话路由给 Agent，授权配对、聊天内审批、主动投递，Agent 发的表情 / 图片发到聊天里，转发插件斜杠命令，HTTP / WebSocket / OpenAI 兼容控制面",
   "keywords": [
     "gateway",
     "telegram",

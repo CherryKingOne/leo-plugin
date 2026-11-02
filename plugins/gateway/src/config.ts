@@ -69,6 +69,8 @@ export const AgentSchema = z.object({
   turnTimeoutMs: z.number().int().positive().default(1_800_000),
   /** 是否把工具进度（“正在执行 bash …”）发到聊天里 */
   toolProgress: z.boolean().default(false),
+  /** 把 Agent 发出的图片（互动层 send_sticker 的表情等）发到聊天里；平台不支持图片时改发文字说明（0.3.0 起） */
+  images: z.boolean().default(true),
   /** Agent 出错时回给用户的提示；空字符串表示不回 */
   errorReply: z.string().default('抱歉，处理消息时出错了：{error}'),
 })

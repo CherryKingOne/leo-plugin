@@ -13,6 +13,8 @@ leo 的**消息网关**：一个常驻在 leo 进程里的总机，参考 [OpenC
 - **聊天内审批**：网关会话里的写文件、执行命令等副作用工具，在聊天里请求 `/approve`，不再卡在终端上。
 - **指令**：`/new` `/stop` `/status` `/approve` `/deny` `/whoami` `/pair` `/unpair`，由网关直接处理，不经过模型。
 - **主动投递**：Agent 可以用 `gateway_send` 把消息发到任意会话或 home 会话（定时任务结果、通知）。
+- **图片与表情**（0.3.0 起）：Agent 发的表情（[互动层](../interaction/) 的 `send_sticker`）和工具结果里的图片直接以图片消息发到 Telegram / QQ / 飞书；平台发不了时改发文字说明。
+- **插件命令**（0.3.0 起，需要 leo-agents ≥ 0.2.1）：`/sticker` 这类插件注册的斜杠命令在聊天里也能用。
 - **控制面**：同一个端口提供 HTTP API、SSE、WebSocket 与 **OpenAI 兼容接口**（`/v1/chat/completions`），也承载平台 webhook 回调。
 
 ```text
@@ -176,6 +178,7 @@ webhook 模式的回调地址是 `<公网地址><server.hooksPath>/<账号>`，�
 | `systemPrompt` | — | 追加在 leo 默认提示词之后 |
 | `maxSteps` / `turnTimeoutMs` | leo 默认 / 30 分钟 | |
 | `toolProgress` | `false` | 把“⏳ bash”这类工具进度发到聊天里 |
+| `images` | `true` | 把 Agent 发的表情 / 图片发到聊天里（0.3.0 起） |
 | `errorReply` | `抱歉，处理消息时出错了：{error}` | 出错时的回复；空字符串表示不回 |
 
 ### approval、server
@@ -203,7 +206,9 @@ webhook 模式的回调地址是 `<公网地址><server.hooksPath>/<账号>`，�
 | `/pair [码]` | 管理员：列出 / 批准配对请求 |
 | `/unpair <平台:用户 id>` | 管理员：撤销配对授权 |
 
-不认识的 `/xxx` 当作普通消息交给 Agent。
+宿主有 `commands` 服务（leo-agents ≥ 0.2.1）时，插件注册的斜杠命令（如互动层的 `/sticker`、`/stickers`、`/persona`）由网关转发执行：文字与图片发回聊天，需要 Agent 接话的交给 Agent；与上表同名时网关优先，`/help` 会列出它们。
+
+其他不认识的 `/xxx` 当作普通消息交给 Agent。
 
 ## 控制面 API
 
