@@ -115,6 +115,11 @@ export function createGatewayPlugin(opts: GatewayPluginOptions = {}): PluginDefi
           ctx.emit('gateway/sent', { account, chatId: target.chatId, text, messageIds: r.messageIds })
           return r
         },
+        sendImageTo: async (account, target, image, replyTo, signal) => {
+          const r = await registry.send(account, target, { text: '', image, ...(replyTo ? { replyTo } : {}) }, signal)
+          ctx.emit('gateway/sent', { account, chatId: target.chatId, text: image.alt ? `[图片] ${image.alt}` : '[图片]', messageIds: r.messageIds })
+          return r
+        },
         accountConfig: (id) => registry.account(id)?.config,
         accountIds: () => registry.accounts().map((a) => a.account),
       })
@@ -140,6 +145,12 @@ export function createGatewayPlugin(opts: GatewayPluginOptions = {}): PluginDefi
           const t = core.resolveTarget(target)
           const r = await registry.send(t.account, t.target, { text, ...(t.replyTo ? { replyTo: t.replyTo } : {}) }, signal)
           ctx.emit('gateway/sent', { account: t.account, chatId: t.target.chatId, text, messageIds: r.messageIds })
+          return { ...r, account: t.account, chatId: t.target.chatId }
+        },
+        async sendImage(target, image, signal) {
+          const t = core.resolveTarget(target)
+          const r = await registry.send(t.account, t.target, { text: '', image, ...(t.replyTo ? { replyTo: t.replyTo } : {}) }, signal)
+          ctx.emit('gateway/sent', { account: t.account, chatId: t.target.chatId, text: image.alt ? `[图片] ${image.alt}` : '[图片]', messageIds: r.messageIds })
           return { ...r, account: t.account, chatId: t.target.chatId }
         },
         inject: (m) => registry.dispatch(m),
@@ -252,6 +263,7 @@ function disabledService(): GatewayService {
     abortSession: () => false,
     history: async () => [],
     send: async () => off(),
+    sendImage: async () => off(),
     inject: () => {},
     pairing: () => [],
     approvePairing: () => undefined,

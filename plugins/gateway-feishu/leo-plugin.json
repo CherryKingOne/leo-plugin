@@ -2,9 +2,9 @@
   "$schema": "../../schemas/leo-plugin.schema.json",
   "id": "gateway-feishu",
   "package": "leo-plugin-gateway-feishu",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "status": "experimental",
-  "description": "消息网关的飞书子插件：飞书 / Lark 机器人渠道驱动，支持飞书扫码一键创建应用、扫码人自动成为管理员，替代网关内置飞书驱动（需要 gateway ≥ 0.2.0，自动授权需要 ≥ 0.2.2）",
+  "description": "消息网关的飞书子插件：飞书 / Lark 机器人渠道驱动，支持飞书扫码一键创建应用、扫码人自动成为管理员、图片消息，替代网关内置飞书驱动（需要 gateway ≥ 0.2.0，自动授权需要 ≥ 0.2.2，发图片需要 ≥ 0.3.0）",
   "keywords": [
     "gateway",
     "feishu",

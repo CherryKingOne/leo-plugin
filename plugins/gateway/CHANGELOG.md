@@ -1,5 +1,12 @@
 # 更新日志
 
+## 0.3.0 — 2026-11-02
+
+- **图片消息**：`OutboundMessage.image`（`{ url, alt? }`）与驱动能力 `ChannelDriver.images`；内置 Telegram（`sendPhoto`，http(s) 直传、data URL multipart 上传）、QQ（单聊 / 群先上传富媒体拿 `file_info` 再发 `msg_type 7`，ttl 内复用；频道发 `image` 地址）、飞书（下载后上传 `im/v1/images` 拿 `image_key`，按地址缓存）都支持。驱动不支持图片或发送失败时改发图片说明，不丢消息。
+- **Agent 发的表情 / 图片发到聊天里**：工具结果 `display` 里的 image 块（leo-agents ≥ 0.2.1），或互动层 `send_sticker` 在 `details.image` 里的图片地址（leo-agents 0.2.0 也可用），在文字回复之前发出。`agent.images: false` 关闭。控制面流式接口多一个 `image` 事件。
+- **转发插件斜杠命令**：宿主有 `commands` 服务（leo-agents ≥ 0.2.1）时，聊天里的 `/sticker` 等插件命令交给它执行，结果的文字、图片发回聊天，`prompt` 作为用户消息交给 Agent；网关自己的指令同名时优先；`/help` 列出插件命令。
+- 服务新增 `sendImage(target, image)`。
+
 ## 0.2.3 — 2026-10-31
 
 - `gateway.json` 模板：飞书默认声明 `"feishu": { "channel": "feishu" }`，由新的飞书子插件 gateway-feishu 扫码创建应用；`builtin` 默认改为 `["telegram"]`（QQ、飞书都由子插件提供），旧版 `appId` / `appSecret` 写法保留在注释里，并说明要在 `builtin` 加上对应渠道。

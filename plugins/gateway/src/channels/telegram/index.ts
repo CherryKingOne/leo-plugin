@@ -11,7 +11,7 @@
  */
 import { timingSafeEqual } from 'node:crypto'
 import { z } from 'zod'
-import { ChannelHttpError, requestJson } from '../../http.js'
+import { ChannelHttpError, loadImage, requestJson } from '../../http.js'
 import type { ChannelConnection, ChannelDriver, ChannelInit, InboundMessage } from '../../types.js'
 
 export const TelegramOptions = z.object({
@@ -170,6 +170,27 @@ async function create(init: ChannelInit<TelegramOptions>): Promise<ChannelConnec
     },
     async send(target, message, signal) {
       const thread = target.extra?.threadId
+      if (message.image) {
+        // 图片：http(s) 地址交给 Telegram 自己下载；data URL 用 multipart 上传
+        const common = {
+          chat_id: target.chatId,
+          ...(message.text ? { caption: message.text } : {}),
+          ...(thread ? { message_thread_id: Number(thread) } : {}),
+          ...(message.replyTo ? { reply_parameters: { message_id: Number(message.replyTo), allow_sending_without_reply: true } } : {}),
+        }
+        if (/^https?:/i.test(message.image.url)) {
+          const r = await api<{ message_id: number }>('sendPhoto', { ...common, photo: message.image.url }, signal)
+          return { messageIds: [String(r.message_id)] }
+        }
+        const img = await loadImage(init.fetch, message.image.url, { signal, timeoutMs: o.requestTimeoutMs })
+        const form = new FormData()
+        for (const [k, v] of Object.entries(common)) form.set(k, typeof v === 'object' ? JSON.stringify(v) : String(v))
+        form.set('photo', new Blob([img.bytes], { type: img.mimeType }), img.fileName)
+        const res = await init.fetch(`${o.apiBase}/bot${token}/sendPhoto`, { method: 'POST', body: form, signal: AbortSignal.any([signal, AbortSignal.timeout(o.requestTimeoutMs)]) })
+        const r = (await res.json()) as TgResponse<{ message_id: number }>
+        if (!r.ok) throw new ChannelHttpError(`telegram sendPhoto: ${r.description ?? `HTTP ${res.status}`}`)
+        return { messageIds: [String(r.result.message_id)] }
+      }
       const r = await api<{ message_id: number }>(
         'sendMessage',
         {
@@ -210,5 +231,6 @@ export const telegram: ChannelDriver<TelegramOptions> = {
   secretFields: ['botToken', 'webhookSecret'],
   textLimit: 4096,
   receive: 'polling',
+  images: true,
   create,
 }

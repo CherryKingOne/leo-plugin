@@ -1,6 +1,6 @@
 {
   "name": "leo-plugin-gateway-feishu",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "description": "leo 消息网关的飞书子插件：飞书 / Lark 机器人渠道驱动（长连接 / webhook），支持飞书扫码一键创建应用，扫码人自动成为管理员，替代网关内置的飞书驱动",
   "type": "module",
   "license": "Apache-2.0",

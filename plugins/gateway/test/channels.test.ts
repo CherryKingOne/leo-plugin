@@ -15,7 +15,12 @@ function fakeFetch(routes: Record<string, (body: any, url: string) => unknown | 
   const calls: { url: string; body: any; headers: Record<string, string> }[] = []
   const impl = (async (input: string | URL, init?: RequestInit) => {
     const url = String(input)
-    const body = init?.body ? JSON.parse(String(init.body)) : undefined
+    const body =
+      init?.body instanceof FormData
+        ? Object.fromEntries([...init.body.entries()].map(([k, v]) => [k, typeof v === 'string' ? v : `<file ${(v as File).name} ${(v as File).type} ${(v as File).size}>`]))
+        : init?.body
+          ? JSON.parse(String(init.body))
+          : undefined
     calls.push({ url, body, headers: (init?.headers ?? {}) as Record<string, string> })
     const key = Object.keys(routes).find((k) => url.includes(k))
     if (!key) return new Response('{"error":"no route"}', { status: 404 })
@@ -47,6 +52,8 @@ async function boot(fetchImpl: typeof fetch, accounts: Record<string, unknown>, 
     accounts: () => gw.accounts(),
     send: (account: string, target: { chatId: string; chatType?: 'direct' | 'group' | 'channel'; extra?: Record<string, string> }, m: { text: string; replyTo?: string }) =>
       gw.send({ account, ...target, ...(m.replyTo ? { replyTo: m.replyTo } : {}) }, m.text),
+    sendImage: (account: string, target: { chatId: string; chatType?: 'direct' | 'group' | 'channel'; extra?: Record<string, string> }, image: { url: string; alt?: string }, replyTo?: string) =>
+      gw.sendImage({ account, ...target, ...(replyTo ? { replyTo } : {}) }, image),
   }
   return { leo, svc, received, url }
 }
@@ -83,6 +90,7 @@ describe('telegram', () => {
         return { ok: true, result: [{ update_id: 10, message: { message_id: 5, date: 1, chat: { id: 42, type: 'private' }, from: { id: 42, first_name: 'Bo' }, text: 'hello' } }] }
       },
       '/sendMessage': () => ({ ok: true, result: { message_id: 6 } }),
+      '/sendPhoto': () => ({ ok: true, result: { message_id: 7 } }),
     })
     process.env.TG_TEST_TOKEN = '123:SECRET'
     const { leo, svc, received } = await boot(f.impl, { tg: { channel: 'telegram', botToken: '$TG_TEST_TOKEN', pollTimeoutSec: 1 } })
@@ -96,6 +104,11 @@ describe('telegram', () => {
     expect(sent.url).toContain('/bot123:SECRET/sendMessage')
     expect(sent.body).toMatchObject({ chat_id: '42', text: 'hi back', reply_parameters: { message_id: 5 } })
     expect(JSON.stringify(svc.accounts())).not.toContain('SECRET')
+    // 图片：http(s) 地址直接给 Telegram；data URL 用 multipart 上传
+    await svc.sendImage('tg', { chatId: '42' }, { url: 'https://img.example/a.png', alt: '测试通过！' }, '5')
+    expect(f.calls.find((c) => c.url.includes('/sendPhoto'))!.body).toMatchObject({ chat_id: '42', photo: 'https://img.example/a.png', reply_parameters: { message_id: 5 } })
+    await svc.sendImage('tg', { chatId: '42' }, { url: `data:image/png;base64,${Buffer.from('PNG').toString('base64')}` })
+    expect(f.calls.filter((c) => c.url.includes('/sendPhoto'))[1]!.body).toEqual({ chat_id: '42', photo: '<file image.png image/png 3>' })
     delete process.env.TG_TEST_TOKEN
   })
 })
@@ -122,6 +135,8 @@ describe('feishu', () => {
       '/tenant_access_token/internal': () => ({ code: 0, msg: 'ok', tenant_access_token: 't-1', expire: 7200 }),
       '/bot/v3/info': () => ({ code: 0, msg: 'ok', bot: { open_id: 'ou_bot', app_name: 'Leo' } }),
       '/reply': () => ({ code: 0, msg: 'ok', data: { message_id: 'om_reply' } }),
+      '/im/v1/images': () => ({ code: 0, msg: 'ok', data: { image_key: 'img_v3_1' } }),
+      'img.example/': () => new Response(Buffer.from('PNGDATA'), { headers: { 'content-type': 'image/png' } }),
     })
     const encryptKey = 'enc-key'
     const { leo, svc, received, url } = await boot(f.impl, {
@@ -164,6 +179,18 @@ describe('feishu', () => {
     const reply = f.calls.find((c) => c.url.includes('/messages/om_1/reply'))!
     expect(reply.body).toEqual({ msg_type: 'text', content: '{"text":"hi"}' })
     expect(reply.headers.authorization).toBe('Bearer t-1')
+
+    // 图片：下载 → 上传拿 image_key → 回复 image 消息；同一张图第二次不再上传
+    await svc.sendImage('fs', { chatId: 'oc_g', chatType: 'group' }, { url: 'https://img.example/s/21-tests-passed.png', alt: '测试通过！' }, 'om_1')
+    await svc.sendImage('fs', { chatId: 'oc_g', chatType: 'group' }, { url: 'https://img.example/s/21-tests-passed.png' }, 'om_1')
+    const uploads = f.calls.filter((c) => c.url.includes('/im/v1/images'))
+    expect(uploads).toHaveLength(1)
+    expect(uploads[0]!.body).toEqual({ image_type: 'message', image: '<file 21-tests-passed.png image/png 7>' })
+    const imgReplies = f.calls.filter((c) => c.url.includes('/messages/om_1/reply')).slice(1)
+    expect(imgReplies.map((c) => c.body)).toEqual([
+      { msg_type: 'image', content: '{"image_key":"img_v3_1"}' },
+      { msg_type: 'image', content: '{"image_key":"img_v3_1"}' },
+    ])
   })
 })
 
@@ -277,6 +304,7 @@ describe('qq', () => {
     const f = fakeFetch({
       'bots.qq.com/app/getAppAccessToken': () => ({ access_token: 'QT', expires_in: '7200' }),
       '/v2/groups/G/messages': () => ({ id: 'sent-1', timestamp: 1 }),
+      '/v2/groups/G/files': () => ({ file_uuid: 'u', file_info: 'FI', ttl: 3600 }),
     })
     const { leo, svc, received, url } = await boot(f.impl, { qqbot: { channel: 'qq', options: { mode: 'webhook', appId: '1', appSecret: secret } } })
     cleanup.push(() => leo.dispose())
@@ -307,6 +335,17 @@ describe('qq', () => {
       { content: 'b', msg_type: 0, msg_id: 'msg-1', msg_seq: 2 },
     ])
     expect(sends[0]!.headers.authorization).toBe('QQBot QT')
+
+    // 图片：上传富媒体拿 file_info，发 msg_type 7；ttl 内复用
+    const target = { chatId: m.chat.id, chatType: m.chat.type, ...(m.chat.extra ? { extra: m.chat.extra } : {}) }
+    await svc.sendImage('qqbot', target, { url: 'https://img.example/a.png', alt: '测试通过！' }, 'msg-1')
+    await svc.sendImage('qqbot', target, { url: 'https://img.example/a.png' }, 'msg-1')
+    const files = f.calls.filter((c) => c.url.includes('/v2/groups/G/files'))
+    expect(files.map((c) => c.body)).toEqual([{ file_type: 1, srv_send_msg: false, url: 'https://img.example/a.png' }])
+    expect(f.calls.filter((c) => c.url.includes('/v2/groups/G/messages')).slice(2).map((c) => c.body)).toEqual([
+      { msg_type: 7, media: { file_info: 'FI' }, msg_id: 'msg-1', msg_seq: 3 },
+      { msg_type: 7, media: { file_info: 'FI' }, msg_id: 'msg-1', msg_seq: 4 },
+    ])
   })
 })
 

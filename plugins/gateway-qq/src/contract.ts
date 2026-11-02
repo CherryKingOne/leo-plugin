@@ -28,8 +28,11 @@ export interface ChannelTarget {
 }
 
 export interface OutboundMessage {
+  /** 文本；带 image 时是图片说明（可以为空） */
   text: string
   replyTo?: string
+  /** 图片（gateway ≥ 0.3.0）：只发给声明了 `images: true` 的驱动 */
+  image?: { url: string; alt?: string }
 }
 
 export interface SendResult {
@@ -93,6 +96,8 @@ export interface ChannelDriver<O = any> {
   secretFields?: readonly string[]
   textLimit?: number
   receive?: 'webhook' | 'polling' | 'websocket' | 'none'
+  /** 支持发图片（gateway ≥ 0.3.0）；旧版网关忽略这个字段，不会发图片给驱动 */
+  images?: boolean
   create(init: ChannelInit<O>): ChannelConnection | Promise<ChannelConnection>
 }
 

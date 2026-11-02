@@ -19,19 +19,20 @@ async function until(fn: () => boolean, ms = 3000): Promise<void> {
 let port = 19_400 + Math.floor(Math.random() * 400)
 
 /** 测试用平台驱动：记录发出的消息，暴露 dispatch */
-function fakeDriver(id = 'fake') {
-  const sent: { chatId: string; text: string; replyTo?: string }[] = []
+function fakeDriver(id = 'fake', images = false) {
+  const sent: { chatId: string; text: string; replyTo?: string; image?: string }[] = []
   let dispatch: ((m: InboundMessage) => void) | undefined
   const driver: ChannelDriver<{ token?: string }> = {
     id,
     name: 'Fake',
     options: z.object({ token: z.string().optional() }),
     textLimit: 4000,
+    ...(images ? { images: true } : {}),
     create(init) {
       dispatch = init.dispatch
       return {
         async send(target, msg) {
-          sent.push({ chatId: target.chatId, text: msg.text, ...(msg.replyTo ? { replyTo: msg.replyTo } : {}) })
+          sent.push({ chatId: target.chatId, text: msg.text, ...(msg.replyTo ? { replyTo: msg.replyTo } : {}), ...(msg.image ? { image: msg.image.url } : {}) })
           return { messageIds: [String(sent.length)] }
         },
       }
@@ -67,6 +68,7 @@ interface BootOptions {
   extraPlugins?: PluginLike[]
   withPolicy?: boolean
   factory?: boolean
+  images?: boolean
 }
 
 const cleanup: (() => Promise<void>)[] = []
@@ -76,7 +78,7 @@ afterEach(async () => {
 
 async function boot(opts: BootOptions = {}) {
   port++
-  const f = fakeDriver()
+  const f = fakeDriver('fake', opts.images)
   const mock = new MockProvider({ script: Array.from({ length: 300 }, () => (req: LlmRequest) => (opts.route ?? ((r) => ({ text: `echo:${lastUser(r)}` })))(req)) })
   const executed: string[] = []
   const tools: PluginLike = {
@@ -94,6 +96,16 @@ async function boot(opts: BootOptions = {}) {
             return `ran ${command}`
           },
         }),
+      )
+      // 模拟互动层的 send_sticker：图片地址在 details 里（旧宿主没有 display）
+      await ctx.effect(() =>
+        ctx.get('tools').register({
+          name: 'send_sticker',
+          description: 'send a sticker',
+          parameters: z.object({ id: z.string() }),
+          execute: ({ id }: { id: string }) => ({ ok: true, id, text: '测试通过！', image: `https://img.example/${id}.png` }),
+          render: (r: { text: string }) => ({ content: `已发送表情「${r.text}」`, details: r }),
+        } as never),
       )
     },
   } as PluginLike
@@ -448,6 +460,69 @@ describe('投递', () => {
     const tool = leo.ctx.get('tools').get('gateway_send')!
     expect(tool.permissions).toEqual([{ kind: 'gateway.send', sideEffect: true }])
     expect(leo.ctx.get('tools').get('gateway_status')!.permissions).toBeUndefined()
+  })
+})
+
+describe('图片与插件命令', () => {
+  const stickerRoute = (r: LlmRequest) =>
+    r.messages.at(-1)?.role === 'tool' ? { text: '哼，过了' } : { toolCalls: [{ id: 's1', name: 'send_sticker', arguments: { id: 'tests-passed' } }] }
+
+  it('Agent 发的表情作为图片发到聊天里（在文字回复之前）', async () => {
+    const { gw, f } = await boot({ images: true, route: stickerRoute, config: { auth: { allowAll: true } } })
+    gw.inject(msg('跑测试'))
+    await until(() => f.sent.length >= 2)
+    expect(f.sent).toEqual([
+      { chatId: 'u1', text: '', image: 'https://img.example/tests-passed.png', replyTo: expect.any(String) },
+      { chatId: 'u1', text: '哼，过了', replyTo: expect.any(String) },
+    ])
+  })
+
+  it('平台不支持图片时改发文字说明；agent.images=false 时不发', async () => {
+    const a = await boot({ route: stickerRoute, config: { auth: { allowAll: true } } })
+    a.gw.inject(msg('跑测试'))
+    await until(() => a.f.sent.length >= 2)
+    expect(a.f.texts()).toEqual(['[测试通过！]', '哼，过了'])
+    const b = await boot({ images: true, route: stickerRoute, config: { auth: { allowAll: true }, agent: { model: 'm', images: false } } })
+    b.gw.inject(msg('跑测试'))
+    await until(() => b.f.sent.length >= 1)
+    await tick(50)
+    expect(b.f.texts()).toEqual(['哼，过了'])
+  })
+
+  it('宿主有 commands 服务时转发插件命令：文字、图片、prompt 交给 Agent；/help 列出插件命令', async () => {
+    const commandsPlugin: PluginLike = {
+      name: 'fake-commands',
+      apply(ctx: Context<any>) {
+        const defs = [{ name: 'sticker', usage: '<id>', description: '发一个表情' }, { name: 'stop' }]
+        ctx.provide('commands' as never, {
+          get: (n: string) => defs.find((d) => d.name === n),
+          list: () => defs,
+          run: async (n: string, c: { args: string; surface: string }) => {
+            if (n !== 'sticker') return undefined
+            if (c.args === 'bad') return { text: '表情不存在：bad', isError: true }
+            return {
+              display: [
+                { type: 'ansi', lines: ['█'], fallback: '🐋 [表情] 这就够了' },
+                { type: 'image', url: 'https://img.example/enough.png', alt: '这就够了' },
+              ],
+              prompt: `[我发了一个表情：「这就够了」] via ${c.surface}`,
+            }
+          },
+        } as never)
+      },
+    } as PluginLike
+    const { gw, f } = await boot({ images: true, extraPlugins: [commandsPlugin], config: { auth: { allowAll: true } } })
+    gw.inject(msg('/sticker enough'))
+    await until(() => f.sent.length >= 2)
+    expect(f.sent[0]).toMatchObject({ image: 'https://img.example/enough.png' })
+    expect(f.sent[1]!.text).toBe('echo:[我发了一个表情：「这就够了」] via gateway')
+    gw.inject(msg('/sticker bad'))
+    await until(() => f.sent.length >= 3)
+    expect(f.sent[2]!.text).toBe('⚠️ 表情不存在：bad')
+    gw.inject(msg('/help'))
+    await until(() => f.sent.length >= 4)
+    expect(f.sent[3]!.text).toContain('插件指令：\n/sticker <id> 发一个表情')
+    expect(f.sent[3]!.text).not.toMatch(/插件指令：[\s\S]*\/stop/)
   })
 })
 

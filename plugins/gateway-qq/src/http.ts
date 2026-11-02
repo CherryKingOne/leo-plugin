@@ -91,3 +91,24 @@ export class TokenCache {
     this.expiresAt = 0
   }
 }
+
+/** 读取要上传的图片：http(s) 地址下载，data URL 直接解码（0.3.0 起，给需要先上传图片的平台用） */
+export async function loadImage(fetchImpl: typeof fetch, url: string, opts: { signal?: AbortSignal; timeoutMs?: number; maxBytes?: number } = {}): Promise<{ bytes: Buffer; mimeType: string; fileName: string }> {
+  const max = opts.maxBytes ?? 10 * 1024 * 1024
+  const data = /^data:([^;,]+)?(;base64)?,(.*)$/s.exec(url)
+  if (data) {
+    const mimeType = data[1] || 'image/png'
+    const bytes = data[2] ? Buffer.from(data[3]!, 'base64') : Buffer.from(decodeURIComponent(data[3]!), 'utf8')
+    if (bytes.length > max) throw new ChannelHttpError(`image too large (${bytes.length} bytes)`)
+    return { bytes, mimeType, fileName: `image.${mimeType.split('/')[1] ?? 'png'}` }
+  }
+  if (!/^https?:/i.test(url)) throw new ChannelHttpError('image url must be http(s) or a data URL')
+  const signal = AbortSignal.any([AbortSignal.timeout(opts.timeoutMs ?? 30_000), ...(opts.signal ? [opts.signal] : [])])
+  const res = await fetchImpl(url, { signal })
+  if (!res.ok) throw new ChannelHttpError(`download image: HTTP ${res.status}`, res.status)
+  const bytes = Buffer.from(await res.arrayBuffer())
+  if (bytes.length > max) throw new ChannelHttpError(`image too large (${bytes.length} bytes)`)
+  const mimeType = res.headers.get('content-type')?.split(';')[0]?.trim() || 'image/png'
+  const fileName = decodeURIComponent(new URL(url).pathname.split('/').pop() || 'image.png')
+  return { bytes, mimeType, fileName }
+}

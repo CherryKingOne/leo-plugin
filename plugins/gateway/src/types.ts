@@ -58,9 +58,19 @@ export interface ChannelTarget {
   extra?: Record<string, string>
 }
 
-/** 出站消息。当前只定义文本；平台不支持的字段应忽略 */
+/** 出站图片（0.3.0 起）：`url` 为 http(s) 地址或 data URL */
+export interface OutboundImage {
+  url: string
+  /** 图片说明；平台不能发图时网关改发这段文字 */
+  alt?: string
+}
+
+/** 出站消息。平台不支持的字段应忽略 */
 export interface OutboundMessage {
+  /** 文本；带 image 时是图片说明（可以为空） */
   text: string
+  /** 图片（0.3.0 起）：只会发给声明了 `images: true` 的驱动 */
+  image?: OutboundImage
   /** 回复哪条消息（平台侧消息 id）。QQ 被动回复必须带上 */
   replyTo?: string
 }
@@ -171,6 +181,8 @@ export interface ChannelDriver<O = any> {
   textLimit?: number
   /** 收消息方式，仅用于诊断展示 */
   receive?: 'webhook' | 'polling' | 'websocket' | 'none'
+  /** 支持发图片（0.3.0 起）：`send` 会收到带 `image` 的消息；不声明时网关把图片改成文字发送 */
+  images?: boolean
   create(init: ChannelInit<O>): ChannelConnection | Promise<ChannelConnection>
 }
 
@@ -287,6 +299,8 @@ export interface GatewayService {
   // —— 投递 ——
   /** 主动发消息到某个平台会话（自动分段）。不经过授权，调用方自行把关 */
   send(target: DeliveryTarget, text: string, signal?: AbortSignal): Promise<SendResult & { account: string; chatId: string }>
+  /** 主动发图片（0.3.0 起）；平台不支持图片或发送失败时改发图片说明 */
+  sendImage(target: DeliveryTarget, image: OutboundImage, signal?: AbortSignal): Promise<SendResult & { account: string; chatId: string }>
   /** 以编程方式注入一条入站消息（测试、或自定义接入）；走完整的授权 / 指令 / 路由流程 */
   inject(message: InboundMessage): void
 
@@ -311,5 +325,7 @@ export type GatewayStreamEvent =
   | { type: 'start'; sessionKey: string; sessionId: string; turnId: string }
   | { type: 'delta'; text: string }
   | { type: 'tool'; name: string; phase: 'start' | 'end'; error?: string }
+  /** Agent 发出的图片（如 send_sticker 的表情），0.3.0 起 */
+  | { type: 'image'; url: string; alt?: string }
   | { type: 'approval'; id: string; tool: string; summary: string }
   | { type: 'done'; reason: string; text: string; error?: string }

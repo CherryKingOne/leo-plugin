@@ -395,10 +395,25 @@ export function createChannelRegistry(deps: RegistryDeps): ChannelRegistry {
       if (!a) throw new Error(`unknown account "${id}"`)
       const conn = a.conn
       if (a.state !== 'running' || !conn) throw new Error(`account "${id}" is not running (${a.state}${a.error ? `: ${a.error}` : ''})`)
-      const limit = active(a.channel)?.driver.textLimit ?? 4000
+      const driver = active(a.channel)?.driver
+      const limit = driver?.textLimit ?? 4000
+      const sig = signal ?? a.controller?.signal ?? new AbortController().signal
+      if (message.image) {
+        // 能发图的驱动直接发；不能发或发送失败时改发文字（图片说明），不丢消息
+        if (driver?.images) {
+          try {
+            const r = await conn.send(target, { text: message.text, image: message.image, ...(message.replyTo ? { replyTo: message.replyTo } : {}) }, sig)
+            a.sent++
+            return r
+          } catch (err) {
+            if (sig.aborted) throw err
+            log.warn({ account: id, err: (err as Error).message }, 'gateway: image send failed, falling back to text')
+          }
+        }
+        message = { text: message.text || (message.image.alt ? `[${message.image.alt}]` : message.image.url), ...(message.replyTo ? { replyTo: message.replyTo } : {}) }
+      }
       const parts = splitText(message.text, limit)
       const ids: string[] = []
-      const sig = signal ?? a.controller?.signal ?? new AbortController().signal
       for (const [i, text] of parts.entries()) {
         const r = await conn.send(target, { text, ...(i === 0 && message.replyTo ? { replyTo: message.replyTo } : {}) }, sig)
         ids.push(...r.messageIds)

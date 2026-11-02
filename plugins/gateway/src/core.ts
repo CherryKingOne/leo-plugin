@@ -13,7 +13,7 @@ import type { Agent, AgentEvent, AgentMessage, AgentOptions, ApprovalRequest, Co
 import type { AccountConfig, GatewayConfig } from './config.js'
 import { isShared, newSessionId, type GatewayState, sessionKey } from './state.js'
 import { preview } from './text.js'
-import type { ChannelTarget, DeliveryTarget, GatewaySessionInfo, GatewayStreamEvent, GatewayTurnResult, InboundMessage, PairingRequest, SessionSource } from './types.js'
+import type { ChannelTarget, DeliveryTarget, OutboundImage, GatewaySessionInfo, GatewayStreamEvent, GatewayTurnResult, InboundMessage, PairingRequest, SessionSource } from './types.js'
 
 /**
  * leo-agents 的 `agentFactory` 服务（较新的宿主提供）：按宿主配置的默认模型、提示词、限额创建 Agent。
@@ -40,6 +40,8 @@ interface WorkItem {
   replyTo?: string
   /** 把最终回复交给谁：平台会话或控制面调用方 */
   deliver(text: string): Promise<void>
+  /** 把 Agent 发出的图片（表情）交给平台会话；控制面调用方没有，只收到 image 流事件 */
+  deliverImage?(image: OutboundImage): Promise<void>
   onEvent?: (ev: GatewayStreamEvent) => void
   signal?: AbortSignal
   done?: (r: GatewayTurnResult) => void
@@ -71,6 +73,8 @@ export interface CoreDeps {
   state: GatewayState
   /** 发送到平台会话（已分段） */
   sendTo(account: string, target: ChannelTarget, text: string, replyTo?: string, signal?: AbortSignal): Promise<{ messageIds: string[] }>
+  /** 发图片到平台会话；驱动不支持图片时改发图片说明（0.3.0 起） */
+  sendImageTo?(account: string, target: ChannelTarget, image: OutboundImage, replyTo?: string, signal?: AbortSignal): Promise<{ messageIds: string[] }>
   accountConfig(account: string): AccountConfig | undefined
   /** 列出所有账号 id 与配置（解析 home 目标用） */
   accountIds(): string[]
@@ -151,6 +155,8 @@ export class GatewayCore {
     }
     const target: ChannelTarget = { chatId: m.chat.id, chatType: m.chat.type, ...(m.chat.extra ? { extra: m.chat.extra } : {}) }
     const reply = (text: string) => this.deps.sendTo(m.account, target, text, m.id).then(() => {})
+    const replyImage = (image: OutboundImage) =>
+      (this.deps.sendImageTo ? this.deps.sendImageTo(m.account, target, image, m.id) : this.deps.sendTo(m.account, target, image.alt || image.url, m.id)).then(() => {})
     const text = m.text.trim()
     const cmd = parseCommand(text)
 
@@ -165,7 +171,7 @@ export class GatewayCore {
     lane.notify = reply
 
     if (cmd) {
-      void this.command(cmd.name, cmd.args, { user, source, lane, reply }).catch((err: Error) => {
+      void this.command(cmd.name, cmd.args, { user, source, lane, reply, replyImage, replyTo: m.id }).catch((err: Error) => {
         this.log.warn({ err: err.message, cmd: cmd.name }, 'gateway: command failed')
         void reply(`指令执行失败：${err.message}`).catch(() => {})
       })
@@ -178,7 +184,7 @@ export class GatewayCore {
       if (DENY.has(word)) return void this.resolveApproval(lane, false, user)
     }
     const input = isShared(source.chatType, source.threadId, this.cfg.sessions) ? `[${m.sender.name ?? m.sender.id}] ${text}` : text
-    this.enqueue(lane, { text: input, source, replyTo: m.id, deliver: reply })
+    this.enqueue(lane, { text: input, source, replyTo: m.id, deliver: reply, deliverImage: replyImage })
   }
 
   private warn(what: string) {
@@ -210,12 +216,21 @@ export class GatewayCore {
 
   // ———————————————————————————————————————— 指令 ————————————————————————————————————————
 
-  private async command(name: string, args: string, c: { user: string; source: SessionSource; lane: Lane; reply: (t: string) => Promise<void> }): Promise<void> {
+  private async command(
+    name: string,
+    args: string,
+    c: { user: string; source: SessionSource; lane: Lane; reply: (t: string) => Promise<void>; replyImage: (i: OutboundImage) => Promise<void>; replyTo?: string },
+  ): Promise<void> {
     const { lane, reply } = c
     switch (name) {
       case 'start':
-      case 'help':
-        return reply(HELP)
+      case 'help': {
+        const extra = commandsOf(this.deps.ctx)
+          ?.list()
+          .filter((d) => !BUILTIN_COMMANDS.has(d.name))
+          .map((d) => `/${d.name}${d.usage ? ` ${d.usage}` : ''}${d.description ? ` ${d.description}` : ''}`)
+        return reply(extra?.length ? `${HELP}\n\n插件指令：\n${extra.join('\n')}` : HELP)
+      }
       case 'new':
       case 'reset': {
         await this.resetSession(lane.key)
@@ -258,10 +273,40 @@ export class GatewayCore {
         if (!this.isAdmin(c.user)) return reply('只有管理员可以撤销授权。')
         return reply(args && this.deps.state.unpair(args.trim()) ? `已撤销 ${args.trim()}。` : '用法：/unpair <channel:userId>（只能撤销通过配对授权的用户）')
       }
-      default:
+      default: {
+        // 插件注册的斜杠命令（leo-agents ≥ 0.2.1 的 commands 服务，如互动层的 /sticker）
+        const commands = commandsOf(this.deps.ctx)
+        if (commands?.get(name)) {
+          const sessionId = this.deps.state.session(lane.key)?.sessionId
+          const r = await commands.run(name, { args, surface: 'gateway', userId: c.user, ...(sessionId ? { sessionId } : {}) })
+          if (r) {
+            await this.deliverCommandResult(r, c)
+            const prompt = promptText(r.prompt)
+            if (prompt) {
+              const input = isShared(c.source.chatType, c.source.threadId, this.cfg.sessions) ? `[${c.source.userName ?? c.source.userId}] ${prompt}` : prompt
+              this.enqueue(lane, { text: input, source: c.source, ...(c.replyTo ? { replyTo: c.replyTo } : {}), deliver: reply, deliverImage: c.replyImage })
+            }
+            return
+          }
+        }
         // 不认识的 / 开头消息当作普通文本交给 Agent（例如用户真的想问 “/etc/hosts 是什么”）
-        this.enqueue(lane, { text: args ? `/${name} ${args}` : `/${name}`, source: c.source, deliver: reply })
+        this.enqueue(lane, { text: args ? `/${name} ${args}` : `/${name}`, source: c.source, deliver: reply, deliverImage: c.replyImage })
+      }
     }
+  }
+
+  /** 把插件命令的结果发回聊天：文字、图片；字符画聊天里显示不了，改发它的文字说明（同一结果里有图片时省略） */
+  private async deliverCommandResult(r: CommandResultLike, c: { reply: (t: string) => Promise<void>; replyImage: (i: OutboundImage) => Promise<void> }): Promise<void> {
+    const blocks = r.display ?? []
+    const hasImage = blocks.some((b) => b.type === 'image' && isSendableUrl(b.url))
+    const texts: string[] = []
+    if (r.text) texts.push(r.isError ? `⚠️ ${r.text}` : r.text)
+    for (const b of blocks) {
+      if (b.type === 'text' && b.text) texts.push(b.text)
+      else if (b.type === 'ansi' && !hasImage && b.fallback) texts.push(b.fallback)
+    }
+    if (texts.length) await c.reply(texts.join('\n'))
+    for (const b of blocks) if (b.type === 'image' && isSendableUrl(b.url)) await c.replyImage({ url: b.url, ...(b.alt ? { alt: b.alt } : {}) })
   }
 
   /** 渠道驱动直接授权某个用户（如扫码绑定机器人的人），不经过配对码 */
@@ -437,6 +482,12 @@ export class GatewayCore {
             break
           case 'tool_result':
             emit({ type: 'tool', name: ev.result.name, phase: 'end', ...(ev.result.isError ? { error: preview(textOf(ev.message) || 'error', 200) } : {}) })
+            if (this.cfg.agent.images && !ev.result.isError) {
+              for (const image of imagesOfToolResult(ev.result)) {
+                emit({ type: 'image', url: image.url, ...(image.alt ? { alt: image.alt } : {}) })
+                if (item.deliverImage) await item.deliverImage(image).catch(this.warn('image delivery'))
+              }
+            }
             break
           case 'turn_end':
             end = ev
@@ -671,6 +722,56 @@ function summarize(p: PreExecutePayload): string {
   const pick = args.command ?? args.cmd ?? args.path ?? args.file_path ?? args.url ?? args.text
   const detail = typeof pick === 'string' ? pick : JSON.stringify(args)
   return `${p.tool.name} ${preview(detail ?? '', 160)}`.trim()
+}
+
+/** 网关自己处理的指令（插件命令同名时网关优先） */
+export const BUILTIN_COMMANDS = new Set(['start', 'help', 'new', 'reset', 'stop', 'status', 'approve', 'yes', 'deny', 'no', 'pair', 'unpair', 'whoami'])
+
+/** 宿主 commands 服务（leo-agents ≥ 0.2.1）的结构；旧宿主没有它时不转发插件命令 */
+interface DisplayBlockLike {
+  type: string
+  text?: string
+  fallback?: string
+  url?: string
+  alt?: string
+}
+export interface CommandResultLike {
+  text?: string
+  display?: DisplayBlockLike[]
+  isError?: boolean
+  prompt?: unknown
+}
+interface CommandsLike {
+  get(name: string): { name: string } | undefined
+  list(): { name: string; usage?: string; description?: string }[]
+  run(name: string, c: { args: string; surface: string; sessionId?: string; userId?: string; signal?: AbortSignal }): Promise<CommandResultLike | undefined>
+}
+const commandsOf = (ctx: Context<any>) => ctx.maybe('commands' as never) as CommandsLike | undefined
+
+/** 聊天平台能拿去发的图片地址 */
+export const isSendableUrl = (url: unknown): url is string => typeof url === 'string' && /^(https?:|data:image\/)/i.test(url)
+
+/** 命令结果里的 prompt（字符串或内容块数组）取文字 */
+function promptText(p: unknown): string {
+  if (typeof p === 'string') return p.trim()
+  if (Array.isArray(p)) return p.map((b) => (b && typeof b === 'object' && (b as { type?: string }).type === 'text' ? String((b as { text?: unknown }).text ?? '') : '')).join('').trim()
+  return ''
+}
+
+/**
+ * 工具结果里要发给聊天的图片：
+ * - 结果的 `display` 里的 image 块（leo-agents ≥ 0.2.1）
+ * - 旧宿主没有 display：互动层 `send_sticker` 把图片地址放在 `details.image`，直接读取
+ */
+export function imagesOfToolResult(result: { name: string; details?: unknown; display?: unknown }): OutboundImage[] {
+  const out: OutboundImage[] = []
+  if (Array.isArray(result.display)) {
+    for (const b of result.display as DisplayBlockLike[]) if (b?.type === 'image' && isSendableUrl(b.url)) out.push({ url: b.url, ...(b.alt ? { alt: b.alt } : {}) })
+    if (out.length) return out
+  }
+  const d = result.details as { image?: unknown; text?: unknown } | undefined
+  if (result.name === 'send_sticker' && d && isSendableUrl(d.image)) out.push({ url: d.image, ...(typeof d.text === 'string' ? { alt: d.text } : {}) })
+  return out
 }
 
 export const HELP = `可用指令：

@@ -14,7 +14,7 @@
  */
 import { createDecipheriv, createHash, timingSafeEqual } from 'node:crypto'
 import { z } from 'zod'
-import { ChannelHttpError, requestJson, TokenCache } from '../../http.js'
+import { ChannelHttpError, loadImage, requestJson, TokenCache } from '../../http.js'
 import { FeishuWsClient } from './ws.js'
 import type { ChannelConnection, ChannelDriver, ChannelInit, InboundMessage, WebhookRequest, WebhookResponse } from '../../types.js'
 
@@ -152,6 +152,35 @@ async function create(init: ChannelInit<FeishuOptions>): Promise<ChannelConnecti
     return r.data
   }
 
+  /** 上传图片拿 image_key（im/v1/images，image_type=message）；image_key 在应用内可复用，按地址缓存 */
+  const imageKeys = new Map<string, string>()
+  const uploadImage = async (url: string, signal: AbortSignal): Promise<string> => {
+    const hit = imageKeys.get(url)
+    if (hit) return hit
+    const img = await loadImage(init.fetch, url, { signal, timeoutMs: o.requestTimeoutMs })
+    const call = async () => {
+      const form = new FormData()
+      form.set('image_type', 'message')
+      form.set('image', new Blob([img.bytes], { type: img.mimeType }), img.fileName)
+      const res = await init.fetch(`${base}/open-apis/im/v1/images`, {
+        method: 'POST',
+        headers: { authorization: `Bearer ${await tokens.get()}` },
+        body: form,
+        signal: AbortSignal.any([signal, AbortSignal.timeout(o.requestTimeoutMs)]),
+      })
+      return (await res.json().catch(() => ({ code: res.status, msg: `HTTP ${res.status}` }))) as { code: number; msg: string; data?: { image_key?: string } }
+    }
+    let r = await call()
+    if (r.code === 99991663 || r.code === 99991661) {
+      tokens.invalidate()
+      r = await call()
+    }
+    if (r.code !== 0 || !r.data?.image_key) throw new ChannelHttpError(`feishu upload image: code ${r.code}: ${r.msg}`)
+    imageKeys.set(url, r.data.image_key)
+    if (imageKeys.size > 500) imageKeys.delete(imageKeys.keys().next().value as string)
+    return r.data.image_key
+  }
+
   // 机器人自己的 open_id：用于判断群聊里是否 @ 了它
   const info = await requestJson<{ code: number; msg: string; bot?: { open_id?: string; app_name?: string } }>(init.fetch, `${base}/open-apis/bot/v3/info`, {
     headers: { authorization: `Bearer ${await tokens.get()}` },
@@ -245,15 +274,24 @@ async function create(init: ChannelInit<FeishuOptions>): Promise<ChannelConnecti
       await ws?.stop()
     },
     async send(target, message, signal) {
-      const content = JSON.stringify({ text: message.text })
-      const data = message.replyTo
-        ? await api<{ message_id: string }>(`/open-apis/im/v1/messages/${encodeURIComponent(message.replyTo)}/reply`, { msg_type: 'text', content }, signal, 'feishu reply')
-        : await api<{ message_id: string }>(
-            `/open-apis/im/v1/messages?receive_id_type=${target.chatType === 'direct' && target.chatId.startsWith('ou_') ? 'open_id' : 'chat_id'}`,
-            { receive_id: target.chatId, msg_type: 'text', content },
-            signal,
-            'feishu send',
-          )
+      const post = (msgType: string, content: string, replyTo?: string) =>
+        replyTo
+          ? api<{ message_id: string }>(`/open-apis/im/v1/messages/${encodeURIComponent(replyTo)}/reply`, { msg_type: msgType, content }, signal, 'feishu reply')
+          : api<{ message_id: string }>(
+              `/open-apis/im/v1/messages?receive_id_type=${target.chatType === 'direct' && target.chatId.startsWith('ou_') ? 'open_id' : 'chat_id'}`,
+              { receive_id: target.chatId, msg_type: msgType, content },
+              signal,
+              'feishu send',
+            )
+      if (message.image) {
+        // 图片：先上传拿 image_key（同一张图复用），再发 image 消息；说明文字另发一条
+        const imageKey = await uploadImage(message.image.url, signal)
+        const data = await post('image', JSON.stringify({ image_key: imageKey }), message.replyTo)
+        const ids = [data.message_id]
+        if (message.text) ids.push((await post('text', JSON.stringify({ text: message.text }))).message_id)
+        return { messageIds: ids }
+      }
+      const data = await post('text', JSON.stringify({ text: message.text }), message.replyTo)
       return { messageIds: [data.message_id] }
     },
   }
@@ -268,5 +306,6 @@ export const feishu: ChannelDriver<FeishuOptions> = {
   // 飞书文本消息上限约 150KB，这里保守分段，便于阅读
   textLimit: 4000,
   receive: 'websocket',
+  images: true,
   create,
 }
