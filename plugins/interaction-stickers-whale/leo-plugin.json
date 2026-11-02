@@ -1,0 +1,36 @@
+{
+  "$schema": "../../schemas/leo-plugin.schema.json",
+  "id": "interaction-stickers-whale",
+  "package": "leo-plugin-interaction-stickers-whale",
+  "version": "0.1.0",
+  "status": "experimental",
+  "description": "互动层的表情包子插件：鲸鱼娘表情 24 张 × 蓝鲸娘 / 黑鲸娘两套角色（10 张 Agent 专属彩蛋），Agent 按语境自动发，终端显示字符画、聊天平台用图片（移植自 dsh-stickers，需要 interaction ≥ 0.1.0）",
+  "keywords": [
+    "interaction",
+    "sticker",
+    "whale",
+    "表情包",
+    "鲸鱼娘"
+  ],
+  "leo": ">=0.2.0",
+  "entry": "./dist/index.js",
+  "bundle": "./dist/interaction-stickers-whale.bundle.js",
+  "inject": [
+    "interaction"
+  ],
+  "provides": {
+    "services": [],
+    "tools": [],
+    "events": []
+  },
+  "permissions": [],
+  "install": {
+    "config": "leo-plugin-interaction-stickers-whale",
+    "example": [
+      "leo-plugin-interaction-stickers-whale",
+      {
+        "defaultVariant": "blue"
+      }
+    ]
+  }
+}

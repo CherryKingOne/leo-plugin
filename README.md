@@ -18,6 +18,9 @@
 | [provider-deepseek](plugins/provider-deepseek) | `leo-plugin-provider-deepseek` | 实验性 0.3.0 | 模型供应商的 DeepSeek 子插件：deepseek-flash / deepseek-v4-pro，思考模式与工具调用，旧模型名自动改写 |
 | [provider-longcat](plugins/provider-longcat) | `leo-plugin-provider-longcat` | 实验性 0.1.0 | 模型供应商的 LongCat（美团）子插件：LongCat-2.5-Preview，思考模式与工具调用，推理强度换算成思考预算 |
 | [provider-spark](plugins/provider-spark) | `leo-plugin-provider-spark` | 实验性 0.1.0 | 模型供应商的讯飞星火子插件：Spark-X2.6 / X2.5 系列（讯飞自研），思考模式 enabled / disabled / auto 与工具调用 |
+| [interaction](plugins/interaction) | `leo-plugin-interaction` | 实验性 0.1.0 | 互动层（注册层）：人设与表情包由子插件注册，Agent 按对话语境用 send_sticker 自动发表情；/persona、/sticker、/stickers |
+| [interaction-persona-whale](plugins/interaction-persona-whale) | `leo-plugin-interaction-persona-whale` | 实验性 0.1.0 | 互动层的人设子插件：鲸鱼娘·大肥鱼（移植自 dsh-whale-musume-persona） |
+| [interaction-stickers-whale](plugins/interaction-stickers-whale) | `leo-plugin-interaction-stickers-whale` | 实验性 0.1.0 | 互动层的表情包子插件：鲸鱼娘表情 24 张 × 蓝 / 黑两套角色，终端字符画 + 图片（移植自 dsh-stickers） |
 
 机器可读的索引见 [`registry.json`](registry.json)。
 
@@ -69,7 +72,10 @@ leo-plugin/
     ├── provider/             模型供应商注册层
     ├── provider-deepseek/    模型供应商的 DeepSeek 子插件
     ├── provider-longcat/     模型供应商的 LongCat 子插件
-    └── provider-spark/       模型供应商的讯飞星火子插件
+    ├── provider-spark/       模型供应商的讯飞星火子插件
+    ├── interaction/          互动层（人设、表情包的注册层）
+    ├── interaction-persona-whale/   互动层的人设子插件（鲸鱼娘）
+    └── interaction-stickers-whale/  互动层的表情包子插件（鲸鱼娘表情）
 ```
 
 ## 许可

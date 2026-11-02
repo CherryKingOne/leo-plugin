@@ -1,0 +1,34 @@
+{
+  "$schema": "../../schemas/leo-plugin.schema.json",
+  "id": "interaction-persona-whale",
+  "package": "leo-plugin-interaction-persona-whale",
+  "version": "0.1.0",
+  "status": "experimental",
+  "description": "互动层的人设子插件：鲸鱼娘·大肥鱼——傲娇但很甜的鲸鱼娘口吻，思考用中文，编码能力不打折（移植自 dsh-whale-musume-persona，需要 interaction ≥ 0.1.0）",
+  "keywords": [
+    "interaction",
+    "persona",
+    "whale",
+    "鲸鱼娘",
+    "人设"
+  ],
+  "leo": ">=0.2.0",
+  "entry": "./dist/index.js",
+  "bundle": "./dist/interaction-persona-whale.bundle.js",
+  "inject": [
+    "interaction"
+  ],
+  "provides": {
+    "services": [],
+    "tools": [],
+    "events": []
+  },
+  "permissions": [],
+  "install": {
+    "config": "leo-plugin-interaction-persona-whale",
+    "example": [
+      "leo-plugin-interaction-persona-whale",
+      {}
+    ]
+  }
+}

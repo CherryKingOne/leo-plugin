@@ -1,0 +1,22 @@
+{
+  // leo 互动层配置（leo-plugin-interaction）。项目里的 .leo/interaction.json 覆盖这里。
+
+  // 当前人设：人设子插件注册的 id（例如 "whale"）；"auto" = 用第一个安装的人设；"off" = 不用人设
+  // 交互中 /persona <id> 切换会写回这里
+  "persona": "auto",
+
+  "stickers": {
+    // 是否让 Agent 按对话语境自动发表情（send_sticker 工具）
+    "enabled": true,
+    // 默认角色（同一张表情的不同画风，例如 "blue" 蓝鲸娘 / "black" 黑鲸娘）；空 = 表情包自己的默认
+    "variant": "",
+    // 是否允许 Agent 发只有它能发的彩蛋表情
+    "hidden": true,
+    // 每轮对话最多几张；0 = 关闭
+    "maxPerTurn": 1,
+    // 展示方式：art = 终端字符画（聊天平台用图片）；image = 只给图片；off = 只有一行文字
+    "display": "art",
+    // 你用 /sticker 发表情后，是否把它当成一条消息发给 Agent，让它接话
+    "userPrompt": true
+  }
+}
