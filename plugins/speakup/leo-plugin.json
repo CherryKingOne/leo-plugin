@@ -1,0 +1,62 @@
+{
+  "$schema": "../../schemas/leo-plugin.schema.json",
+  "id": "speakup",
+  "package": "leo-plugin-speakup",
+  "version": "0.1.0",
+  "status": "experimental",
+  "description": "主动搭话：对方一阵子没来找时，Agent 在私聊里主动找对方说几句，问了话没回会轻轻追一句；清醒时段、空闲时长、每天次数可配，经消息网关作为主动消息发出（需要 gateway ≥ 0.3.0；/speakup 命令需要 leo-agents ≥ 0.2.1）",
+  "keywords": [
+    "speakup",
+    "proactive",
+    "主动消息",
+    "主动搭话",
+    "gateway"
+  ],
+  "leo": ">=0.1.2",
+  "entry": "./dist/index.js",
+  "bundle": "./dist/speakup.bundle.js",
+  "inject": [
+    "gateway"
+  ],
+  "provides": {
+    "services": [
+      "speakup"
+    ],
+    "tools": [],
+    "events": []
+  },
+  "permissions": [],
+  "install": {
+    "config": "leo-plugin-speakup",
+    "example": [
+      "leo-plugin-speakup",
+      {}
+    ]
+  },
+  "init": {
+    "files": [
+      {
+        "path": "speakup.json",
+        "template": "templates/speakup.json",
+        "description": "主动搭话配置：找谁、清醒时段、空闲多久、每天几次、追问"
+      }
+    ]
+  },
+  "release": {
+    "version": "0.1.0",
+    "bundle": {
+      "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/speakup/0.1.0/speakup.bundle.js",
+      "sha256": "7aeb9e78effc70ae1707b85a4e3cafa44e81c34dcddeba6a23b58363325e7b4c"
+    },
+    "init": {
+      "files": [
+        {
+          "path": "speakup.json",
+          "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/speakup/0.1.0/init/speakup.json",
+          "sha256": "9f794518fd99868e8aa6d475bbbfb1fb638c80476e2be22cdc5472ac9d46f726",
+          "description": "主动搭话配置：找谁、清醒时段、空闲多久、每天几次、追问"
+        }
+      ]
+    }
+  }
+}
