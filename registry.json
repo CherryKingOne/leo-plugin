@@ -200,20 +200,20 @@
       "id": "speakup",
       "package": "leo-plugin-speakup",
       "path": "plugins/speakup",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "status": "experimental",
       "description": "主动搭话：对方一阵子没来找时，Agent 在私聊里主动找对方说几句，问了话没回会轻轻追一句；清醒时段、空闲时长、每天次数可配，经消息网关作为主动消息发出（需要 gateway ≥ 0.3.0；/speakup 命令需要 leo-agents ≥ 0.2.1）",
       "leo": ">=0.1.2",
       "bundle": {
-        "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/speakup/0.1.0/speakup.bundle.js",
-        "sha256": "7aeb9e78effc70ae1707b85a4e3cafa44e81c34dcddeba6a23b58363325e7b4c"
+        "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/speakup/0.1.1/speakup.bundle.js",
+        "sha256": "f5f5bbfc83e8d368d7749c0f97284bef63b831580621050720023153046168dc"
       },
       "init": {
         "files": [
           {
             "path": "speakup.json",
-            "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/speakup/0.1.0/init/speakup.json",
-            "sha256": "9f794518fd99868e8aa6d475bbbfb1fb638c80476e2be22cdc5472ac9d46f726",
+            "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/speakup/0.1.1/init/speakup.json",
+            "sha256": "fbbe361c662f42f2d51a1408c55e53cd4488f75c39bf94146306347a7e3ba8d1",
             "description": "主动搭话配置：找谁、清醒时段、空闲多久、每天几次、追问"
           }
         ]

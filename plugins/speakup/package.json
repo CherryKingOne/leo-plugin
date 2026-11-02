@@ -1,6 +1,6 @@
 {
   "name": "leo-plugin-speakup",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "leo 主动搭话：对方一阵子没来找时，Agent 在私聊里主动找对方说几句；问了话没回会轻轻追一句（经消息网关发出）",
   "type": "module",
   "license": "Apache-2.0",

@@ -268,7 +268,7 @@ describe('插件', () => {
     leo.ctx.emit('gateway/turn-end' as never, { sessionKey: 'qq:main:direct:U1', text: '嗯嗯？', reason: 'completed' } as never)
     expect(sp.state['qq:main:direct:U1']).toMatchObject({ lastUserAt: 123, lastBotText: '嗯嗯？' })
 
-    expect((await h.run()).text).toMatch(/qq:main:direct:U1（小王） · 今天 0\/3/)
+    expect((await h.run()).text).toMatch(/qq:main:direct:U1（小王） · 今天 0\/10/)
     expect((await h.run('now')).text).toBe('已主动发给 qq:main:direct:U1：好久不见！')
     expect(h.g.sent.length).toBe(1)
     expect((await h.run('now telegram')).text).toMatch(/没有匹配/)

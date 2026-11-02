@@ -21,7 +21,7 @@
 | [interaction](plugins/interaction) | `leo-plugin-interaction` | 实验性 0.1.0 | 互动层（注册层）：人设与表情包由子插件注册，Agent 按对话语境用 send_sticker 自动发表情；/persona、/sticker、/stickers |
 | [interaction-persona-whale](plugins/interaction-persona-whale) | `leo-plugin-interaction-persona-whale` | 实验性 0.1.0 | 互动层的人设子插件：鲸鱼娘·大肥鱼（移植自 dsh-whale-musume-persona） |
 | [interaction-stickers-whale](plugins/interaction-stickers-whale) | `leo-plugin-interaction-stickers-whale` | 实验性 0.1.0 | 互动层的表情包子插件：鲸鱼娘表情 24 张 × 蓝 / 黑两套角色，终端字符画 + 图片（移植自 dsh-stickers） |
-| [speakup](plugins/speakup) | `leo-plugin-speakup` | 实验性 0.1.0 | 主动搭话：对方一阵子没来找时，Agent 在私聊里主动找对方说几句，问了话没回会轻轻追一句；经网关作为主动消息发出（需要 gateway ≥ 0.3.0） |
+| [speakup](plugins/speakup) | `leo-plugin-speakup` | 实验性 0.1.1 | 主动搭话：对方一阵子没来找时，Agent 在私聊里主动找对方说几句，问了话没回会轻轻追一句；经网关作为主动消息发出（需要 gateway ≥ 0.3.0） |
 
 机器可读的索引见 [`registry.json`](registry.json)。
 
