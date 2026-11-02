@@ -43,10 +43,10 @@
     ]
   },
   "release": {
-    "version": "0.2.2",
+    "version": "0.3.0",
     "bundle": {
-      "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/gateway-qq/0.2.2/gateway-qq.bundle.js",
-      "sha256": "84979eaa5f4b0151874ee209d6c7d472afece09059c90876fb2c3cf90e7d6469"
+      "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/gateway-qq/0.3.0/gateway-qq.bundle.js",
+      "sha256": "bc244a41ed3a02f8feb24e9a70a359e6b9344f1b574c677eda53db5f31d49f63"
     }
   }
 }

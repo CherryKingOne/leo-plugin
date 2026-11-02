@@ -43,10 +43,10 @@
     ]
   },
   "release": {
-    "version": "0.2.3",
+    "version": "0.3.0",
     "bundle": {
-      "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/gateway-feishu/0.2.3/gateway-feishu.bundle.js",
-      "sha256": "db0929eff2a608f856678979914d9c4e3720edaa3c3f464c67f720a5232bfe41"
+      "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/gateway-feishu/0.3.0/gateway-feishu.bundle.js",
+      "sha256": "9e0547ec6addae093bd99f5906bf3ff983b95719ea2efef635d8965fb9a5aba3"
     }
   }
 }
