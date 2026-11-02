@@ -63,6 +63,55 @@
       }
     },
     {
+      "id": "interaction",
+      "package": "leo-plugin-interaction",
+      "path": "plugins/interaction",
+      "version": "0.1.0",
+      "status": "experimental",
+      "description": "互动层（注册层）：人设与表情包由子插件注册；人设注入系统提示词，Agent 按对话语境用 send_sticker 自动发表情；/persona、/sticker、/stickers 命令（需要 leo-agents ≥ 0.2.1）",
+      "leo": ">=0.2.0",
+      "bundle": {
+        "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/interaction/0.1.0/interaction.bundle.js",
+        "sha256": "12406c8e2251f26c2450d42f16507a37d0fac55089909471b01c25aea57e201f"
+      },
+      "init": {
+        "files": [
+          {
+            "path": "interaction.json",
+            "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/interaction/0.1.0/init/interaction.json",
+            "sha256": "99b59ed1f7b32104a1d239e10ca59bfe7ac484221f20c3a892a6b18e53cdcf62",
+            "description": "互动层配置：当前人设、表情开关、默认角色、每轮上限与展示方式"
+          }
+        ]
+      }
+    },
+    {
+      "id": "interaction-persona-whale",
+      "package": "leo-plugin-interaction-persona-whale",
+      "path": "plugins/interaction-persona-whale",
+      "version": "0.1.0",
+      "status": "experimental",
+      "description": "互动层的人设子插件：鲸鱼娘·大肥鱼——傲娇但很甜的鲸鱼娘口吻，思考用中文，编码能力不打折（移植自 dsh-whale-musume-persona，需要 interaction ≥ 0.1.0）",
+      "leo": ">=0.2.0",
+      "bundle": {
+        "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/interaction-persona-whale/0.1.0/interaction-persona-whale.bundle.js",
+        "sha256": "d3947897ed0dc48c69aacaba4ba9f140c4878ce827437aeafc19f45122c1da88"
+      }
+    },
+    {
+      "id": "interaction-stickers-whale",
+      "package": "leo-plugin-interaction-stickers-whale",
+      "path": "plugins/interaction-stickers-whale",
+      "version": "0.1.0",
+      "status": "experimental",
+      "description": "互动层的表情包子插件：鲸鱼娘表情 24 张 × 蓝鲸娘 / 黑鲸娘两套角色（10 张 Agent 专属彩蛋），Agent 按语境自动发，终端显示字符画、聊天平台用图片（移植自 dsh-stickers，需要 interaction ≥ 0.1.0）",
+      "leo": ">=0.2.0",
+      "bundle": {
+        "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/interaction-stickers-whale/0.1.0/interaction-stickers-whale.bundle.js",
+        "sha256": "548ad9c54d486f53e5e34bf1b2f30a3e6f7c482263b45f967f42e86f93d817b2"
+      }
+    },
+    {
       "id": "mcp",
       "package": "leo-plugin-mcp",
       "path": "plugins/mcp",

@@ -32,5 +32,12 @@
         "defaultVariant": "blue"
       }
     ]
+  },
+  "release": {
+    "version": "0.1.0",
+    "bundle": {
+      "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/interaction-stickers-whale/0.1.0/interaction-stickers-whale.bundle.js",
+      "sha256": "548ad9c54d486f53e5e34bf1b2f30a3e6f7c482263b45f967f42e86f93d817b2"
+    }
   }
 }

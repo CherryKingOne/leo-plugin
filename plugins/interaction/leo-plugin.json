@@ -44,5 +44,22 @@
         "description": "互动层配置：当前人设、表情开关、默认角色、每轮上限与展示方式"
       }
     ]
+  },
+  "release": {
+    "version": "0.1.0",
+    "bundle": {
+      "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/interaction/0.1.0/interaction.bundle.js",
+      "sha256": "12406c8e2251f26c2450d42f16507a37d0fac55089909471b01c25aea57e201f"
+    },
+    "init": {
+      "files": [
+        {
+          "path": "interaction.json",
+          "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/interaction/0.1.0/init/interaction.json",
+          "sha256": "99b59ed1f7b32104a1d239e10ca59bfe7ac484221f20c3a892a6b18e53cdcf62",
+          "description": "互动层配置：当前人设、表情开关、默认角色、每轮上限与展示方式"
+        }
+      ]
+    }
   }
 }

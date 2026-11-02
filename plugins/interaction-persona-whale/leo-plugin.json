@@ -30,5 +30,12 @@
       "leo-plugin-interaction-persona-whale",
       {}
     ]
+  },
+  "release": {
+    "version": "0.1.0",
+    "bundle": {
+      "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/interaction-persona-whale/0.1.0/interaction-persona-whale.bundle.js",
+      "sha256": "d3947897ed0dc48c69aacaba4ba9f140c4878ce827437aeafc19f45122c1da88"
+    }
   }
 }
