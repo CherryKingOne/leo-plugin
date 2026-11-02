@@ -11,7 +11,8 @@ leo-agents（底座）与 leo-plugin（插件）各自发版。这张表回答�
 
 | leo-agents | 发布时间 | 可用插件（推荐版本） | 不可用 / 受限 | 备注 |
 | --- | --- | --- | --- | --- |
-| [0.2.0](https://github.com/CherryKingOne/leo-agents/releases/tag/0.2.0) | 2026-10-31 | provider 0.3.1、provider-deepseek 0.3.0、provider-longcat 0.1.0、provider-spark 0.1.0、gateway 0.3.0、gateway-qq 0.3.0、gateway-feishu 0.3.0、interaction 0.1.0、interaction-persona-whale 0.1.0、interaction-stickers-whale 0.1.0、mcp 0.1.1、sub-agents 0.1.1 | — | **破坏性变更**：底座不再内置模型厂商，必须装 `provider` 加至少一个厂商子插件（deepseek / longcat / spark）才能对话 |
+| [0.2.1](https://github.com/CherryKingOne/leo-agents/releases/tag/0.2.1) | 2026-11-02 | 同 0.2.0，推荐 gateway 0.3.1、gateway-qq 0.3.1、gateway-feishu 0.3.0、interaction 0.1.1、interaction-persona-whale 0.1.0、interaction-stickers-whale 0.1.0 | — | 新增 `commands` 服务（插件斜杠命令）与展示块 `display`：interaction 的 `/persona`、`/sticker`、`/stickers` 与终端画表情、网关转发插件命令从这版开始可用 |
+| [0.2.0](https://github.com/CherryKingOne/leo-agents/releases/tag/0.2.0) | 2026-10-31 | provider 0.3.1、provider-deepseek 0.3.0、provider-longcat 0.1.0、provider-spark 0.1.0、gateway 0.3.1、gateway-qq 0.3.1、gateway-feishu 0.3.0、interaction 0.1.1、interaction-persona-whale 0.1.0、interaction-stickers-whale 0.1.0、mcp 0.1.1、sub-agents 0.1.1 | interaction 的斜杠命令与终端画表情、网关转发插件命令（需要 0.2.1） | **破坏性变更**：底座不再内置模型厂商，必须装 `provider` 加至少一个厂商子插件（deepseek / longcat / spark）才能对话 |
 | 0.1.2 | 2026-10-31 | gateway 0.2.3、gateway-qq 0.2.2、gateway-feishu 0.2.3、mcp 0.1.1、sub-agents 0.1.1 | provider 全系列（要求 ≥ 0.2.0） | 模型厂商仍内置在底座（`.leo/config.json` 的 `providers`）；`leo serve` / `agentFactory` / `plugin/notice` / `remove --purge` 从这版开始，网关常驻运行需要它 |
 | 0.1.1 | 2026-10-31 | mcp 0.1.1、sub-agents 0.1.1、gateway 0.1.1 ~ 0.2.3（仅交互式 `leo` 中运行） | provider 全系列；gateway-qq 扫码后的 `--purge` 重扫 | 新增 `leo plugin add/remove`、安装即初始化配置模板、修改配置热加载 |
 | 0.1.0 | 2026-10-30 | mcp 0.1.0、sub-agents 0.1.0（手动写进 `config.json` 的 `plugins`） | provider 全系列；`leo plugin add` 一键安装；热加载 | 首个版本：插件内核、Agent Loop、内置 OpenAI 兼容 Provider、`leo` 命令行 |
@@ -67,7 +68,7 @@ leo-agents（底座）与 leo-plugin（插件）各自发版。这张表回答�
 | 版本 | 发布时间 | 需要 | 更新说明 |
 | --- | --- | --- | --- |
 | 0.3.1 | 2026-11-02 | 同 0.3.0 | 内置 QQ 驱动发图改为本机下载后二进制直传，修复平台拉图超时（850027） |
-| 0.3.0 | 2026-11-02 | leo-agents ≥ 0.1.0（常驻运行需要 0.1.2；转发插件命令需要 0.2.1，目前仅在 leo-agents `feat/commands-display` 分支） | 图片消息（Telegram / QQ / 飞书），Agent 发的表情发到聊天里，转发插件斜杠命令，`sendImage` |
+| 0.3.0 | 2026-11-02 | leo-agents ≥ 0.1.0（常驻运行需要 0.1.2；转发插件命令需要 0.2.1） | 图片消息（Telegram / QQ / 飞书），Agent 发的表情发到聊天里，转发插件斜杠命令，`sendImage` |
 | 0.2.3 | 2026-10-31 | leo-agents ≥ 0.1.0（常驻运行需要 0.1.2） | 飞书默认由子插件 gateway-feishu 提供，`builtin` 默认只留 telegram；缺飞书驱动时提示安装 |
 | 0.2.2 | 2026-10-31 | 同上 | 驱动可直接授权用户（`authorize`），`/whoami` 区分管理员与已授权 |
 | 0.2.1 | 2026-10-31 | 同上 | 配置模板按注册层用法重写（QQ 交给 gateway-qq 扫码）；缺驱动提示更具体，3 秒宽限期 |
@@ -113,7 +114,7 @@ leo-agents（底座）与 leo-plugin（插件）各自发版。这张表回答�
 | 插件 | 版本 | 需要 | 更新说明 |
 | --- | --- | --- | --- |
 | interaction | 0.1.1 | 同 0.1.0 | 表情提示词要求必须调用 `send_sticker`，修复部分模型只写「（发送了一张……）」不调用工具 |
-| interaction | 0.1.0 | leo-agents ≥ 0.2.0（斜杠命令与终端画表情需要 0.2.1，目前仅在 leo-agents `feat/commands-display` 分支，尚未发布） | 首个版本：人设与表情包注册层，`send_sticker` 让 Agent 按语境自动发表情，`/persona`、`/sticker`、`/stickers` |
+| interaction | 0.1.0 | leo-agents ≥ 0.2.0（斜杠命令与终端画表情需要 0.2.1） | 首个版本：人设与表情包注册层，`send_sticker` 让 Agent 按语境自动发表情，`/persona`、`/sticker`、`/stickers` |
 | interaction-persona-whale | 0.1.0 | interaction ≥ 0.1.0 | 首个版本：鲸鱼娘·大肥鱼人设（移植自 dsh-whale-musume-persona，MIT） |
 | interaction-stickers-whale | 0.1.0 | interaction ≥ 0.1.0 | 首个版本：鲸鱼娘表情 24 张 × 蓝 / 黑角色，终端字符画 + 图片（移植自 dsh-stickers，BSD-3-Clause） |
 

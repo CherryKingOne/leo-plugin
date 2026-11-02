@@ -61,7 +61,7 @@ leo
 
 | leo-agents | 效果 |
 | --- | --- |
-| ≥ 0.2.1（`feat/commands-display` 分支） | 完整：Agent 自动发表情并在终端画出来，`/persona`、`/sticker`、`/stickers` 可用 |
+| ≥ 0.2.1 | 完整：Agent 自动发表情并在终端画出来，`/persona`、`/sticker`、`/stickers` 可用 |
 | 0.2.0 | 人设与 Agent 自动发表情照常工作；终端只显示一行文字，没有斜杠命令 |
 
 聊天平台：配合 [gateway](../gateway/) ≥ 0.3.0，Agent 发的表情以图片发到 Telegram / QQ / 飞书（QQ、飞书子插件需要 ≥ 0.3.0）；聊天里用 `/sticker` 等命令还需要 leo-agents ≥ 0.2.1。
