@@ -102,6 +102,7 @@ describe('interaction plugin in a leo host', () => {
     expect(first.system!.indexOf('You are leo.')).toBeLessThan(first.system!.indexOf('## 人设'))
     expect(first.system).toContain('- tests-passed：测试通过！（适合：测试通过）')
     expect(first.system).toContain('- hot-update：热更新成功，进程没了')
+    expect(first.system).toContain('发表情的唯一方式是调用 send_sticker 工具')
     const tool = first.tools!.find((t) => t.name === 'send_sticker')!
     expect((tool.parameters as { properties: { id: { enum: string[] } } }).properties.id.enum).toEqual(['tests-passed', 'hot-update'])
     expect(results[0]!.content).toEqual([{ type: 'text', text: '已发送表情「测试通过！」（tests-passed · blue），用户已经看到。' }])

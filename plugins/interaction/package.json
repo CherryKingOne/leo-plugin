@@ -1,6 +1,6 @@
 {
   "name": "leo-plugin-interaction",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "leo 互动层：人设与表情包的注册层，子插件注册人设 / 表情包，Agent 按对话语境自动发表情",
   "type": "module",
   "license": "Apache-2.0",

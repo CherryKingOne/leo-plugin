@@ -2,7 +2,7 @@
   "$schema": "../../schemas/leo-plugin.schema.json",
   "id": "interaction",
   "package": "leo-plugin-interaction",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "status": "experimental",
   "description": "互动层（注册层）：人设与表情包由子插件注册；人设注入系统提示词，Agent 按对话语境用 send_sticker 自动发表情；/persona、/sticker、/stickers 命令（需要 leo-agents ≥ 0.2.1）",
   "keywords": [
@@ -46,16 +46,16 @@
     ]
   },
   "release": {
-    "version": "0.1.0",
+    "version": "0.1.1",
     "bundle": {
-      "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/interaction/0.1.0/interaction.bundle.js",
-      "sha256": "12406c8e2251f26c2450d42f16507a37d0fac55089909471b01c25aea57e201f"
+      "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/interaction/0.1.1/interaction.bundle.js",
+      "sha256": "ab241fca942426d4253180d3a3d90de7119aa8bb27e251ec5386a2368589021f"
     },
     "init": {
       "files": [
         {
           "path": "interaction.json",
-          "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/interaction/0.1.0/init/interaction.json",
+          "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/interaction/0.1.1/init/interaction.json",
           "sha256": "99b59ed1f7b32104a1d239e10ca59bfe7ac484221f20c3a892a6b18e53cdcf62",
           "description": "互动层配置：当前人设、表情开关、默认角色、每轮上限与展示方式"
         }

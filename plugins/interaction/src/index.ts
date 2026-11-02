@@ -231,6 +231,7 @@ export class Interaction implements InteractionRegistry {
     return [
       '## 表情包',
       `你可以用 send_sticker 工具给用户发表情，让对话更有活人感。按对话语境主动使用，不必等用户要求；每轮最多 ${max} 张，只在它确实能表达语气时发，绝不能用表情代替实质回答。发完不用再描述表情内容。`,
+      '发表情的唯一方式是调用 send_sticker 工具。只在回复文字里写「（发送了一张……表情）」之类的描述，用户什么都看不到；想发就调用工具，不想发就别提表情。用户要你发表情时，一定要调用工具。',
       variants.length > 1
         ? `每张表情有多个角色：${variants.map((v) => `${v.id}（${v.name}）`).join('、')}；默认 ${this.config.stickers.variant || variants[0]!.id}，用户换过角色时跟着用户的选择传 variant。`
         : '',
