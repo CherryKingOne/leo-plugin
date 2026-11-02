@@ -103,6 +103,14 @@ leo-agents（底座）与 leo-plugin（插件）各自发版。这张表回答�
 | 0.1.1 | 2026-10-31 | leo-agents ≥ 0.1.0（热加载、自动初始化需要 0.1.1） | 新增或修改 `agents/*.md` 自动生效；安装时自动生成示例 |
 | 0.1.0 | 2026-10-31 | leo-agents ≥ 0.1.0 | 首个版本：`task` 工具、`subAgents` 服务、`agents/*.md` 定义子 Agent |
 
+### 互动层（开发中，`feat/interaction` 分支，尚未发布）
+
+| 插件 | 版本 | 需要 | 更新说明 |
+| --- | --- | --- | --- |
+| interaction | 0.1.0 | leo-agents ≥ 0.2.0（斜杠命令与终端画表情需要 0.2.1，leo-agents `feat/commands-display` 分支） | 首个版本：人设与表情包注册层，`send_sticker` 让 Agent 按语境自动发表情，`/persona`、`/sticker`、`/stickers` |
+| interaction-persona-whale | 0.1.0 | interaction ≥ 0.1.0 | 首个版本：鲸鱼娘·大肥鱼人设（移植自 dsh-whale-musume-persona，MIT） |
+| interaction-stickers-whale | 0.1.0 | interaction ≥ 0.1.0 | 首个版本：鲸鱼娘表情 24 张 × 蓝 / 黑角色，终端字符画 + 图片（移植自 dsh-stickers，BSD-3-Clause） |
+
 ## 四、插件依赖关系
 
 ```
@@ -112,6 +120,8 @@ leo-agents
 │             └─ provider-spark
 ├── gateway ──┬─ gateway-qq
 │             └─ gateway-feishu
+├── interaction ┬─ interaction-persona-whale
+│               └─ interaction-stickers-whale
 ├── mcp
 └── sub-agents
 ```
