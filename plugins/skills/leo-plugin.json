@@ -1,0 +1,76 @@
+{
+  "$schema": "../../schemas/leo-plugin.schema.json",
+  "id": "skills",
+  "package": "leo-plugin-skills",
+  "version": "0.1.0",
+  "status": "experimental",
+  "description": "技能（Agent Skills / SKILL.md）：内置技能（skill-creator）与用户安装的外部技能（~/.leo/skills、项目 .leo/skills）分开管理；系统提示只放目录，模型用 skill 工具按需加载，/skill 手动触发，/skills 安装、删除、启停",
+  "keywords": [
+    "skills",
+    "SKILL.md",
+    "agent-skills",
+    "技能",
+    "skill-creator"
+  ],
+  "leo": ">=0.1.2",
+  "entry": "./dist/index.js",
+  "bundle": "./dist/skills.bundle.js",
+  "inject": [
+    "tools",
+    "context"
+  ],
+  "provides": {
+    "services": [
+      "skills"
+    ],
+    "tools": [
+      "skill"
+    ],
+    "events": []
+  },
+  "permissions": [],
+  "install": {
+    "config": "leo-plugin-skills",
+    "example": [
+      "leo-plugin-skills",
+      {}
+    ]
+  },
+  "init": {
+    "files": [
+      {
+        "path": "skills.json",
+        "template": "templates/skills.json",
+        "description": "技能配置：内置开关、禁用列表、额外目录"
+      },
+      {
+        "path": "skills/README.md",
+        "template": "templates/skills-README.md",
+        "description": "外部技能目录（自己安装的技能放这里）"
+      }
+    ]
+  },
+  "release": {
+    "version": "0.1.0",
+    "bundle": {
+      "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/skills/0.1.0/skills.bundle.js",
+      "sha256": "6a8c073a585fa38594e64ed6bac86394f91fc9c2b986c8f2bdbd6fbc8cf43b24"
+    },
+    "init": {
+      "files": [
+        {
+          "path": "skills.json",
+          "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/skills/0.1.0/init/skills.json",
+          "sha256": "1c55f474d441d98e7ec3038e589dd68c8ace03103981c7191f700ce01e7bea41",
+          "description": "技能配置：内置开关、禁用列表、额外目录"
+        },
+        {
+          "path": "skills/README.md",
+          "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/skills/0.1.0/init/skills/README.md",
+          "sha256": "e540d6067c3dae9ff17e42273405f00bd732483514c1f2c22cec153198e34006",
+          "description": "外部技能目录（自己安装的技能放这里）"
+        }
+      ]
+    }
+  }
+}

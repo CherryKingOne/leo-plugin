@@ -1,0 +1,49 @@
+{
+  "name": "leo-plugin-skills",
+  "version": "0.1.0",
+  "description": "leo 技能（Agent Skills / SKILL.md）：内置技能与用户安装的外部技能分开管理，系统提示只放目录，用到时再按需加载",
+  "type": "module",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/CherryKingOne/leo-plugin.git",
+    "directory": "plugins/skills"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "builtin",
+    "templates",
+    "leo-plugin.json",
+    "README.md",
+    "CHANGELOG.md",
+    "THIRD-PARTY-NOTICES.md"
+  ],
+  "scripts": {
+    "gen": "node scripts/gen-builtin.mjs",
+    "build": "node scripts/gen-builtin.mjs && tsc -p tsconfig.json && esbuild src/index.ts --bundle --platform=node --format=esm --target=node22 --external:leo-agents --outfile=dist/skills.bundle.js --log-level=warning",
+    "typecheck": "tsc -p tsconfig.test.json --noEmit",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "leo-agents": ">=0.1.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "esbuild": "^0.28.0",
+    "leo-agents": "github:CherryKingOne/leo-agents#fc1a081",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.0"
+  }
+}

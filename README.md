@@ -22,6 +22,7 @@
 | [interaction-persona-whale](plugins/interaction-persona-whale) | `leo-plugin-interaction-persona-whale` | 实验性 0.1.0 | 互动层的人设子插件：鲸鱼娘·大肥鱼（移植自 dsh-whale-musume-persona） |
 | [interaction-stickers-whale](plugins/interaction-stickers-whale) | `leo-plugin-interaction-stickers-whale` | 实验性 0.1.0 | 互动层的表情包子插件：鲸鱼娘表情 24 张 × 蓝 / 黑两套角色，终端字符画 + 图片（移植自 dsh-stickers） |
 | [speakup](plugins/speakup) | `leo-plugin-speakup` | 实验性 0.1.1 | 主动搭话：对方一阵子没来找时，Agent 在私聊里主动找对方说几句，问了话没回会轻轻追一句；经网关作为主动消息发出（需要 gateway ≥ 0.3.0） |
+| [skills](plugins/skills) | `leo-plugin-skills` | 实验性 0.1.0 | 技能（SKILL.md）：内置技能（skill-creator）与用户安装的外部技能分开管理；系统提示只放目录，`skill` 工具按需加载，`/skill` 手动触发，`/skills` 安装 / 删除 / 启停 |
 
 机器可读的索引见 [`registry.json`](registry.json)。
 
@@ -77,7 +78,8 @@ leo-plugin/
     ├── interaction/          互动层（人设、表情包的注册层）
     ├── interaction-persona-whale/   互动层的人设子插件（鲸鱼娘）
     ├── interaction-stickers-whale/  互动层的表情包子插件（鲸鱼娘表情）
-    └── speakup/              主动搭话（经网关主动发消息）
+    ├── speakup/              主动搭话（经网关主动发消息）
+    └── skills/               技能（内置 + 外部，按需加载）
 ```
 
 ## 许可

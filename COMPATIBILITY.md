@@ -11,7 +11,7 @@ leo-agents（底座）与 leo-plugin（插件）各自发版。这张表回答�
 
 | leo-agents | 发布时间 | 可用插件（推荐版本） | 不可用 / 受限 | 备注 |
 | --- | --- | --- | --- | --- |
-| [0.2.1](https://github.com/CherryKingOne/leo-agents/releases/tag/0.2.1) | 2026-11-02 | 同 0.2.0，推荐 gateway 0.3.1、gateway-qq 0.3.1、gateway-feishu 0.3.0、interaction 0.1.1、interaction-persona-whale 0.1.0、interaction-stickers-whale 0.1.0、speakup 0.1.1 | — | 新增 `commands` 服务（插件斜杠命令）与展示块 `display`：interaction 的 `/persona`、`/sticker`、`/stickers` 与终端画表情、网关转发插件命令从这版开始可用 |
+| [0.2.1](https://github.com/CherryKingOne/leo-agents/releases/tag/0.2.1) | 2026-11-02 | 同 0.2.0，推荐 gateway 0.3.1、gateway-qq 0.3.1、gateway-feishu 0.3.0、interaction 0.1.1、interaction-persona-whale 0.1.0、interaction-stickers-whale 0.1.0、speakup 0.1.1、skills 0.1.0 | — | 新增 `commands` 服务（插件斜杠命令）与展示块 `display`：interaction 的 `/persona`、`/sticker`、`/stickers` 与终端画表情、网关转发插件命令从这版开始可用 |
 | [0.2.0](https://github.com/CherryKingOne/leo-agents/releases/tag/0.2.0) | 2026-10-31 | provider 0.3.1、provider-deepseek 0.3.0、provider-longcat 0.1.0、provider-spark 0.1.0、gateway 0.3.1、gateway-qq 0.3.1、gateway-feishu 0.3.0、interaction 0.1.1、interaction-persona-whale 0.1.0、interaction-stickers-whale 0.1.0、mcp 0.1.1、sub-agents 0.1.1 | interaction 的斜杠命令与终端画表情、网关转发插件命令（需要 0.2.1） | **破坏性变更**：底座不再内置模型厂商，必须装 `provider` 加至少一个厂商子插件（deepseek / longcat / spark）才能对话 |
 | 0.1.2 | 2026-10-31 | gateway 0.2.3、gateway-qq 0.2.2、gateway-feishu 0.2.3、mcp 0.1.1、sub-agents 0.1.1 | provider 全系列（要求 ≥ 0.2.0） | 模型厂商仍内置在底座（`.leo/config.json` 的 `providers`）；`leo serve` / `agentFactory` / `plugin/notice` / `remove --purge` 从这版开始，网关常驻运行需要它 |
 | 0.1.1 | 2026-10-31 | mcp 0.1.1、sub-agents 0.1.1、gateway 0.1.1 ~ 0.2.3（仅交互式 `leo` 中运行） | provider 全系列；gateway-qq 扫码后的 `--purge` 重扫 | 新增 `leo plugin add/remove`、安装即初始化配置模板、修改配置热加载 |
@@ -125,6 +125,12 @@ leo-agents（底座）与 leo-plugin（插件）各自发版。这张表回答�
 | speakup | 0.1.1 | 同 0.1.0 | 默认更积极：空闲 60 分钟、间隔 30 ~ 120 分钟、每天最多 10 次（原 120 分钟、90 ~ 240 分钟、3 次） |
 | speakup | 0.1.0 | leo-agents ≥ 0.1.2、gateway ≥ 0.3.0（`/speakup` 命令需要 leo-agents ≥ 0.2.1） | 首个版本：对方一阵子没来找时 Agent 主动在私聊里找对方说话，问了话没回会追一句；清醒时段、空闲时长、每天次数、时区可配；不改网关与渠道驱动 |
 
+### 技能（2026-11-03 发布）
+
+| 插件 | 版本 | 需要 | 更新说明 |
+| --- | --- | --- | --- |
+| skills | 0.1.0 | leo-agents ≥ 0.1.2（`/skill`、`/skills` 命令需要 leo-agents ≥ 0.2.1） | 首个版本：内置技能（skill-creator）释放到 `~/.leo/skills/.builtin/`，外部技能放 `~/.leo/skills/` 与项目 `.leo/skills/`；系统提示只放目录，`skill` 工具按需加载；`/skills add` 从 git 或本地安装；不改核心 |
+
 ## 四、插件依赖关系
 
 ```
@@ -137,6 +143,7 @@ leo-agents
 │             └─ speakup（只用网关的接口，与渠道无关）
 ├── interaction ┬─ interaction-persona-whale
 │               └─ interaction-stickers-whale
+├── skills（只用核心接口，与其他插件无关）
 ├── mcp
 └── sub-agents
 ```
