@@ -1,0 +1,27 @@
+{
+  // leo 技能配置（leo-plugin-skills）。项目里的 .leo/skills.json 覆盖这里。改完自动生效。
+  //
+  // 技能放在哪：
+  //   内置  ~/.leo/skills/.builtin/<名字>/   随插件发布，只读，升级时覆盖（目前有 skill-creator）
+  //   用户  ~/.leo/skills/<名字>/SKILL.md     你自己装的，所有项目可用
+  //   项目  <项目>/.leo/skills/<名字>/SKILL.md 只在这个项目可用
+  // 同名时：项目 > paths > 用户 > 内置。想改内置技能，复制一份到 ~/.leo/skills/<同名>/ 再改。
+
+  // 总开关
+  "enabled": true,
+
+  // 启用随插件发布的内置技能
+  "builtin": true,
+
+  // 禁用的技能名（内置和外部都算）；也可以用 /skills disable <名字>
+  "disabled": [],
+
+  // 额外的技能目录（每个子目录一个技能），例如复用 Claude Code 的技能：["~/.claude/skills"]
+  "paths": [],
+
+  // 系统提示里每条描述最多多少字（只影响目录，不影响加载）
+  "maxDescriptionChars": 500,
+
+  // 允许在聊天渠道（QQ、飞书、Telegram）里用 /skills add / remove / enable / disable；默认只允许终端
+  "remoteManage": false
+}
