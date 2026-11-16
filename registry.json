@@ -4,6 +4,59 @@
   "version": 1,
   "plugins": [
     {
+      "id": "agent-team",
+      "package": "leo-plugin-agent-team",
+      "path": "plugins/agent-team",
+      "version": "0.1.0",
+      "status": "experimental",
+      "description": "Agent 团队：Leader、产品经理、产品设计、技术负责人、全栈开发、QA 组成常驻团队，按 PRD → 设计 → 开发 → 测试 → 交付推进，关卡处请用户审批",
+      "leo": ">=0.1.2",
+      "bundle": {
+        "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/agent-team/0.1.0/agent-team.bundle.js",
+        "sha256": "38829858a0df2547642e37b6c25d61e88ec2c0a1f3b2b01936fff77da6fbddf6"
+      },
+      "init": {
+        "files": [
+          {
+            "path": "team/leader.md",
+            "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/agent-team/0.1.0/init/team/leader.md",
+            "sha256": "dc6d8050ec071d19d7f90e775a4a66f8298d7cd9ee6e780525c53cf13fe25551",
+            "description": "团队角色：项目协调者（Leader）（改提示词、模型、工具）"
+          },
+          {
+            "path": "team/pm.md",
+            "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/agent-team/0.1.0/init/team/pm.md",
+            "sha256": "40d073ee54cbf9b0696a14f5870113998eb8a28cd884082c53579ca63db99f93",
+            "description": "团队角色：产品经理（改提示词、模型、工具）"
+          },
+          {
+            "path": "team/designer.md",
+            "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/agent-team/0.1.0/init/team/designer.md",
+            "sha256": "1e2007d69b5932bfb1623d94ce3dc9677677682a0a77110096e0e6392857afd0",
+            "description": "团队角色：产品设计 / 原型设计（改提示词、模型、工具）"
+          },
+          {
+            "path": "team/tech-lead.md",
+            "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/agent-team/0.1.0/init/team/tech-lead.md",
+            "sha256": "37f1c9b689adfea8ec9d5bfef51d2b2fafcb9b6c67be229d58b63537d39831e4",
+            "description": "团队角色：技术负责人（改提示词、模型、工具）"
+          },
+          {
+            "path": "team/dev.md",
+            "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/agent-team/0.1.0/init/team/dev.md",
+            "sha256": "cc193e6908f11b4bd93fb8b666cf210e09817b33bb8f9e247332d9d838639911",
+            "description": "团队角色：全栈开发（改提示词、模型、工具）"
+          },
+          {
+            "path": "team/qa.md",
+            "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/agent-team/0.1.0/init/team/qa.md",
+            "sha256": "8c97c4d40ffd6e1150f1c8dcb70b0eb269bdcaed16be8ad1a78296d53704f15f",
+            "description": "团队角色：测试工程师（QA）（改提示词、模型、工具）"
+          }
+        ]
+      }
+    },
+    {
       "id": "gateway",
       "package": "leo-plugin-gateway",
       "path": "plugins/gateway",
