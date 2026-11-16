@@ -24,6 +24,7 @@
 | [speakup](plugins/speakup) | `leo-plugin-speakup` | 实验性 0.1.1 | 主动搭话：对方一阵子没来找时，Agent 在私聊里主动找对方说几句，问了话没回会轻轻追一句；经网关作为主动消息发出（需要 gateway ≥ 0.3.0） |
 | [skills](plugins/skills) | `leo-plugin-skills` | 实验性 0.1.0 | 技能（SKILL.md）：内置技能（skill-creator）与用户安装的外部技能分开管理；系统提示只放目录，`skill` 工具按需加载，`/skill` 手动触发，`/skills` 安装 / 删除 / 启停 |
 | [agent-team](plugins/agent-team) | `leo-plugin-agent-team` | 实验性 0.1.0 | Agent 团队：Leader、产品经理、产品设计、技术负责人、全栈开发、QA 组成常驻团队，按 PRD → 设计 + 技术方案 → 开发 → 测试 → 交付推进，关卡处请用户审批（`/team approve` / `/team reject`） |
+| [trajectory](plugins/trajectory) | `leo-plugin-trajectory` | 实验性 0.1.0 | 轨迹观测：会话 → turn → 模型调用 → 工具 → 子会话（子 Agent / 团队成员）的树，本机网页实时查看耗时、首 token 时间（TTFT）、用量、重试与错误；`/trace` 摘要与导出。只读，不注册工具（零 token）。完整计时需要 leo-agents ≥ 0.2.2 |
 
 机器可读的索引见 [`registry.json`](registry.json)。
 
@@ -70,6 +71,7 @@ leo-plugin/
     ├── mcp/                  MCP 客户端插件
     ├── sub-agents/           子代理插件
     ├── agent-team/           Agent 团队插件（常驻多角色团队）
+    ├── trajectory/           轨迹观测（本机网页 + /trace，只读）
     ├── gateway/              消息网关插件
     ├── gateway-qq/           网关的 QQ 子插件（扫码绑定）
     ├── gateway-feishu/       网关的飞书子插件（扫码创建应用）

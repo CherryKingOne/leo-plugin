@@ -11,7 +11,8 @@ leo-agents（底座）与 leo-plugin（插件）各自发版。这张表回答�
 
 | leo-agents | 发布时间 | 可用插件（推荐版本） | 不可用 / 受限 | 备注 |
 | --- | --- | --- | --- | --- |
-| [0.2.1](https://github.com/CherryKingOne/leo-agents/releases/tag/0.2.1) | 2026-11-02 | 同 0.2.0，推荐 gateway 0.3.1、gateway-qq 0.3.1、gateway-feishu 0.3.0、interaction 0.1.1、interaction-persona-whale 0.1.0、interaction-stickers-whale 0.1.0、speakup 0.1.1、skills 0.1.0 | — | 新增 `commands` 服务（插件斜杠命令）与展示块 `display`：interaction 的 `/persona`、`/sticker`、`/stickers` 与终端画表情、网关转发插件命令从这版开始可用 |
+| 0.2.2（未发布，分支 [feat/trajectory-log](https://github.com/CherryKingOne/leo-agents/tree/feat/trajectory-log)） | — | 同 0.2.1，另加 trajectory 0.1.0（完整计时） | — | 只新增：会话日志 `tool/start` / `tool/end`、`llm/response.startedAt/firstTokenAt`（TTFT）、`session/meta`（`AgentOptions.sessionMeta`）、`SessionStore.list()`；测试通过后才合并发布 |
+| [0.2.1](https://github.com/CherryKingOne/leo-agents/releases/tag/0.2.1) | 2026-11-02 | 同 0.2.0，推荐 gateway 0.3.1、gateway-qq 0.3.1、gateway-feishu 0.3.0、interaction 0.1.1、interaction-persona-whale 0.1.0、interaction-stickers-whale 0.1.0、speakup 0.1.1、skills 0.1.0、trajectory 0.1.0 | trajectory 的工具开始时间、历史 TTFT、日志里的父子关系（需要 0.2.2） | 新增 `commands` 服务（插件斜杠命令）与展示块 `display`：interaction 的 `/persona`、`/sticker`、`/stickers` 与终端画表情、网关转发插件命令从这版开始可用 |
 | [0.2.0](https://github.com/CherryKingOne/leo-agents/releases/tag/0.2.0) | 2026-10-31 | provider 0.3.1、provider-deepseek 0.3.0、provider-longcat 0.1.0、provider-spark 0.1.0、gateway 0.3.1、gateway-qq 0.3.1、gateway-feishu 0.3.0、interaction 0.1.1、interaction-persona-whale 0.1.0、interaction-stickers-whale 0.1.0、mcp 0.1.1、sub-agents 0.1.1 | interaction 的斜杠命令与终端画表情、网关转发插件命令（需要 0.2.1） | **破坏性变更**：底座不再内置模型厂商，必须装 `provider` 加至少一个厂商子插件（deepseek / longcat / spark）才能对话 |
 | 0.1.2 | 2026-10-31 | gateway 0.2.3、gateway-qq 0.2.2、gateway-feishu 0.2.3、mcp 0.1.1、sub-agents 0.1.1 | provider 全系列（要求 ≥ 0.2.0） | 模型厂商仍内置在底座（`.leo/config.json` 的 `providers`）；`leo serve` / `agentFactory` / `plugin/notice` / `remove --purge` 从这版开始，网关常驻运行需要它 |
 | 0.1.1 | 2026-10-31 | mcp 0.1.1、sub-agents 0.1.1、gateway 0.1.1 ~ 0.2.3（仅交互式 `leo` 中运行） | provider 全系列；gateway-qq 扫码后的 `--purge` 重扫 | 新增 `leo plugin add/remove`、安装即初始化配置模板、修改配置热加载 |
@@ -137,6 +138,12 @@ leo-agents（底座）与 leo-plugin（插件）各自发版。这张表回答�
 | --- | --- | --- | --- |
 | agent-team | 0.1.0 | leo-agents ≥ 0.1.2（`/team` 命令需要 ≥ 0.2.1） | 首个版本：常驻团队（Leader、产品经理、产品设计、技术负责人、全栈开发、QA），PRD → 设计 + 技术方案 → 开发 → QA（打回）→ 交付，人工关卡 `/team approve` / `/team reject`，项目状态持久化可恢复；不改核心 |
 
+### 轨迹观测（2026-11-17 发布）
+
+| 插件 | 版本 | 需要 | 更新说明 |
+| --- | --- | --- | --- |
+| trajectory | 0.1.0 | leo-agents ≥ 0.2.1（完整计时需要 leo-agents ≥ 0.2.2，目前在分支 `feat/trajectory-log`，尚未发布） | 首个版本：会话日志只读投影成 turn → step → 工具 → 子会话的树；本机网页（账本、时间线、详情、SSE 实时跟随）与 JSON API，默认 `http://127.0.0.1:18791/`，非本机地址必须设令牌；`/trace`、`/trace open`、`/trace export`、`/trace list`；服务 `trajectory`；不注册工具。0.2.1 上：step 耗时取事件时间、工具耗时取结果自报值（开始时间推算）、TTFT 只有运行期间现场测得、子会话靠 sub-agents 结果与 agent-team 会话命名挂上；0.2.2 上直接用 `tool/start` / `tool/end`、`firstTokenAt`、`session/meta`、`sessions.list()` |
+
 ## 四、插件依赖关系
 
 ```
@@ -152,7 +159,8 @@ leo-agents
 ├── skills（只用核心接口，与其他插件无关）
 ├── mcp
 ├── sub-agents
-└── agent-team（只用核心接口，与 sub-agents 并存）
+├── agent-team（只用核心接口，与 sub-agents 并存）
+└── trajectory（只读核心会话日志；认得 sub-agents、agent-team 的子会话，但不依赖它们）
 ```
 
 子插件不会自动装上注册层，需要先装：`leo plugin add provider && leo plugin add provider-spark`。

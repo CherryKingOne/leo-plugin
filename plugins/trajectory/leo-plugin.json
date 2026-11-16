@@ -1,0 +1,38 @@
+{
+  "$schema": "../../schemas/leo-plugin.schema.json",
+  "id": "trajectory",
+  "package": "leo-plugin-trajectory",
+  "version": "0.1.0",
+  "status": "experimental",
+  "description": "轨迹观测：把会话日志投影成 turn / step / 工具 / 子会话的树，本机网页实时查看耗时、TTFT、用量与错误，/trace 命令摘要与导出",
+  "keywords": [
+    "trajectory",
+    "observability",
+    "trace",
+    "debug",
+    "timeline"
+  ],
+  "leo": ">=0.2.1",
+  "entry": "./dist/index.js",
+  "bundle": "./dist/trajectory.bundle.js",
+  "inject": [
+    "sessions"
+  ],
+  "provides": {
+    "services": [
+      "trajectory"
+    ]
+  },
+  "permissions": [
+    "net.listen"
+  ],
+  "install": {
+    "config": "leo-plugin-trajectory",
+    "example": [
+      "leo-plugin-trajectory",
+      {
+        "port": 18791
+      }
+    ]
+  }
+}
