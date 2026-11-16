@@ -34,5 +34,12 @@
         "port": 18791
       }
     ]
+  },
+  "release": {
+    "version": "0.1.0",
+    "bundle": {
+      "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/trajectory/0.1.0/trajectory.bundle.js",
+      "sha256": "37cb83b23a864048733fe38c78ab3c448b98dd45d38a0a2b307d326a7d53b9f0"
+    }
   }
 }

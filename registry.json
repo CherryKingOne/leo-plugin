@@ -323,6 +323,19 @@
           }
         ]
       }
+    },
+    {
+      "id": "trajectory",
+      "package": "leo-plugin-trajectory",
+      "path": "plugins/trajectory",
+      "version": "0.1.0",
+      "status": "experimental",
+      "description": "轨迹观测：把会话日志投影成 turn / step / 工具 / 子会话的树，本机网页实时查看耗时、TTFT、用量与错误，/trace 命令摘要与导出",
+      "leo": ">=0.2.1",
+      "bundle": {
+        "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/trajectory/0.1.0/trajectory.bundle.js",
+        "sha256": "37cb83b23a864048733fe38c78ab3c448b98dd45d38a0a2b307d326a7d53b9f0"
+      }
     }
   ]
 }
