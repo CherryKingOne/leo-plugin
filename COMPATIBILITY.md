@@ -131,6 +131,12 @@ leo-agents（底座）与 leo-plugin（插件）各自发版。这张表回答�
 | --- | --- | --- | --- |
 | skills | 0.1.0 | leo-agents ≥ 0.1.2（`/skill`、`/skills` 命令需要 leo-agents ≥ 0.2.1） | 首个版本：内置技能（skill-creator）释放到 `~/.leo/skills/.builtin/`，外部技能放 `~/.leo/skills/` 与项目 `.leo/skills/`；系统提示只放目录，`skill` 工具按需加载；`/skills add` 从 git 或本地安装；不改核心 |
 
+### Agent 团队（开发中，分支 `feat/agent-team`，未发布）
+
+| 插件 | 版本 | 需要 | 更新说明 |
+| --- | --- | --- | --- |
+| agent-team | 0.1.0（未发布） | leo-agents ≥ 0.1.2（`/team` 命令需要 ≥ 0.2.1） | 首个版本：常驻团队（Leader、产品经理、产品设计、技术负责人、全栈开发、QA），PRD → 设计 + 技术方案 → 开发 → QA（打回）→ 交付，人工关卡 `/team approve` / `/team reject`，项目状态持久化可恢复；不改核心 |
+
 ## 四、插件依赖关系
 
 ```
@@ -145,7 +151,8 @@ leo-agents
 │               └─ interaction-stickers-whale
 ├── skills（只用核心接口，与其他插件无关）
 ├── mcp
-└── sub-agents
+├── sub-agents
+└── agent-team（只用核心接口，与 sub-agents 并存）
 ```
 
 子插件不会自动装上注册层，需要先装：`leo plugin add provider && leo plugin add provider-spark`。

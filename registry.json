@@ -4,6 +4,15 @@
   "version": 1,
   "plugins": [
     {
+      "id": "agent-team",
+      "package": "leo-plugin-agent-team",
+      "path": "plugins/agent-team",
+      "version": "0.1.0",
+      "status": "experimental",
+      "description": "Agent 团队：Leader、产品经理、产品设计、技术负责人、全栈开发、QA 组成常驻团队，按 PRD → 设计 → 开发 → 测试 → 交付推进，关卡处请用户审批",
+      "leo": ">=0.1.2"
+    },
+    {
       "id": "gateway",
       "package": "leo-plugin-gateway",
       "path": "plugins/gateway",

@@ -1,0 +1,100 @@
+{
+  "$schema": "../../schemas/leo-plugin.schema.json",
+  "id": "agent-team",
+  "package": "leo-plugin-agent-team",
+  "version": "0.1.0",
+  "status": "experimental",
+  "description": "Agent 团队：Leader、产品经理、产品设计、技术负责人、全栈开发、QA 组成常驻团队，按 PRD → 设计 → 开发 → 测试 → 交付推进，关卡处请用户审批",
+  "keywords": [
+    "agent",
+    "team",
+    "multi-agent",
+    "workflow",
+    "prd",
+    "qa"
+  ],
+  "leo": ">=0.1.2",
+  "entry": "./dist/index.js",
+  "bundle": "./dist/agent-team.bundle.js",
+  "inject": [
+    "agentLoop",
+    "tools"
+  ],
+  "provides": {
+    "services": [
+      "agentTeam"
+    ],
+    "tools": [
+      "team_start",
+      "team_reply",
+      "team_assign",
+      "team_board",
+      "team_artifact",
+      "team_request_approval",
+      "team_deliver",
+      "team_ask",
+      "team_task_update"
+    ],
+    "events": [
+      "agent-team/phase-started",
+      "agent-team/phase-finished",
+      "agent-team/bounced",
+      "agent-team/awaiting-approval",
+      "agent-team/finished"
+    ]
+  },
+  "permissions": [
+    "agent.spawn"
+  ],
+  "install": {
+    "config": "leo-plugin-agent-team",
+    "example": [
+      "leo-plugin-agent-team",
+      {
+        "gates": {
+          "design": false
+        },
+        "maxBounces": 3,
+        "roles": {
+          "qa": {
+            "model": "deepseek/deepseek-flash"
+          }
+        }
+      }
+    ]
+  },
+  "init": {
+    "files": [
+      {
+        "path": "team/leader.md",
+        "template": "templates/team/leader.md",
+        "description": "团队角色：项目协调者（Leader）（改提示词、模型、工具）"
+      },
+      {
+        "path": "team/pm.md",
+        "template": "templates/team/pm.md",
+        "description": "团队角色：产品经理（改提示词、模型、工具）"
+      },
+      {
+        "path": "team/designer.md",
+        "template": "templates/team/designer.md",
+        "description": "团队角色：产品设计 / 原型设计（改提示词、模型、工具）"
+      },
+      {
+        "path": "team/tech-lead.md",
+        "template": "templates/team/tech-lead.md",
+        "description": "团队角色：技术负责人（改提示词、模型、工具）"
+      },
+      {
+        "path": "team/dev.md",
+        "template": "templates/team/dev.md",
+        "description": "团队角色：全栈开发（改提示词、模型、工具）"
+      },
+      {
+        "path": "team/qa.md",
+        "template": "templates/team/qa.md",
+        "description": "团队角色：测试工程师（QA）（改提示词、模型、工具）"
+      }
+    ]
+  }
+}
