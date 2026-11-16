@@ -1,6 +1,6 @@
 # leo-plugin-agent-team
 
-> 状态：**experimental**（0.1.0，未发布到 `bundles` 分支）
+> 状态：**experimental**（0.1.0）
 
 一支常驻的 Agent 团队：**Leader（项目协调者）、产品经理、产品设计、技术负责人、全栈开发、QA**。你把需求交给团队，Leader 按阶段推进：
 
