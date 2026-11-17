@@ -1,0 +1,37 @@
+{
+  "$schema": "../../schemas/leo-plugin.schema.json",
+  "id": "provider-qianfan",
+  "package": "leo-plugin-provider-qianfan",
+  "version": "0.1.0",
+  "status": "experimental",
+  "description": "模型供应商注册层的百度千帆（文心 ERNIE）子插件：ERNIE-5.5-Flash-Preview、ERNIE-Light-DT-1.0、ERNIE 5.1，保存 API Key 即自动接入，思考开关与推理强度按模型处理、工具调用开箱可用（需要 provider ≥ 0.3.1）",
+  "keywords": [
+    "provider",
+    "qianfan",
+    "baidu",
+    "ernie",
+    "wenxin",
+    "llm"
+  ],
+  "leo": ">=0.2.0",
+  "entry": "./dist/index.js",
+  "bundle": "./dist/provider-qianfan.bundle.js",
+  "inject": [
+    "providers"
+  ],
+  "provides": {
+    "services": [],
+    "tools": [],
+    "events": []
+  },
+  "permissions": [
+    "net.connect"
+  ],
+  "install": {
+    "config": "leo-plugin-provider-qianfan",
+    "example": [
+      "leo-plugin-provider-qianfan",
+      {}
+    ]
+  }
+}
