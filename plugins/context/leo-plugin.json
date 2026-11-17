@@ -34,5 +34,12 @@
         "port": 18792
       }
     ]
+  },
+  "release": {
+    "version": "0.1.0",
+    "bundle": {
+      "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/context/0.1.0/context.bundle.js",
+      "sha256": "124317664215dd0cbfb8795fb1a13ade3d48676d4710de0390cd42a256ee0982"
+    }
   }
 }
