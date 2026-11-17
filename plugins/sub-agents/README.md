@@ -1,5 +1,7 @@
 # leo-plugin-sub-agents
 
+> **Rust rewrite**：本插件已用 Rust 重写，实现见 `src/*.rs`；构建/测试：`cargo test -p leo-plugin-sub-agents`。安装与加载见根目录 [`docs/install.md`](../../docs/install.md)。
+
 > 状态：**experimental**（0.1.1）
 
 让主 Agent 把一个独立的子任务（调研代码库、查资料、并行处理多个文件）交给**子 Agent** 执行。子 Agent 有自己的上下文窗口，只把最终结论返回给主 Agent，避免主对话被大量中间过程撑满。

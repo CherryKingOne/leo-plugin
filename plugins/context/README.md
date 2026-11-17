@@ -1,5 +1,7 @@
 # leo-plugin-context
 
+> **Rust rewrite**：本插件已用 Rust 重写，实现见 `src/*.rs`；构建/测试：`cargo test -p leo-plugin-context`。安装与加载见根目录 [`docs/install.md`](../../docs/install.md)。
+
 上下文观测：看清 Agent **现在带着什么、这些东西从哪来、怎么一步步变成这样**。参考 DeepSeek Harness 的 [dsh-context](https://github.com/bowenliang123/dsh-context)（Apache-2.0）的设计，为 leo 重新实现：数据来自核心会话日志，展示是插件。
 
 - **独立网页**（默认 `http://127.0.0.1:18792/`），与 [trajectory](../trajectory) 的轨迹网页（18791）分开

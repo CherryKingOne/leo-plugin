@@ -1,5 +1,7 @@
 # leo-plugin-provider
 
+> **Rust rewrite**：本插件已用 Rust 重写，实现见 `src/*.rs`；构建/测试：`cargo test -p leo-plugin-provider`。安装与加载见根目录 [`docs/install.md`](../../docs/install.md)。
+
 模型供应商**注册层**（大箱子）。leo-agents 0.2 起底座不再内置任何模型厂商，Agent 用到的模型全部由本插件接入：
 
 ```

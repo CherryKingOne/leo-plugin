@@ -1,5 +1,7 @@
 # leo-plugin-provider-spark
 
+> **Rust rewrite**：本插件已用 Rust 重写，实现见 `src/*.rs`；构建/测试：`cargo test -p leo-plugin-provider-spark`。安装与加载见根目录 [`docs/install.md`](../../docs/install.md)。
+
 [leo-plugin-provider](../provider) 的讯飞星火子插件：接入[星辰 MaaS 平台](https://maas.xfyun.cn/doc/)上讯飞**自研**的星火模型。
 
 需要 leo-agents ≥ 0.2.0、leo-plugin-provider ≥ 0.2.0（错误码分类需要 ≥ 0.3.1，自动写入 provider.json 需要 ≥ 0.3.0）。

@@ -1,5 +1,7 @@
 # leo-plugin-gateway
 
+> **Rust rewrite**：本插件已用 Rust 重写，实现见 `src/*.rs`；构建/测试：`cargo test -p leo-plugin-gateway`。安装与加载见根目录 [`docs/install.md`](../../docs/install.md)。
+
 > 实验性 0.2.3
 
 ## 用途

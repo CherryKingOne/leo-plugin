@@ -1,5 +1,7 @@
 # leo-plugin-provider-deepseek
 
+> **Rust rewrite**：本插件已用 Rust 重写，实现见 `src/*.rs`；构建/测试：`cargo test -p leo-plugin-provider-deepseek`。安装与加载见根目录 [`docs/install.md`](../../docs/install.md)。
+
 模型供应商注册层（[leo-plugin-provider](../provider)）的 **DeepSeek 子插件**，注册驱动 `deepseek`。
 
 ```bash

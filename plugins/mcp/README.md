@@ -1,5 +1,7 @@
 # leo-plugin-mcp
 
+> **Rust rewrite**：本插件已用 Rust 重写，实现见 `src/*.rs`；构建/测试：`cargo test -p leo-plugin-mcp`。安装与加载见根目录 [`docs/install.md`](../../docs/install.md)。
+
 让 leo Agent 使用外部 [MCP（Model Context Protocol）](https://modelcontextprotocol.io) 服务器提供的工具。服务器写在 `mcp-servers.json` 里，格式与 Claude Desktop / Claude Code / Cursor 的 `mcpServers` 相同，可以直接复制过来用。
 
 > 状态：实验性（0.1.1）。需要 leo-agents 支持 `Permission.sideEffect`（`f73f7c9` 及以后），否则 MCP 工具不会触发审批。

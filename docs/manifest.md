@@ -1,6 +1,6 @@
 # 插件清单 `leo-plugin.json`
 
-每个插件目录必须有一份 `leo-plugin.json`。它是插件的“身份证”：`scripts/gen-registry.mjs` 用它生成根目录的 `registry.json`，安装器（`leo plugin add`）用它决定装什么、怎么写配置，插件 README 的“安装”一节也由它生成。
+每个插件目录必须有一份 `leo-plugin.json`。它是插件的“身份证”：`cargo run -p leo-plugin-xtask -- gen-registry` 用它生成根目录的 `registry.json`，安装器用它决定装什么、怎么写配置，插件 README 的“安装”一节也由它生成。
 
 JSON Schema：[`schemas/leo-plugin.schema.json`](../schemas/leo-plugin.schema.json)
 
@@ -57,10 +57,9 @@ JSON Schema：[`schemas/leo-plugin.schema.json`](../schemas/leo-plugin.schema.js
 
 ## 一致性检查
 
-`scripts/validate.mjs`（规划中）会在 CI 中检查：
+`crates/leo-plugin-xtask`（`cargo run -p leo-plugin-xtask -- validate`）会在 CI 中检查：
 
-- `id` = 目录名，`package` = `leo-plugin-<id>` = `package.json#name`
-- `version` = `package.json#version`
-- `leo` = `package.json#peerDependencies.leo-agents`
+- `id` = 目录名，`package` = `leo-plugin-<id>` = `Cargo.toml` 的 `name`
+- `version` = `leo-plugin.json` 的 `version`
+- `leo` = 兼容的 leo-agents 版本范围
 - `provides.tools` 不与核心保留工具名冲突
-- 构建产物中没有对 `leo-agents` 的运行时 import

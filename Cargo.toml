@@ -1,0 +1,62 @@
+# Rust workspace for the leo-agents official plugin repository.
+#
+# The original project was a TypeScript monorepo whose plugins were ESM modules
+# loaded by the TypeScript `leo-agents` host. This workspace is a complete Rust
+# rewrite: every `plugins/<id>` directory is now a Cargo crate that implements
+# the `leo_plugin_sdk::Plugin` contract, and the shared runtime lives in
+# `crates/leo-plugin-sdk`. Plugins can be loaded in-process (tests, embedders) or
+# as subprocesses speaking newline-delimited JSON-RPC (see `leo-plugin-host`).
+
+[workspace]
+resolver = "2"
+members = [
+    "crates/leo-plugin-sdk",
+    "crates/leo-plugin-host",
+    "crates/leo-plugin-xtask",
+    "plugins/_template",
+    "plugins/agent-team",
+    "plugins/context",
+    "plugins/gateway",
+    "plugins/gateway-feishu",
+    "plugins/gateway-qq",
+    "plugins/interaction",
+    "plugins/interaction-persona-whale",
+    "plugins/interaction-stickers-whale",
+    "plugins/mcp",
+    "plugins/provider",
+    "plugins/provider-deepseek",
+    "plugins/provider-longcat",
+    "plugins/provider-spark",
+    "plugins/skills",
+    "plugins/speakup",
+    "plugins/sub-agents",
+    "plugins/trajectory",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.80"
+license = "Apache-2.0"
+repository = "https://github.com/CherryKingOne/leo-plugin"
+
+[workspace.dependencies]
+leo-plugin-sdk = { path = "crates/leo-plugin-sdk" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+async-trait = "0.1"
+tokio = { version = "1", features = ["full"] }
+tokio-util = { version = "0.7", features = ["rt"] }
+futures = "0.3"
+anyhow = "1"
+thiserror = "1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+uuid = { version = "1", features = ["v4"] }
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "stream"] }
+parking_lot = "0.12"
+
+[profile.release]
+opt-level = 2
+lto = "thin"
+codegen-units = 1

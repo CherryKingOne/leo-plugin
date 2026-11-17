@@ -1,5 +1,7 @@
 # leo-plugin-trajectory
 
+> **Rust rewrite**：本插件已用 Rust 重写，实现见 `src/*.rs`；构建/测试：`cargo test -p leo-plugin-trajectory`。安装与加载见根目录 [`docs/install.md`](../../docs/install.md)。
+
 轨迹观测：看清 Agent 每一轮到底做了什么、每一步花了多久。参考 DeepSeek Harness 的 ui-trajectory：**记录在核心会话日志里，展示是插件**——本插件只读会话日志，做成一棵树：
 
 ```text

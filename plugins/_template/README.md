@@ -1,5 +1,7 @@
 # leo-plugin-template
 
+> **Rust rewrite**：本插件已用 Rust 重写，实现见 `src/*.rs`；构建/测试：`cargo test -p leo-plugin-template`。安装与加载见根目录 [`docs/install.md`](../../docs/install.md)。
+
 > 新插件模板，不会发布。复制本目录开始开发：`cp -r plugins/_template plugins/<id>`，然后按 [PROTOCOL.md](../../PROTOCOL.md) 第 9 节修改。
 
 每个插件的 README 必须包含以下几节：

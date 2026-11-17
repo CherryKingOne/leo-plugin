@@ -1,5 +1,7 @@
 # leo-plugin-skills
 
+> **Rust rewrite**：本插件已用 Rust 重写，实现见 `src/*.rs`；构建/测试：`cargo test -p leo-plugin-skills`。安装与加载见根目录 [`docs/install.md`](../../docs/install.md)。
+
 **技能**（[Agent Skills](https://github.com/anthropics/skills)，`SKILL.md`）：一份针对某类任务的操作说明，可以带参考文档和脚本。本插件把**内置技能**和**用户安装的外部技能**分开管理，系统提示里只放目录，模型用到时再加载正文。
 
 ```bash

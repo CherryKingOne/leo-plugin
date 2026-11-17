@@ -5,7 +5,9 @@ leo-agents（底座）与 leo-plugin（插件）各自发版。这张表回答�
 - 我装的是某个 leo-agents 版本，该装哪些插件、哪个版本？
 - 某个插件的某个版本，什么时候发的、改了什么、需要什么？
 
-> 维护约定：每次发布插件（`scripts/release.mjs <id> --push`）或 leo-agents 打 tag 后，同步更新本文件对应的行。时间为北京时间（UTC+8）。
+> 维护约定：每次发布插件（`cargo run -p leo-plugin-xtask -- release <id> --push`）或 leo-agents 打 tag 后，同步更新本文件对应的行。时间为北京时间（UTC+8）。
+>
+> 本仓库已从 TypeScript 重写为 Rust：插件以 crate 形式提供，表格中的“插件版本”与 `leo-plugin.json` 的 `version` 保持一致。
 
 ## 一、快速对照：leo-agents 版本 → 可用插件
 

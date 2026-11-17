@@ -1,5 +1,7 @@
 # leo-plugin-interaction
 
+> **Rust rewrite**：本插件已用 Rust 重写，实现见 `src/*.rs`；构建/测试：`cargo test -p leo-plugin-interaction`。安装与加载见根目录 [`docs/install.md`](../../docs/install.md)。
+
 leo 的**互动层**：让 Agent 有人设、会发表情包。和网关、模型供应商一样分两层：
 
 | 层 | 插件 | 作用 |

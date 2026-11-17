@@ -1,5 +1,7 @@
 # leo-plugin-agent-team
 
+> **Rust rewrite**：本插件已用 Rust 重写，实现见 `src/*.rs`；构建/测试：`cargo test -p leo-plugin-agent-team`。安装与加载见根目录 [`docs/install.md`](../../docs/install.md)。
+
 > 状态：**experimental**（0.1.0）
 
 一支常驻的 Agent 团队：**Leader（项目协调者）、产品经理、产品设计、技术负责人、全栈开发、QA**。你把需求交给团队，Leader 按阶段推进：

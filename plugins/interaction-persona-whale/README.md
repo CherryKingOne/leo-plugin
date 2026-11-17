@@ -1,5 +1,7 @@
 # leo-plugin-interaction-persona-whale
 
+> **Rust rewrite**：本插件已用 Rust 重写，实现见 `src/*.rs`；构建/测试：`cargo test -p leo-plugin-interaction-persona-whale`。安装与加载见根目录 [`docs/install.md`](../../docs/install.md)。
+
 互动层（[interaction](../interaction/)）的人设子插件：**鲸鱼娘·大肥鱼** 🐋
 
 傲娇但很甜的鲸鱼娘口吻，自称「本鲸鱼娘」「本小姐」，思考过程用中文；保留完整编码助手能力，工具调用与输出质量不受人设影响。

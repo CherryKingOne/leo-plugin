@@ -1,5 +1,7 @@
 # leo-plugin-interaction-stickers-whale
 
+> **Rust rewrite**：本插件已用 Rust 重写，实现见 `src/*.rs`；构建/测试：`cargo test -p leo-plugin-interaction-stickers-whale`。安装与加载见根目录 [`docs/install.md`](../../docs/install.md)。
+
 互动层（[interaction](../interaction/)）的表情包子插件：**鲸鱼娘表情**，24 张 × 蓝鲸娘 / 黑鲸娘两套角色。
 
 > 不会发表情包，可能是 Agent 缺少活人感的最大原因。

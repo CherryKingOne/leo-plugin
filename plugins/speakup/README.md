@@ -1,5 +1,7 @@
 # leo-plugin-speakup
 
+> **Rust rewrite**：本插件已用 Rust 重写，实现见 `src/*.rs`；构建/测试：`cargo test -p leo-plugin-speakup`。安装与加载见根目录 [`docs/install.md`](../../docs/install.md)。
+
 **主动搭话**：对方一阵子没来找时，Agent 在私聊里主动找对方说几句；Agent 问了话对方没回，会轻轻追一句。
 
 思路来自 [dsh-aurabot-qq](https://github.com/aureth-labs/dsh-aurabot-qq) 的「主动搭话」模块。不同的是：它要登录一个 QQ 小号（OneBot），本插件只用 leo 消息网关已有的接口发主动消息，QQ / 飞书 / Telegram 都能用，**不改网关和渠道驱动**。

@@ -1,354 +1,684 @@
 {
-  "$schema": "./schemas/registry.schema.json",
-  "description": "官方插件索引。由 scripts/gen-registry.mjs 根据 plugins/*/leo-plugin.json 生成，请勿手改。leo plugin add 读取此文件。",
-  "version": 1,
   "plugins": [
     {
-      "id": "agent-team",
-      "package": "leo-plugin-agent-team",
-      "path": "plugins/agent-team",
-      "version": "0.1.0",
-      "status": "experimental",
+      "bundle": "./dist/agent-team.bundle.js",
       "description": "Agent 团队：Leader、产品经理、产品设计、技术负责人、全栈开发、QA 组成常驻团队，按 PRD → 设计 → 开发 → 测试 → 交付推进，关卡处请用户审批",
-      "leo": ">=0.1.2",
-      "bundle": {
-        "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/agent-team/0.1.0/agent-team.bundle.js",
-        "sha256": "38829858a0df2547642e37b6c25d61e88ec2c0a1f3b2b01936fff77da6fbddf6"
-      },
-      "init": {
-        "files": [
+      "entry": "./dist/index.js",
+      "id": "agent-team",
+      "inject": [
+        "agentLoop",
+        "tools"
+      ],
+      "install": {
+        "config": "leo-plugin-agent-team",
+        "example": [
+          "leo-plugin-agent-team",
           {
-            "path": "team/leader.md",
-            "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/agent-team/0.1.0/init/team/leader.md",
-            "sha256": "dc6d8050ec071d19d7f90e775a4a66f8298d7cd9ee6e780525c53cf13fe25551",
-            "description": "团队角色：项目协调者（Leader）（改提示词、模型、工具）"
-          },
-          {
-            "path": "team/pm.md",
-            "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/agent-team/0.1.0/init/team/pm.md",
-            "sha256": "40d073ee54cbf9b0696a14f5870113998eb8a28cd884082c53579ca63db99f93",
-            "description": "团队角色：产品经理（改提示词、模型、工具）"
-          },
-          {
-            "path": "team/designer.md",
-            "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/agent-team/0.1.0/init/team/designer.md",
-            "sha256": "1e2007d69b5932bfb1623d94ce3dc9677677682a0a77110096e0e6392857afd0",
-            "description": "团队角色：产品设计 / 原型设计（改提示词、模型、工具）"
-          },
-          {
-            "path": "team/tech-lead.md",
-            "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/agent-team/0.1.0/init/team/tech-lead.md",
-            "sha256": "37f1c9b689adfea8ec9d5bfef51d2b2fafcb9b6c67be229d58b63537d39831e4",
-            "description": "团队角色：技术负责人（改提示词、模型、工具）"
-          },
-          {
-            "path": "team/dev.md",
-            "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/agent-team/0.1.0/init/team/dev.md",
-            "sha256": "cc193e6908f11b4bd93fb8b666cf210e09817b33bb8f9e247332d9d838639911",
-            "description": "团队角色：全栈开发（改提示词、模型、工具）"
-          },
-          {
-            "path": "team/qa.md",
-            "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/agent-team/0.1.0/init/team/qa.md",
-            "sha256": "8c97c4d40ffd6e1150f1c8dcb70b0eb269bdcaed16be8ad1a78296d53704f15f",
-            "description": "团队角色：测试工程师（QA）（改提示词、模型、工具）"
+            "gates": {
+              "design": false
+            },
+            "maxBounces": 3,
+            "roles": {
+              "qa": {
+                "model": "deepseek/deepseek-flash"
+              }
+            }
           }
         ]
-      }
+      },
+      "keywords": [
+        "agent",
+        "team",
+        "multi-agent",
+        "workflow",
+        "prd",
+        "qa"
+      ],
+      "leo": ">=0.1.2",
+      "package": "leo-plugin-agent-team",
+      "permissions": [
+        "agent.spawn"
+      ],
+      "provides": {
+        "events": [
+          "agent-team/phase-started",
+          "agent-team/phase-finished",
+          "agent-team/bounced",
+          "agent-team/awaiting-approval",
+          "agent-team/finished"
+        ],
+        "services": [
+          "agentTeam"
+        ],
+        "tools": [
+          "team_start",
+          "team_reply",
+          "team_assign",
+          "team_board",
+          "team_artifact",
+          "team_request_approval",
+          "team_deliver",
+          "team_ask",
+          "team_task_update"
+        ]
+      },
+      "status": "experimental",
+      "version": "0.1.0"
     },
     {
-      "id": "context",
-      "package": "leo-plugin-context",
-      "path": "plugins/context",
-      "version": "0.1.0",
-      "status": "experimental",
+      "bundle": "./dist/context.bundle.js",
       "description": "上下文观测：每次请求的上下文由什么组成（System 片段、插件注入、工具定义、消息分类）、离窗口和自动压缩多远、怎么演变；跨会话用量、成本与工具洞察。独立本机网页（默认 18792）+ /context，只读",
+      "entry": "./dist/index.js",
+      "id": "context",
+      "inject": [
+        "sessions"
+      ],
+      "install": {
+        "config": "leo-plugin-context",
+        "example": [
+          "leo-plugin-context",
+          {
+            "port": 18792
+          }
+        ]
+      },
+      "keywords": [
+        "context",
+        "observability",
+        "tokens",
+        "cost",
+        "insight"
+      ],
       "leo": ">=0.2.1",
-      "bundle": {
-        "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/context/0.1.0/context.bundle.js",
-        "sha256": "124317664215dd0cbfb8795fb1a13ade3d48676d4710de0390cd42a256ee0982"
-      }
+      "package": "leo-plugin-context",
+      "permissions": [
+        "net.listen"
+      ],
+      "provides": {
+        "services": [
+          "contextInsight"
+        ]
+      },
+      "status": "experimental",
+      "version": "0.1.0"
     },
     {
-      "id": "gateway",
-      "package": "leo-plugin-gateway",
-      "path": "plugins/gateway",
-      "version": "0.3.1",
-      "status": "experimental",
+      "bundle": "./dist/gateway.bundle.js",
       "description": "消息网关：常驻接入 Telegram / 飞书 / QQ，按会话路由给 Agent，授权配对、聊天内审批、主动投递，Agent 发的表情 / 图片发到聊天里，转发插件斜杠命令，HTTP / WebSocket / OpenAI 兼容控制面",
-      "leo": ">=0.1.0",
-      "bundle": {
-        "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/gateway/0.3.1/gateway.bundle.js",
-        "sha256": "1509a34e227793d1a2a625bd874f19384be91ccca66845b9a4739713b2eb20cd"
-      },
-      "init": {
-        "files": [
+      "entry": "./dist/index.js",
+      "id": "gateway",
+      "inject": [
+        "tools"
+      ],
+      "install": {
+        "config": "leo-plugin-gateway",
+        "example": [
+          "leo-plugin-gateway",
           {
-            "path": "gateway.json",
-            "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/gateway/0.3.1/init/gateway.json",
-            "sha256": "a46f86a2ec04fdefaf49ed13da11ff839cbd2541f594fad4e042c31256231adc",
-            "description": "网关配置：聊天平台机器人、授权、会话策略、控制面端口；QQ 默认扫码绑定（配合 gateway-qq），其他渠道取消注释并填入凭证"
+            "server": {
+              "port": 18790
+            }
           }
         ]
-      }
+      },
+      "keywords": [
+        "gateway",
+        "telegram",
+        "feishu",
+        "lark",
+        "qq",
+        "chatbot",
+        "openai-compatible"
+      ],
+      "leo": ">=0.1.0",
+      "package": "leo-plugin-gateway",
+      "permissions": [
+        "gateway.send",
+        "gateway.pair",
+        "net.listen",
+        "net.connect"
+      ],
+      "provides": {
+        "events": [
+          "gateway/message",
+          "gateway/turn-start",
+          "gateway/turn-end",
+          "gateway/sent",
+          "gateway/status",
+          "gateway/pairing-requested",
+          "gateway/paired",
+          "gateway/session-reset"
+        ],
+        "services": [
+          "gateway"
+        ],
+        "tools": [
+          "gateway_status",
+          "gateway_send",
+          "gateway_pair"
+        ]
+      },
+      "status": "experimental",
+      "version": "0.3.1"
     },
     {
-      "id": "gateway-feishu",
-      "package": "leo-plugin-gateway-feishu",
-      "path": "plugins/gateway-feishu",
-      "version": "0.3.0",
-      "status": "experimental",
+      "bundle": "./dist/gateway-feishu.bundle.js",
       "description": "消息网关的飞书子插件：飞书 / Lark 机器人渠道驱动，支持飞书扫码一键创建应用、扫码人自动成为管理员、图片消息，替代网关内置飞书驱动（需要 gateway ≥ 0.2.0，自动授权需要 ≥ 0.2.2，发图片需要 ≥ 0.3.0）",
-      "leo": ">=0.1.0",
-      "bundle": {
-        "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/gateway-feishu/0.3.0/gateway-feishu.bundle.js",
-        "sha256": "9e0547ec6addae093bd99f5906bf3ff983b95719ea2efef635d8965fb9a5aba3"
-      },
-      "purge": {
-        "credentials": [
-          "gateway/feishu/"
+      "entry": "./dist/index.js",
+      "id": "gateway-feishu",
+      "inject": [
+        "gateway",
+        "tools"
+      ],
+      "install": {
+        "config": "leo-plugin-gateway-feishu",
+        "example": [
+          "leo-plugin-gateway-feishu",
+          {
+            "qrConsole": true
+          }
         ]
-      }
+      },
+      "keywords": [
+        "gateway",
+        "feishu",
+        "lark",
+        "qr",
+        "chatbot"
+      ],
+      "leo": ">=0.1.0",
+      "package": "leo-plugin-gateway-feishu",
+      "permissions": [
+        "gateway.bind",
+        "net.connect"
+      ],
+      "provides": {
+        "tools": [
+          "gateway_feishu_bind"
+        ]
+      },
+      "status": "experimental",
+      "version": "0.3.0"
     },
     {
-      "id": "gateway-qq",
-      "package": "leo-plugin-gateway-qq",
-      "path": "plugins/gateway-qq",
-      "version": "0.3.1",
-      "status": "experimental",
+      "bundle": "./dist/gateway-qq.bundle.js",
       "description": "消息网关的 QQ 子插件：QQ 官方机器人渠道驱动，支持手机 QQ 扫码绑定与图片消息，替代网关内置 QQ 驱动（需要 gateway ≥ 0.2.0，发图片需要 ≥ 0.3.0）",
-      "leo": ">=0.1.0",
-      "bundle": {
-        "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/gateway-qq/0.3.1/gateway-qq.bundle.js",
-        "sha256": "cb314d9c5bdd23b09b8f8286e460eada575c9084489f11aa659c2fc4576d8a0b"
-      },
-      "purge": {
-        "credentials": [
-          "gateway/qq/"
+      "entry": "./dist/index.js",
+      "id": "gateway-qq",
+      "inject": [
+        "gateway",
+        "tools"
+      ],
+      "install": {
+        "config": "leo-plugin-gateway-qq",
+        "example": [
+          "leo-plugin-gateway-qq",
+          {
+            "qrConsole": true
+          }
         ]
-      }
+      },
+      "keywords": [
+        "gateway",
+        "qq",
+        "qqbot",
+        "qr",
+        "chatbot"
+      ],
+      "leo": ">=0.1.0",
+      "package": "leo-plugin-gateway-qq",
+      "permissions": [
+        "gateway.bind",
+        "net.connect"
+      ],
+      "provides": {
+        "tools": [
+          "gateway_qq_bind"
+        ]
+      },
+      "status": "experimental",
+      "version": "0.3.1"
     },
     {
-      "id": "interaction",
-      "package": "leo-plugin-interaction",
-      "path": "plugins/interaction",
-      "version": "0.1.1",
-      "status": "experimental",
+      "bundle": "./dist/interaction.bundle.js",
       "description": "互动层（注册层）：人设与表情包由子插件注册；人设注入系统提示词，Agent 按对话语境用 send_sticker 自动发表情；/persona、/sticker、/stickers 命令（需要 leo-agents ≥ 0.2.1）",
-      "leo": ">=0.2.0",
-      "bundle": {
-        "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/interaction/0.1.1/interaction.bundle.js",
-        "sha256": "ab241fca942426d4253180d3a3d90de7119aa8bb27e251ec5386a2368589021f"
-      },
-      "init": {
-        "files": [
-          {
-            "path": "interaction.json",
-            "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/interaction/0.1.1/init/interaction.json",
-            "sha256": "99b59ed1f7b32104a1d239e10ca59bfe7ac484221f20c3a892a6b18e53cdcf62",
-            "description": "互动层配置：当前人设、表情开关、默认角色、每轮上限与展示方式"
-          }
+      "entry": "./dist/index.js",
+      "id": "interaction",
+      "inject": [
+        "tools",
+        "context"
+      ],
+      "install": {
+        "config": "leo-plugin-interaction",
+        "example": [
+          "leo-plugin-interaction",
+          {}
         ]
-      }
+      },
+      "keywords": [
+        "interaction",
+        "persona",
+        "sticker",
+        "表情包",
+        "人设"
+      ],
+      "leo": ">=0.2.0",
+      "package": "leo-plugin-interaction",
+      "permissions": [],
+      "provides": {
+        "events": [],
+        "services": [
+          "interaction"
+        ],
+        "tools": [
+          "send_sticker"
+        ]
+      },
+      "status": "experimental",
+      "version": "0.1.1"
     },
     {
-      "id": "interaction-persona-whale",
-      "package": "leo-plugin-interaction-persona-whale",
-      "path": "plugins/interaction-persona-whale",
-      "version": "0.1.0",
-      "status": "experimental",
+      "bundle": "./dist/interaction-persona-whale.bundle.js",
       "description": "互动层的人设子插件：鲸鱼娘·大肥鱼——傲娇但很甜的鲸鱼娘口吻，思考用中文，编码能力不打折（移植自 dsh-whale-musume-persona，需要 interaction ≥ 0.1.0）",
+      "entry": "./dist/index.js",
+      "id": "interaction-persona-whale",
+      "inject": [
+        "interaction"
+      ],
+      "install": {
+        "config": "leo-plugin-interaction-persona-whale",
+        "example": [
+          "leo-plugin-interaction-persona-whale",
+          {}
+        ]
+      },
+      "keywords": [
+        "interaction",
+        "persona",
+        "whale",
+        "鲸鱼娘",
+        "人设"
+      ],
       "leo": ">=0.2.0",
-      "bundle": {
-        "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/interaction-persona-whale/0.1.0/interaction-persona-whale.bundle.js",
-        "sha256": "d3947897ed0dc48c69aacaba4ba9f140c4878ce827437aeafc19f45122c1da88"
-      }
+      "package": "leo-plugin-interaction-persona-whale",
+      "permissions": [],
+      "provides": {
+        "events": [],
+        "services": [],
+        "tools": []
+      },
+      "status": "experimental",
+      "version": "0.1.0"
     },
     {
-      "id": "interaction-stickers-whale",
-      "package": "leo-plugin-interaction-stickers-whale",
-      "path": "plugins/interaction-stickers-whale",
-      "version": "0.1.0",
-      "status": "experimental",
+      "bundle": "./dist/interaction-stickers-whale.bundle.js",
       "description": "互动层的表情包子插件：鲸鱼娘表情 24 张 × 蓝鲸娘 / 黑鲸娘两套角色（10 张 Agent 专属彩蛋），Agent 按语境自动发，终端显示字符画、聊天平台用图片（移植自 dsh-stickers，需要 interaction ≥ 0.1.0）",
+      "entry": "./dist/index.js",
+      "id": "interaction-stickers-whale",
+      "inject": [
+        "interaction"
+      ],
+      "install": {
+        "config": "leo-plugin-interaction-stickers-whale",
+        "example": [
+          "leo-plugin-interaction-stickers-whale",
+          {
+            "defaultVariant": "blue"
+          }
+        ]
+      },
+      "keywords": [
+        "interaction",
+        "sticker",
+        "whale",
+        "表情包",
+        "鲸鱼娘"
+      ],
       "leo": ">=0.2.0",
-      "bundle": {
-        "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/interaction-stickers-whale/0.1.0/interaction-stickers-whale.bundle.js",
-        "sha256": "548ad9c54d486f53e5e34bf1b2f30a3e6f7c482263b45f967f42e86f93d817b2"
-      }
+      "package": "leo-plugin-interaction-stickers-whale",
+      "permissions": [],
+      "provides": {
+        "events": [],
+        "services": [],
+        "tools": []
+      },
+      "status": "experimental",
+      "version": "0.1.0"
     },
     {
-      "id": "mcp",
-      "package": "leo-plugin-mcp",
-      "path": "plugins/mcp",
-      "version": "0.1.1",
-      "status": "experimental",
+      "bundle": "./dist/mcp.bundle.js",
       "description": "MCP 客户端：把外部 MCP 服务器的工具接入 Agent，兼容 MCP 2026-07-28（MCP 2.0）与 2025-11-25 及更早版本",
-      "leo": ">=0.1.0",
-      "bundle": {
-        "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/mcp/0.1.1/mcp.bundle.js",
-        "sha256": "a57e9822ead72f5807df1b05824676d6703295e87c84c86a1c21e2566601bf27"
-      },
-      "init": {
-        "files": [
+      "entry": "./dist/index.js",
+      "id": "mcp",
+      "inject": [
+        "tools"
+      ],
+      "install": {
+        "config": "leo-plugin-mcp",
+        "example": [
+          "leo-plugin-mcp",
           {
-            "path": "mcp-servers.json",
-            "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/mcp/0.1.1/init/mcp-servers.json",
-            "sha256": "2bb14b44f84ec7c02884d51b48f1839169b2e3617dbe69520cb43fad60538cc0",
-            "description": "MCP 服务器列表，取消注释或粘贴 mcpServers 即可使用"
+            "timeoutMs": 120000
           }
         ]
-      }
+      },
+      "keywords": [
+        "mcp",
+        "model-context-protocol",
+        "tools"
+      ],
+      "leo": ">=0.1.0",
+      "package": "leo-plugin-mcp",
+      "permissions": [
+        "mcp.call",
+        "process.spawn",
+        "net.connect"
+      ],
+      "provides": {
+        "events": [
+          "mcp/connected",
+          "mcp/error"
+        ],
+        "services": [
+          "mcp"
+        ],
+        "tools": []
+      },
+      "status": "experimental",
+      "version": "0.1.1"
     },
     {
-      "id": "provider",
-      "package": "leo-plugin-provider",
-      "path": "plugins/provider",
-      "version": "0.3.1",
-      "status": "experimental",
+      "bundle": "./dist/provider.bundle.js",
       "description": "模型供应商注册层：子插件（provider-deepseek 等）注册驱动，统一读配置、取密钥、接入 Agent；自带通用 OpenAI 兼容协议，任意兼容端点写 baseURL 即可（需要 leo ≥ 0.2.0）",
-      "leo": ">=0.2.0",
-      "bundle": {
-        "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/provider/0.3.1/provider.bundle.js",
-        "sha256": "b0aadde29667213dd86c2e704db09c4a6e62ae34c39c5e9aa991c695b8ab4066"
-      },
-      "init": {
-        "files": [
+      "entry": "./dist/index.js",
+      "id": "provider",
+      "inject": [
+        "llm"
+      ],
+      "install": {
+        "config": "leo-plugin-provider",
+        "example": [
+          "leo-plugin-provider",
           {
-            "path": "provider.json",
-            "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/provider/0.3.1/init/provider.json",
-            "sha256": "25b594bdc54843991698cda0ef6a1874d4ef2e29ffd759310103d0341c8466ec",
-            "description": "模型供应商配置：默认模型、各厂商的 baseURL / 模型 / 密钥引用；装了子插件并保存密钥的厂商会自动接入"
+            "model": "deepseek/deepseek-flash"
           }
         ]
-      }
+      },
+      "keywords": [
+        "provider",
+        "llm",
+        "model",
+        "openai-compatible"
+      ],
+      "leo": ">=0.2.0",
+      "package": "leo-plugin-provider",
+      "permissions": [
+        "net.connect"
+      ],
+      "provides": {
+        "events": [],
+        "services": [
+          "providers"
+        ],
+        "tools": []
+      },
+      "status": "experimental",
+      "version": "0.3.1"
     },
     {
-      "id": "provider-deepseek",
-      "package": "leo-plugin-provider-deepseek",
-      "path": "plugins/provider-deepseek",
-      "version": "0.3.0",
-      "status": "experimental",
+      "bundle": "./dist/provider-deepseek.bundle.js",
       "description": "模型供应商注册层的 DeepSeek 子插件：deepseek-flash / deepseek-v4-pro，保存密钥即自动接入，思考模式与工具调用开箱可用，旧模型名 deepseek-chat / deepseek-reasoner 自动改写（需要 provider ≥ 0.1.0）",
+      "entry": "./dist/index.js",
+      "id": "provider-deepseek",
+      "inject": [
+        "providers"
+      ],
+      "install": {
+        "config": "leo-plugin-provider-deepseek",
+        "example": [
+          "leo-plugin-provider-deepseek",
+          {}
+        ]
+      },
+      "keywords": [
+        "provider",
+        "deepseek",
+        "llm"
+      ],
       "leo": ">=0.2.0",
-      "bundle": {
-        "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/provider-deepseek/0.3.0/provider-deepseek.bundle.js",
-        "sha256": "9f5defbe5c32934a27fb2237d7839d4d4a0c767b1ad377facc220dcbddd17dd7"
-      }
+      "package": "leo-plugin-provider-deepseek",
+      "permissions": [
+        "net.connect"
+      ],
+      "provides": {
+        "events": [],
+        "services": [],
+        "tools": []
+      },
+      "status": "experimental",
+      "version": "0.3.0"
     },
     {
-      "id": "provider-longcat",
-      "package": "leo-plugin-provider-longcat",
-      "path": "plugins/provider-longcat",
-      "version": "0.1.0",
-      "status": "experimental",
+      "bundle": "./dist/provider-longcat.bundle.js",
       "description": "模型供应商注册层的 LongCat（美团）子插件：LongCat-2.5-Preview，1M 上下文，保存密钥即自动接入，思考模式与工具调用开箱可用（需要 provider ≥ 0.2.0）",
+      "entry": "./dist/index.js",
+      "id": "provider-longcat",
+      "inject": [
+        "providers"
+      ],
+      "install": {
+        "config": "leo-plugin-provider-longcat",
+        "example": [
+          "leo-plugin-provider-longcat",
+          {}
+        ]
+      },
+      "keywords": [
+        "provider",
+        "longcat",
+        "meituan",
+        "llm"
+      ],
       "leo": ">=0.2.0",
-      "bundle": {
-        "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/provider-longcat/0.1.0/provider-longcat.bundle.js",
-        "sha256": "e6e795f0d287d03d615aeb71590a2ca77c06e1e0d08475a195fa646425f1f7d6"
-      }
+      "package": "leo-plugin-provider-longcat",
+      "permissions": [
+        "net.connect"
+      ],
+      "provides": {
+        "events": [],
+        "services": [],
+        "tools": []
+      },
+      "status": "experimental",
+      "version": "0.1.0"
     },
     {
-      "id": "provider-spark",
-      "package": "leo-plugin-provider-spark",
-      "path": "plugins/provider-spark",
-      "version": "0.1.0",
-      "status": "experimental",
+      "bundle": "./dist/provider-spark.bundle.js",
       "description": "模型供应商注册层的讯飞星火子插件：Spark-X2.6 / X2.5 系列（讯飞自研），最长 1M 上下文，保存 APIKey 即自动接入，思考模式（enabled / disabled / auto）与工具调用（需要 provider ≥ 0.2.0）",
+      "entry": "./dist/index.js",
+      "id": "provider-spark",
+      "inject": [
+        "providers"
+      ],
+      "install": {
+        "config": "leo-plugin-provider-spark",
+        "example": [
+          "leo-plugin-provider-spark",
+          {}
+        ]
+      },
+      "keywords": [
+        "provider",
+        "spark",
+        "xfyun",
+        "iflytek",
+        "llm"
+      ],
       "leo": ">=0.2.0",
-      "bundle": {
-        "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/provider-spark/0.1.0/provider-spark.bundle.js",
-        "sha256": "0e1d102d99279773df6eac685c4e1dc3c721ca81725be4a90f710c609999ee39"
-      }
+      "package": "leo-plugin-provider-spark",
+      "permissions": [
+        "net.connect"
+      ],
+      "provides": {
+        "events": [],
+        "services": [],
+        "tools": []
+      },
+      "status": "experimental",
+      "version": "0.1.0"
     },
     {
-      "id": "skills",
-      "package": "leo-plugin-skills",
-      "path": "plugins/skills",
-      "version": "0.1.0",
-      "status": "experimental",
+      "bundle": "./dist/skills.bundle.js",
       "description": "技能（Agent Skills / SKILL.md）：内置技能（skill-creator）与用户安装的外部技能（~/.leo/skills、项目 .leo/skills）分开管理；系统提示只放目录，模型用 skill 工具按需加载，/skill 手动触发，/skills 安装、删除、启停",
-      "leo": ">=0.1.2",
-      "bundle": {
-        "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/skills/0.1.0/skills.bundle.js",
-        "sha256": "6a8c073a585fa38594e64ed6bac86394f91fc9c2b986c8f2bdbd6fbc8cf43b24"
-      },
-      "init": {
-        "files": [
-          {
-            "path": "skills.json",
-            "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/skills/0.1.0/init/skills.json",
-            "sha256": "1c55f474d441d98e7ec3038e589dd68c8ace03103981c7191f700ce01e7bea41",
-            "description": "技能配置：内置开关、禁用列表、额外目录"
-          },
-          {
-            "path": "skills/README.md",
-            "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/skills/0.1.0/init/skills/README.md",
-            "sha256": "e540d6067c3dae9ff17e42273405f00bd732483514c1f2c22cec153198e34006",
-            "description": "外部技能目录（自己安装的技能放这里）"
-          }
+      "entry": "./dist/index.js",
+      "id": "skills",
+      "inject": [
+        "tools",
+        "context"
+      ],
+      "install": {
+        "config": "leo-plugin-skills",
+        "example": [
+          "leo-plugin-skills",
+          {}
         ]
-      }
+      },
+      "keywords": [
+        "skills",
+        "SKILL.md",
+        "agent-skills",
+        "技能",
+        "skill-creator"
+      ],
+      "leo": ">=0.1.2",
+      "package": "leo-plugin-skills",
+      "permissions": [],
+      "provides": {
+        "events": [],
+        "services": [
+          "skills"
+        ],
+        "tools": [
+          "skill"
+        ]
+      },
+      "status": "experimental",
+      "version": "0.1.0"
     },
     {
-      "id": "speakup",
-      "package": "leo-plugin-speakup",
-      "path": "plugins/speakup",
-      "version": "0.1.1",
-      "status": "experimental",
+      "bundle": "./dist/speakup.bundle.js",
       "description": "主动搭话：对方一阵子没来找时，Agent 在私聊里主动找对方说几句，问了话没回会轻轻追一句；清醒时段、空闲时长、每天次数可配，经消息网关作为主动消息发出（需要 gateway ≥ 0.3.0；/speakup 命令需要 leo-agents ≥ 0.2.1）",
+      "entry": "./dist/index.js",
+      "id": "speakup",
+      "inject": [
+        "gateway"
+      ],
+      "install": {
+        "config": "leo-plugin-speakup",
+        "example": [
+          "leo-plugin-speakup",
+          {}
+        ]
+      },
+      "keywords": [
+        "speakup",
+        "proactive",
+        "主动消息",
+        "主动搭话",
+        "gateway"
+      ],
       "leo": ">=0.1.2",
-      "bundle": {
-        "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/speakup/0.1.1/speakup.bundle.js",
-        "sha256": "f5f5bbfc83e8d368d7749c0f97284bef63b831580621050720023153046168dc"
+      "package": "leo-plugin-speakup",
+      "permissions": [],
+      "provides": {
+        "events": [],
+        "services": [
+          "speakup"
+        ],
+        "tools": []
       },
-      "init": {
-        "files": [
-          {
-            "path": "speakup.json",
-            "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/speakup/0.1.1/init/speakup.json",
-            "sha256": "fbbe361c662f42f2d51a1408c55e53cd4488f75c39bf94146306347a7e3ba8d1",
-            "description": "主动搭话配置：找谁、清醒时段、空闲多久、每天几次、追问"
-          }
-        ]
-      }
+      "status": "experimental",
+      "version": "0.1.1"
     },
     {
-      "id": "sub-agents",
-      "package": "leo-plugin-sub-agents",
-      "path": "plugins/sub-agents",
-      "version": "0.1.1",
-      "status": "experimental",
+      "bundle": "./dist/sub-agents.bundle.js",
       "description": "子代理：把任务委派给独立上下文的子 Agent 执行并汇总结果",
-      "leo": ">=0.1.0",
-      "bundle": {
-        "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/sub-agents/0.1.1/sub-agents.bundle.js",
-        "sha256": "b875c6716cf2e1645bcd4540bb62ffe87e5ef1ed3f0682962760f3bb118a43e3"
-      },
-      "init": {
-        "files": [
+      "entry": "./dist/index.js",
+      "id": "sub-agents",
+      "inject": [
+        "agentLoop",
+        "tools"
+      ],
+      "install": {
+        "config": "leo-plugin-sub-agents",
+        "example": [
+          "leo-plugin-sub-agents",
           {
-            "path": "agents/explorer.md",
-            "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/sub-agents/0.1.1/init/agents/explorer.md",
-            "sha256": "4bdec2a684f3ba19b25973ed4710ddf5d3d9da70aa6c9c685a524eeb2a3d6fe9",
-            "description": "示例子 Agent：只读调研（explorer），可复制改成其他角色"
+            "maxConcurrent": 4
           }
         ]
-      }
+      },
+      "keywords": [
+        "agent",
+        "sub-agent",
+        "delegation"
+      ],
+      "leo": ">=0.1.0",
+      "package": "leo-plugin-sub-agents",
+      "permissions": [
+        "agent.spawn"
+      ],
+      "provides": {
+        "events": [
+          "sub-agents/started",
+          "sub-agents/finished"
+        ],
+        "services": [
+          "subAgents"
+        ],
+        "tools": [
+          "task"
+        ]
+      },
+      "status": "experimental",
+      "version": "0.1.1"
     },
     {
-      "id": "trajectory",
-      "package": "leo-plugin-trajectory",
-      "path": "plugins/trajectory",
-      "version": "0.1.0",
-      "status": "experimental",
+      "bundle": "./dist/trajectory.bundle.js",
       "description": "轨迹观测：把会话日志投影成 turn / step / 工具 / 子会话的树，本机网页实时查看耗时、TTFT、用量与错误，/trace 命令摘要与导出",
+      "entry": "./dist/index.js",
+      "id": "trajectory",
+      "inject": [
+        "sessions"
+      ],
+      "install": {
+        "config": "leo-plugin-trajectory",
+        "example": [
+          "leo-plugin-trajectory",
+          {
+            "port": 18791
+          }
+        ]
+      },
+      "keywords": [
+        "trajectory",
+        "observability",
+        "trace",
+        "debug",
+        "timeline"
+      ],
       "leo": ">=0.2.1",
-      "bundle": {
-        "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/trajectory/0.1.0/trajectory.bundle.js",
-        "sha256": "37cb83b23a864048733fe38c78ab3c448b98dd45d38a0a2b307d326a7d53b9f0"
-      }
+      "package": "leo-plugin-trajectory",
+      "permissions": [
+        "net.listen"
+      ],
+      "provides": {
+        "services": [
+          "trajectory"
+        ]
+      },
+      "status": "experimental",
+      "version": "0.1.0"
     }
   ]
 }

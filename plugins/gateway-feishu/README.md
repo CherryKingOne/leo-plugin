@@ -1,5 +1,7 @@
 # leo-plugin-gateway-feishu
 
+> **Rust rewrite**：本插件已用 Rust 重写，实现见 `src/*.rs`；构建/测试：`cargo test -p leo-plugin-gateway-feishu`。安装与加载见根目录 [`docs/install.md`](../../docs/install.md)。
+
 > 实验性 0.2.3 · 需要 [leo-plugin-gateway](../gateway/) ≥ 0.2.0（扫码人自动成为管理员需要 ≥ 0.2.2）
 
 ## 用途
