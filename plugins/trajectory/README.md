@@ -41,7 +41,7 @@ leo plugin add trajectory --project
 
 ## 宿主版本与数据完整度
 
-| 数据 | leo-agents 0.2.1 | leo-agents ≥ 0.2.2（分支 `feat/trajectory-log`，未发布） |
+| 数据 | leo-agents 0.2.1 | leo-agents ≥ 0.2.2 |
 | --- | --- | --- |
 | turn / step / 工具树、用量、重试、错误、压缩 | ✅ 日志 | ✅ 日志 |
 | step 总耗时（含重试） | ✅ 日志事件时间 | ✅ |

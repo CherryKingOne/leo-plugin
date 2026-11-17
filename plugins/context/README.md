@@ -23,7 +23,7 @@ leo plugin add context --project
 
 ## 宿主版本与数据完整度
 
-| 数据 | leo-agents 0.2.1 / 0.2.2 | leo-agents ≥ 0.2.3（分支 `feat/context-log`，未发布） |
+| 数据 | leo-agents 0.2.1 / 0.2.2 | leo-agents ≥ 0.2.3 |
 | --- | --- | --- |
 | 消息分类（用户 / 回答 / 思考 / 工具调用 / 工具结果 / 压缩摘要） | ✅ 日志 | ✅ 日志 |
 | System 提示词 | ⚠️ 整体一类 | ✅ 按片段拆分，带层级与来源插件 |
