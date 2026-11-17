@@ -35,10 +35,10 @@
     ]
   },
   "release": {
-    "version": "0.1.1",
+    "version": "0.1.2",
     "bundle": {
-      "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/provider-qianfan/0.1.1/provider-qianfan.bundle.js",
-      "sha256": "a29c3ca8f990797a863f8880bafaabc30db018a94111449cc12f393b85bdf137"
+      "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/provider-qianfan/0.1.2/provider-qianfan.bundle.js",
+      "sha256": "178b4afb4ac672353177b19de330e57bc80b5ed0a0d2232b2c10524334cbdd3d"
     }
   }
 }

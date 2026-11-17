@@ -266,13 +266,13 @@
       "id": "provider-qianfan",
       "package": "leo-plugin-provider-qianfan",
       "path": "plugins/provider-qianfan",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "status": "experimental",
       "description": "模型供应商注册层的百度千帆（文心 ERNIE）子插件：ERNIE-5.5-Flash-Preview、ERNIE-Light-DT-1.0、ERNIE 5.1，保存 API Key 即自动接入，思考开关与推理强度按模型处理、工具调用开箱可用（需要 provider ≥ 0.3.1）",
       "leo": ">=0.2.0",
       "bundle": {
-        "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/provider-qianfan/0.1.1/provider-qianfan.bundle.js",
-        "sha256": "a29c3ca8f990797a863f8880bafaabc30db018a94111449cc12f393b85bdf137"
+        "url": "https://raw.githubusercontent.com/CherryKingOne/leo-plugin/bundles/provider-qianfan/0.1.2/provider-qianfan.bundle.js",
+        "sha256": "178b4afb4ac672353177b19de330e57bc80b5ed0a0d2232b2c10524334cbdd3d"
       }
     },
     {
