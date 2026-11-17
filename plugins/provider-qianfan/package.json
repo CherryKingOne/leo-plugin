@@ -1,6 +1,6 @@
 {
   "name": "leo-plugin-provider-qianfan",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "leo 模型供应商注册层的百度千帆（文心 ERNIE）子插件：ernie-5.5-flash-preview / ernie-light-dt-1.0 / ernie-5.1，思考开关与推理强度按模型翻译，千帆错误码映射",
   "type": "module",
   "license": "Apache-2.0",

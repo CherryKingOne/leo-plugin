@@ -16,17 +16,18 @@ const prep = (model: string, opts: { reasoning?: unknown; settings?: Record<stri
 const sse = (chunks: unknown[]) => new Response(`${chunks.map((c) => `data: ${JSON.stringify(c)}\n\n`).join('')}data: [DONE]\n\n`, { status: 200 })
 
 describe('prepareQianfanBody', () => {
-  it('ernie-light-dt-1.0: thinking on by default, switchable, effort low / high / max', () => {
-    expect(prep('ernie-light-dt-1.0')).toEqual({ model: 'ernie-light-dt-1.0', thinking: { type: 'enabled' } })
+  it('ernie-light-dt-1.0: thinking on at max effort by default, switchable, effort high / max', () => {
+    expect(prep('ernie-light-dt-1.0')).toEqual({ model: 'ernie-light-dt-1.0', thinking: { type: 'enabled' }, reasoning_effort: 'max' })
     expect(prep('ernie-light-dt-1.0', { reasoning: { enabled: false }, settings: { thinking: 'enabled', reasoningEffort: 'max' } })).toEqual({ model: 'ernie-light-dt-1.0', thinking: { type: 'disabled' } })
     expect(prep('ernie-light-dt-1.0', { reasoning: { effort: 'none' } }).thinking).toEqual({ type: 'disabled' })
     expect(prep('ernie-light-dt-1.0', { settings: { thinking: false } }).thinking).toEqual({ type: 'disabled' })
     expect(prep('ernie-light-dt-1.0', { settings: { reasoningEffort: 'none' } }).thinking).toEqual({ type: 'disabled' })
     const effort = (reasoning: unknown, settings?: Record<string, unknown>) => prep('ernie-light-dt-1.0', { reasoning, ...(settings ? { settings } : {}) }).reasoning_effort
-    expect([effort({ effort: 'minimal' }), effort({ effort: 'low' }), effort({ effort: 'medium' }), effort({ effort: 'high' }), effort({ effort: 'xhigh' }), effort({ effort: 'max' })]).toEqual(['low', 'low', 'high', 'high', 'max', 'max'])
-    expect(effort(undefined, { reasoningEffort: 'low' })).toBe('low')
+    expect([effort({ effort: 'minimal' }), effort({ effort: 'low' }), effort({ effort: 'medium' }), effort({ effort: 'high' }), effort({ effort: 'xhigh' }), effort({ effort: 'max' })]).toEqual(['high', 'high', 'high', 'high', 'max', 'max'])
+    expect(effort(undefined, { reasoningEffort: 'high' })).toBe('high')
+    expect(effort(undefined, { reasoningEffort: 'low' })).toBe('high')
     // 交互中 /effort 优先于 provider.json
-    expect(effort({ enabled: true, effort: 'max' }, { reasoningEffort: 'low' })).toBe('max')
+    expect(effort({ enabled: true, effort: 'max' }, { reasoningEffort: 'high' })).toBe('max')
   })
 
   it('ernie-5.5-flash-preview: always sends thinking enabled, never disabled or an effort', () => {
@@ -34,15 +35,33 @@ describe('prepareQianfanBody', () => {
     expect(prep('ernie-5.5-flash-preview', { reasoning: { enabled: false, effort: 'max' }, body: { reasoning_effort: 'low', thinking: { type: 'disabled' } } })).toEqual({ model: 'ernie-5.5-flash-preview', thinking: { type: 'enabled' } })
   })
 
-  it('ernie-5.1: a plain text model, no thinking parameters, reasoning_content dropped', () => {
+  it('ernie-5.1: thinks by itself, no thinking switch or effort, thinking_budget only when configured', () => {
     const messages = [
       { role: 'user', content: 'hi' },
       { role: 'assistant', content: null, reasoning_content: 'r', tool_calls: [{ id: 'c1' }] },
     ]
-    const out = prep('ernie-5.1', { reasoning: { enabled: true, effort: 'max' }, body: { messages } })
+    const out = prep('ernie-5.1', { reasoning: { enabled: false, effort: 'none' }, body: { messages, thinking_budget: 5 } })
     expect(out.thinking).toBeUndefined()
     expect(out.reasoning_effort).toBeUndefined()
-    expect((out.messages as any[])[1]).toEqual({ role: 'assistant', content: '', tool_calls: [{ id: 'c1' }] })
+    expect(out.thinking_budget).toBeUndefined()
+    // 本轮工具调用循环里的思考内容保留
+    expect((out.messages as any[])[1]).toEqual({ role: 'assistant', content: '', reasoning_content: 'r', tool_calls: [{ id: 'c1' }] })
+    expect(prep('ernie-5.1', { settings: { thinkingBudget: 2048 } }).thinking_budget).toBe(2048)
+    expect(prep('ernie-light-dt-1.0', { settings: { thinkingBudget: 2048 } }).thinking_budget).toBeUndefined()
+    expect(() => prep('ernie-5.1', { settings: { thinkingBudget: 50 } })).toThrow(/thinkingBudget/)
+  })
+
+  it('drops reasoning_content of earlier turns, keeps the current tool-call loop', () => {
+    const messages = [
+      { role: 'user', content: 'q1' },
+      { role: 'assistant', content: 'a1', reasoning_content: 'old' },
+      { role: 'user', content: 'q2' },
+      { role: 'assistant', content: null, reasoning_content: 'now', tool_calls: [{ id: 'c1' }] },
+      { role: 'tool', tool_call_id: 'c1', content: '5' },
+    ]
+    const out = prep('ernie-light-dt-1.0', { body: { messages } }).messages as any[]
+    expect(out[1]).toEqual({ role: 'assistant', content: 'a1' })
+    expect(out[3]).toEqual({ role: 'assistant', content: '', reasoning_content: 'now', tool_calls: [{ id: 'c1' }] })
   })
 
   it('keeps reasoning_content while thinking, drops it when off; assistant null content becomes a string', () => {
@@ -54,6 +73,7 @@ describe('prepareQianfanBody', () => {
   it('validates provider.json and handles models added by hand', () => {
     expect(() => prep('ernie-light-dt-1.0', { settings: { thinking: 'maybe' } })).toThrow(/thinking/)
     expect(() => prep('ernie-light-dt-1.0', { settings: { reasoningEffort: 'ultra' } })).toThrow(/reasoningEffort/)
+    expect(normalizeQianfanEffort('low')).toBe('high')
     // 手动加的非 ERNIE 模型：没声明思考能力就原样发送
     expect(prepareQianfanBody({ model: 'deepseek-v4-pro' }, { request: { model: 'deepseek-v4-pro', messages: [] }, settings: on })).toEqual({ model: 'deepseek-v4-pro' })
     expect(thinkingSpecOf('deepseek-v4-pro', { id: 'deepseek-v4-pro', reasoning: { supported: true, efforts: ['low', 'high', 'max'] } } as never)).toEqual({ toggle: 'switch', effort: true })
@@ -120,7 +140,7 @@ describe('provider-qianfan with the provider registry', () => {
     expect(g!.models.map((m) => [m.id, m.contextWindow, m.maxOutputTokens, m.reasoning?.canDisable])).toEqual([
       ['ernie-5.5-flash-preview', 1000000, 131072, false],
       ['ernie-light-dt-1.0', 1000000, 131072, true],
-      ['ernie-5.1', 131072, 65536, undefined],
+      ['ernie-5.1', 131072, 65536, false],
     ])
     await app.dispose()
   })
@@ -136,8 +156,8 @@ describe('provider-qianfan with the provider registry', () => {
     await app.createAgent({ tools: false, reasoning: { enabled: true, effort: 'low' } }).run('c')
     expect(bodies.map((b) => [b.model, b.thinking.type, b.reasoning_effort])).toEqual([
       ['ernie-light-dt-1.0', 'disabled', undefined],
-      ['ernie-light-dt-1.0', 'enabled', undefined],
-      ['ernie-light-dt-1.0', 'enabled', 'low'],
+      ['ernie-light-dt-1.0', 'enabled', 'max'],
+      ['ernie-light-dt-1.0', 'enabled', 'high'],
     ])
     expect(new Set(bodies.map((b) => b._base))).toEqual(new Set(['https://qianfan.baidubce.com/v2/tokenplan/personal']))
     await app.dispose()

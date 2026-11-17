@@ -1,5 +1,13 @@
 # 更新日志
 
+## 0.1.2 — 2026-11-17
+
+按千帆深度思考文档调整：
+- 默认始终开启思考、强度取最大（`ernie-light-dt-1.0` 不指定时发送 `reasoning_effort: max`），只有人工关闭才关
+- `reasoning_effort` 只用 high / max 两档（千帆把 low、medium 映射为 high，xhigh 映射为 max）
+- 多轮对话只回传本轮工具调用循环里的 `reasoning_content`，之前轮次的去掉
+- `ernie-5.1` 改为自带思考的模型：不发 thinking 开关和强度；provider.json 新增 `thinkingBudget`（≥ 100），写了才发送 `thinking_budget`
+
 ## 0.1.1 — 2026-11-17
 
 - 修复 `ernie-5.5-flash-preview` 不思考：它“只能开启”但不传 `thinking` 时服务端不思考，现在始终发送 `thinking: { type: enabled }`（仍不发关闭与强度）

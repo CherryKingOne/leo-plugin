@@ -24,8 +24,8 @@ leo -m qianfan/ernie-light-dt-1.0
 | 模型 | 上下文 / 最大输出 | 思考 | 推理强度 | 默认流控 |
 | --- | --- | --- | --- | --- |
 | `ernie-5.5-flash-preview`（默认） | 1M / 128K（文档写 1M，这里按 128K 预留输出） | 只能开启 | 固定 high | RPM 300、TPM 3000000 |
-| `ernie-light-dt-1.0` | 1M / 128K | 可开可关 | low / high / max（默认 max） | RPM 60、TPM 1000000 |
-| `ernie-5.1` | 128K（最大输入 119K）/ 64K | 不支持 | — | RPM 60、TPM 150000 |
+| `ernie-light-dt-1.0` | 1M / 128K | 可开可关 | high / max（默认 max） | RPM 60、TPM 1000000 |
+| `ernie-5.1` | 128K（最大输入 119K）/ 64K | 自带思考，不可关 | 可用 `thinkingBudget` 限长 | RPM 60、TPM 150000 |
 
 `GET /v2/models` 会列出平台上所有模型（含图像、视频、向量和其它厂商），所以插件不实时获取，只展示上面三个。想用千帆上的其它模型，在 provider.json 的 `models` 里手动加（思考参数按该模型声明的 `reasoning` 处理，没声明就原样发送）。
 
@@ -35,16 +35,17 @@ leo -m qianfan/ernie-light-dt-1.0
 
 按[深度思考文档](https://cloud.baidu.com/doc/qianfan-docs/s/Wm95lyynv)：
 
-- `ernie-light-dt-1.0`：每次请求明确发送 `thinking: { "type": "enabled" | "disabled" }`；开启时可带 `reasoning_effort`（宿主的 minimal → low，medium → high，xhigh → max）。不指定强度时由千帆决定（默认 max）
+- 默认始终开启思考、强度取最大；只有人工关闭（`/think off`、`--thinking off`、provider.json）才关
+- `ernie-light-dt-1.0`：每次请求明确发送 `thinking: { "type": "enabled" | "disabled" }`；开启时发送 `reasoning_effort`，默认 `max`。千帆只有 high / max 两档生效，宿主的 minimal / low / medium / high 按 high，xhigh / max 按 max
 - `ernie-5.5-flash-preview`：只能开启、强度不可调。不传 `thinking` 时服务端不会思考，所以插件始终发送 `thinking: { "type": "enabled" }`，不发关闭与 `reasoning_effort`（`/think off` 对它无效）
-- `ernie-5.1`：不在深度思考模型列表里，不发思考参数
-- 思考内容（`reasoning_content`）在 leo 里以 💭 显示；思考开启时，带工具调用的多轮请求回传之前的 `reasoning_content`，关闭时不传
+- `ernie-5.1`：本身就思考，不认 `thinking` 开关和 `reasoning_effort`；provider.json 写了 `thinkingBudget`（≥ 100）时发送 `thinking_budget` 限制思维链长度，不写就是模型支持的最大长度
+- 思考内容（`reasoning_content`）在 leo 里以 💭 显示。按千帆文档，只在本轮工具调用循环里回传 `reasoning_content`，之前轮次的不再回传；关闭思考时全部不传
 
 调整方式，优先级从高到低：
 
 | 方式 | 写法 |
 | --- | --- |
-| 交互中 | `/think on` / `/think off`、`/effort low`（会同步写回 provider.json） |
+| 交互中 | `/think on` / `/think off`、`/effort high`（会同步写回 provider.json） |
 | 命令行 | `leo --thinking off`、`leo --effort high`（只作用于本次） |
 | `.leo/config.json` | `"agent": { "reasoning": { "enabled": true, "effort": "max" } }` |
 | `provider.json` | `"qianfan": { "thinking": "enabled", "reasoningEffort": "max" }` |
@@ -68,7 +69,8 @@ leo -m qianfan/ernie-light-dt-1.0
     "qianfan": {
       "defaultModel": "ernie-5.5-flash-preview",
       "thinking": "enabled",        // 或 "disabled"、true / false（只对 ernie-light-dt-1.0 生效）
-      "reasoningEffort": "max",     // none / low / high / max（只对 ernie-light-dt-1.0 生效）
+      "reasoningEffort": "max",     // none / high / max，默认 max（只对 ernie-light-dt-1.0 生效）
+      "thinkingBudget": 8192,      // 可选，思维链最大长度 ≥ 100（只对 ernie-5.1 生效），不写为最大
       // Token Plan 个人版用专属 API Key 时改成：
       // "baseURL": "https://qianfan.baidubce.com/v2/tokenplan/personal"
     }
