@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>leo 上下文</title>
+<style>
+:root{--bg:#0f1115;--panel:#161a21;--line:#262c36;--fg:#d8dee9;--mut:#8a93a3;--acc:#6cb6ff;--ok:#5fd38d;--err:#ff6b6b;--warn:#f0b35a;
+--c-system:#7f8ea3;--c-injected:#c792ea;--c-tools:#f0b35a;--c-user:#6cb6ff;--c-answers:#5fd38d;--c-reasoning:#4fc1c9;--c-toolCalls:#e88f5a;--c-toolResults:#d4c36a;--c-summary:#ff8fb1}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:13px/1.45 ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;height:100vh;display:flex;flex-direction:column}
+header{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--line);background:var(--panel)}
+header h1{font-size:14px;margin:0;font-weight:600}
+.grow{flex:1}
+button,select{background:#222833;color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:4px 10px;cursor:pointer;font:inherit}
+button.on{border-color:var(--acc);color:var(--acc)}
+input[type=search]{background:#0b0d11;border:1px solid var(--line);color:var(--fg);padding:5px 8px;border-radius:6px;width:100%}
+main{flex:1;min-height:0;display:flex}
+#side{width:280px;border-right:1px solid var(--line);overflow:auto;display:none}
+#side.show{display:block}
+#content{flex:1;overflow:auto;padding:12px 16px 48px}
+.sess{padding:6px 10px;border-bottom:1px solid var(--line);cursor:pointer}
+.sess:hover{background:#1b2029}.sess.sel{background:#1d2533;border-left:3px solid var(--acc)}
+.sess .lb{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sess .id{font:11px ui-monospace,Menlo,Consolas,monospace;color:var(--mut);word-break:break-all}
+.sess .meta{font-size:11px;color:var(--mut)}
+.child{padding-left:22px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-width:0}
+.card.wide{grid-column:1/-1}
+.card h3{margin:0 0 8px;font-size:13px;display:flex;align-items:center;gap:8px}
+.card h3 .grow{flex:1}
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.kpi{background:#0b0d11;border:1px solid var(--line);border-radius:8px;padding:8px}
+.kpi .v{font-size:18px;font-weight:600}.kpi .l{font-size:11px;color:var(--mut)}
+.bar{display:flex;height:16px;border-radius:4px;overflow:hidden;background:#0b0d11;position:relative}
+.bar>i{display:block;height:100%}
+.bar .hatch{background:repeating-linear-gradient(45deg,#2a303b 0 4px,#1a1e26 4px 8px)}
+.bar .mark{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--warn)}
+.legend{display:flex;flex-wrap:wrap;gap:4px 12px;margin:6px 0;font-size:11px;color:var(--mut)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;color:var(--mut);font-weight:500;border-bottom:1px solid var(--line);padding:3px 6px}
+td{border-bottom:1px solid #1d222b;padding:3px 6px;vertical-align:top}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px}
+.mut{color:var(--mut)}.err{color:var(--err)}.okc{color:var(--ok)}.warn{color:var(--warn)}
+.badge{display:inline-block;padding:0 6px;border-radius:9px;font-size:11px;border:1px solid var(--line);color:var(--mut)}
+.badge.warn{color:var(--warn);border-color:#5a4a2e}.badge.ok{color:var(--ok);border-color:#2e5a40}
+svg{display:block;width:100%}
+.heat{display:grid;grid-template-rows:repeat(7,12px);grid-auto-flow:column;grid-auto-columns:12px;gap:3px}
+.heat i{border-radius:2px;background:#1b2029}
+.scroll{max-height:320px;overflow:auto}
+pre{white-space:pre-wrap;word-break:break-word;background:#0b0d11;border:1px solid var(--line);border-radius:6px;padding:8px;font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;max-height:260px;overflow:auto;margin:4px 0}
+.item{border-bottom:1px solid #1d222b;padding:4px 0}
+.item .h{display:flex;gap:8px;align-items:baseline;cursor:pointer}
+.item .h .sw{width:8px;height:8px;border-radius:2px;flex:none}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px}
+.sc{background:#0b0d11;border:1px solid var(--line);border-radius:8px;padding:8px;cursor:pointer}
+.sc:hover{border-color:var(--acc)}
+.empty{color:var(--mut);padding:24px}
+.tabs2{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<header>
+  <h1>leo 上下文</h1>
+  <button id="t-insight" class="on">洞察</button>
+  <button id="t-session">会话</button>
+  <span class="grow"></span>
+  <select id="range"><option value="1">今天</option><option value="7" selected>7 天</option><option value="30">30 天</option></select>
+  <span id="live" class="badge">连接中</span>
+</header>
+<main>
+  <div id="side"><div style="padding:8px"><input id="q" type="search" placeholder="搜索会话"></div><div id="list"></div></div>
+  <div id="content"><div class="empty">加载中…</div></div>
+</main>
+<script>
+(function () {
+  'use strict'
+  var params = new URLSearchParams(location.search)
+  var token = params.get('token') || sessionStorage.getItem('leoContextToken') || ''
+  if (params.get('token')) { sessionStorage.setItem('leoContextToken', token); params.delete('token'); history.replaceState(null, '', location.pathname + (params.toString() ? '?' + params : '') + location.hash) }
+  var CATS = ['system', 'injected', 'tools', 'user', 'answers', 'reasoning', 'toolCalls', 'toolResults', 'summary']
+  var LABEL = { system: 'System 提示词', injected: '插件注入', tools: '工具定义', user: '用户消息', answers: '回答', reasoning: '思考', toolCalls: '工具调用', toolResults: '工具结果', summary: '压缩摘要' }
+  var state = { tab: 'insight', session: null, sessions: [], report: null, browser: null, browserCat: '', open: {} }
+  var $ = function (id) { return document.getElementById(id) }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] }) }
+  function api(path) {
+    var h = {}; if (token) h.authorization = 'Bearer ' + token
+    return fetch(path, { headers: h }).then(function (r) { if (r.status === 401) throw new Error('需要令牌：在地址后加 ?token=…'); if (!r.ok) throw new Error('HTTP ' + r.status); return r.json() })
+  }
+  function tk(n) { n = n || 0; return n >= 1e6 ? (n / 1e6).toFixed(2) + 'M' : n >= 1e3 ? (n / 1e3).toFixed(1) + 'k' : String(Math.round(n)) }
+  function pct(x) { return x == null ? '—' : (x * 100).toFixed(1) + '%' }
+  function usd(x) { x = x || 0; return x <= 0 ? '$0' : x < 0.01 ? '$' + x.toFixed(4) : '$' + x.toFixed(2) }
+  function dur(ms) { if (ms == null) return '—'; if (ms < 1000) return Math.round(ms) + 'ms'; var s = ms / 1000; if (s < 60) return s.toFixed(1) + 's'; var m = Math.floor(s / 60); return m < 60 ? m + 'm' + Math.round(s % 60) + 's' : Math.floor(m / 60) + 'h' + (m % 60) + 'm' }
+  function ago(t) { if (!t) return ''; var d = (Date.now() - t) / 1000; return d < 60 ? '刚刚' : d < 3600 ? Math.floor(d / 60) + ' 分钟前' : d < 86400 ? Math.floor(d / 3600) + ' 小时前' : Math.floor(d / 86400) + ' 天前' }
+  function time(t) { var d = new Date(t); return d.toLocaleString() }
+  function sum(c) { return CATS.reduce(function (n, k) { return n + (c[k] || 0) }, 0) }
+  function legend(c) { return '<div class="legend">' + CATS.filter(function (k) { return !c || c[k] > 0 }).map(function (k) { return '<span><i style="background:var(--c-' + k + ')"></i>' + LABEL[k] + (c ? ' ' + tk(c[k]) : '') + '</span>' }).join('') + '</div>' }
+  function stack(c, total, extra) {
+    total = total || sum(c) || 1
+    var h = CATS.map(function (k) { var v = c[k] || 0; return v > 0 ? '<i title="' + LABEL[k] + ' ' + tk(v) + '" style="width:' + (v / total * 100) + '%;background:var(--c-' + k + ')"></i>' : '' }).join('')
+    return '<div class="bar">' + h + (extra || '') + '</div>'
+  }
+
+  // —— 洞察 ——
+  function loadInsight() {
+    var days = $('range').value
+    return api('/api/overview?days=' + days).then(renderInsight).catch(fail)
+  }
+  function renderInsight(o) {
+    var k = o.kpi
+    var maxDay = Math.max.apply(null, o.last7.map(function (d) { return d.billedTokens }).concat([1]))
+    var maxCost = Math.max.apply(null, o.last7.map(function (d) { return d.costUsd }).concat([1e-9]))
+    var bars = '<svg viewBox="0 0 700 150" preserveAspectRatio="none" style="height:150px">' + o.last7.map(function (d, i) {
+      var x = 20 + i * 96, h1 = d.billedTokens / maxDay * 110, h2 = d.costUsd / maxCost * 110
+      return '<rect x="' + x + '" y="' + (120 - h1) + '" width="34" height="' + h1 + '" fill="var(--c-user)"><title>' + d.date + ' 计费 ' + tk(d.billedTokens) + '</title></rect>' +
+        '<rect x="' + (x + 38) + '" y="' + (120 - h2) + '" width="34" height="' + h2 + '" fill="var(--c-tools)"><title>' + d.date + ' 成本 ' + usd(d.costUsd) + '</title></rect>' +
+        '<text x="' + (x + 36) + '" y="140" fill="#8a93a3" font-size="11" text-anchor="middle">' + d.date.slice(5) + '</text>'
+    }).join('') + '</svg><div class="legend"><span><i style="background:var(--c-user)"></i>计费 token</span><span><i style="background:var(--c-tools)"></i>成本</span></div>'
+    var maxHeat = Math.max.apply(null, o.heatmap.map(function (d) { return d.billedTokens }).concat([1]))
+    var heat = '<div class="heat">' + o.heatmap.map(function (d) { var a = d.billedTokens ? 0.2 + 0.8 * d.billedTokens / maxHeat : 0; return '<i title="' + d.date + ' ' + tk(d.billedTokens) + '" style="' + (a ? 'background:rgba(108,182,255,' + a.toFixed(2) + ')' : '') + '"></i>' }).join('') + '</div>'
+    function rank(rows, cols) { return rows.length ? '<table><tr>' + cols.map(function (c) { return '<th' + (c[2] ? ' class="n"' : '') + '>' + c[0] + '</th>' }).join('') + '</tr>' + rows.map(function (r) { return '<tr>' + cols.map(function (c) { return '<td' + (c[2] ? ' class="n"' : '') + '>' + c[1](r) + '</td>' }).join('') + '</tr>' }).join('') + '</table>' : '<div class="mut">没有记录</div>' }
+    var cards = o.sessions.length ? '<div class="cards">' + o.sessions.map(function (s) {
+      return '<div class="sc" data-s="' + esc(s.sessionId) + '"><div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(s.label || s.sessionId) + '</div>' +
+        '<div class="mut" style="font-size:11px">' + esc(s.model || '') + ' · ' + ago(s.updatedAt) + '</div>' +
+        (s.composition ? '<div style="margin:6px 0">' + stack(s.composition) + '</div>' : '') +
+        '<div class="mut" style="font-size:11px">上下文 ' + tk(s.contextTokens) + ' (' + pct(s.occupancy) + ') · 计费 ' + tk(s.billedTokens) + ' · ' + usd(s.costUsd) + ' · ' + (s.turns || 0) + ' 轮</div></div>'
+    }).join('') + '</div>' : '<div class="mut">范围内没有会话</div>'
+    $('content').innerHTML = '<div class="grid">' +
+      '<div class="card wide"><div class="kpis">' +
+      kpi(k.sessions, '活跃会话') + kpi(k.turns, '轮次') + kpi(k.requests, '模型请求') + kpi(tk(k.billedTokens), '计费 token') + kpi(usd(k.costUsd), '估算成本') + kpi(pct(k.cacheHitRate), '缓存命中') + kpi(k.toolCalls, '工具调用') + kpi(dur(k.activeMs), '活跃时长') +
+      '</div>' + (o.truncated ? '<div class="warn" style="margin-top:6px;font-size:11px">会话太多，只统计了最近的一部分（插件选项 maxSessions）</div>' : '') + '</div>' +
+      '<div class="card"><h3>最近 7 天</h3>' + bars + '</div>' +
+      '<div class="card"><h3>最近 8 周</h3>' + heat + '</div>' +
+      '<div class="card"><h3>上下文组成<span class="grow"></span><span class="mut" style="font-weight:400">范围内每次请求合计</span></h3>' + stack(o.composition) + legend(o.composition) + '</div>' +
+      '<div class="card"><h3>工具调用</h3><div class="scroll">' + rank(o.tools, [['工具', function (r) { return '<span class="mono">' + esc(r.name) + '</span>' }], ['次数', function (r) { return r.calls }, 1], ['出错', function (r) { return r.errors ? '<span class="err">' + r.errors + '</span>' : 0 }, 1], ['最近', function (r) { return ago(r.lastAt) }, 1]]) + '</div></div>' +
+      '<div class="card"><h3>技能加载</h3><div class="scroll">' + rank(o.skills, [['技能', function (r) { return esc(r.name) }], ['次数', function (r) { return r.loads }, 1], ['最近', function (r) { return ago(r.lastAt) }, 1]]) + '</div></div>' +
+      '<div class="card"><h3>命令执行</h3><div class="scroll">' + rank(o.programs, [['程序', function (r) { return '<span class="mono">' + esc(r.name) + '</span>' }], ['次数', function (r) { return r.runs }, 1], ['失败', function (r) { return r.failures ? '<span class="err">' + r.failures + '</span>' : 0 }, 1], ['最近', function (r) { return ago(r.lastAt) }, 1]]) + '</div></div>' +
+      '<div class="card wide"><h3>会话</h3>' + cards + '</div></div>'
+    Array.prototype.forEach.call(document.querySelectorAll('.sc'), function (el) { el.onclick = function () { openSession(el.getAttribute('data-s')) } })
+  }
+  function kpi(v, l) { return '<div class="kpi"><div class="v">' + esc(v) + '</div><div class="l">' + l + '</div></div>' }
+
+  // —— 会话 ——
+  function loadList() {
+    return api('/api/sessions').then(function (d) { state.sessions = d.sessions; renderList() }).catch(fail)
+  }
+  function renderList() {
+    var q = $('q').value.trim().toLowerCase()
+    var byParent = {}
+    var ids = {}
+    state.sessions.forEach(function (s) { ids[s.sessionId] = 1 })
+    state.sessions.forEach(function (s) { var p = s.parentSessionId && ids[s.parentSessionId] ? s.parentSessionId : ''; (byParent[p] = byParent[p] || []).push(s) })
+    var out = []
+    function walk(p, depth) { (byParent[p] || []).forEach(function (s) { out.push([s, depth]); if (depth < 4) walk(s.sessionId, depth + 1) }) }
+    walk('', 0)
+    $('list').innerHTML = out.filter(function (x) { var s = x[0]; return !q || (s.sessionId + ' ' + (s.label || '') + ' ' + (s.model || '')).toLowerCase().indexOf(q) >= 0 }).map(function (x) {
+      var s = x[0]
+      return '<div class="sess' + (s.sessionId === state.session ? ' sel' : '') + '" style="padding-left:' + (10 + x[1] * 14) + 'px" data-s="' + esc(s.sessionId) + '">' +
+        '<div class="lb">' + esc(s.label || s.sessionId) + '</div>' + (s.label ? '<div class="id">' + esc(s.sessionId) + '</div>' : '') +
+        '<div class="meta">' + ago(s.updatedAt) + (s.contextTokens != null ? ' · ' + tk(s.contextTokens) + ' (' + pct(s.occupancy) + ')' : '') + '</div></div>'
+    }).join('') || '<div class="empty">没有会话</div>'
+    Array.prototype.forEach.call(document.querySelectorAll('.sess'), function (el) { el.onclick = function () { openSession(el.getAttribute('data-s')) } })
+  }
+  function openSession(id) {
+    state.session = id; state.browser = null; state.open = {}
+    setTab('session')
+    history.replaceState(null, '', location.pathname + '#s=' + encodeURIComponent(id))
+    loadReport()
+  }
+  function loadReport() {
+    if (!state.session) { $('content').innerHTML = '<div class="empty">选择左侧的会话</div>'; return Promise.resolve() }
+    return api('/api/sessions/' + encodeURIComponent(state.session)).then(function (r) { state.report = r; renderReport() }).catch(fail)
+  }
+  function renderReport() {
+    var r = state.report, s = r.stats, u = s.usage, c = r.current
+    var h = '<div class="grid">'
+    h += '<div class="card wide"><h3>' + esc(r.meta.label || r.sessionId) + '<span class="grow"></span>' +
+      (r.completeness.breakdown ? '<span class="badge ok">组成：日志</span>' : '<span class="badge warn" title="宿主日志没有 llm/request.breakdown（需要 leo-agents ≥ 0.2.3），System 未按片段拆分，工具定义为推算">组成：推算</span>') +
+      ' <span class="badge' + (r.completeness.toolTiming ? ' ok' : ' warn') + '">工具计时：' + (r.completeness.toolTiming ? '日志' : '推算') + '</span></h3>' +
+      '<div class="mut mono">' + esc(r.sessionId) + ' · ' + esc(r.models.join(', ')) + (r.meta.parentSessionId ? ' · 父会话 <a href="#" data-s="' + esc(r.meta.parentSessionId) + '" class="lnk">' + esc(r.meta.parentSessionId) + '</a>' : '') + '</div></div>'
+    // 当前上下文
+    if (c) {
+      var w = c.window, cw = w.contextWindow || 1
+      var reserveW = w.reserveOutputTokens / cw * 100
+      var headroom = Math.max(0, w.limitTokens - c.estimatedTokens) / cw * 100
+      var extra = '<i class="hatch" title="剩余空间" style="width:' + headroom + '%"></i><i title="输出预留 ' + tk(w.reserveOutputTokens) + '" style="width:' + reserveW + '%;background:#3a2a2a"></i><span class="mark" title="自动压缩阈值 ' + tk(w.softLimitTokens) + '" style="left:' + (w.softLimitTokens / cw * 100) + '%"></span>'
+      var comp = c.composition, tot = sum(comp)
+      var scale = {}; CATS.forEach(function (k) { scale[k] = tot ? comp[k] / tot * c.estimatedTokens : 0 })
+      h += '<div class="card wide"><h3>当前上下文<span class="grow"></span><span class="mut" style="font-weight:400">第 ' + (c.requestIndex + 1) + ' 次请求 · ' + esc(c.model) + '</span></h3>' +
+        '<div style="font-size:15px;margin-bottom:6px"><b>' + tk(c.estimatedTokens) + '</b> / ' + tk(cw) + ' <span class="mut">(' + pct(c.occupancy) + ')</span> · ' +
+        (c.untilCompaction >= 0 ? '离自动压缩还有 <b>' + tk(c.untilCompaction) + '</b>' : '<span class="warn">已超过自动压缩阈值 ' + tk(-c.untilCompaction) + '</span>') +
+        ' <span class="mut" style="font-size:11px">窗口来源：' + ({ log: '日志', model: '模型信息', default: '默认值' })[w.source] + '</span></div>' +
+        stack(scale, cw, extra) + legend(comp) + injected(c) + '</div>'
+    }
+    // 统计
+    h += '<div class="card"><h3>统计</h3><table>' +
+      row('轮次', s.turns) + row('模型请求', s.steps) + row('用户输入', s.userInputs) + row('工具调用', s.toolCalls + (s.toolErrors ? ' <span class="err">(' + s.toolErrors + ' 出错)</span>' : '')) +
+      row('压缩', s.compactions) + row('失败重试', s.failedAttempts) + row('子会话', r.children.length) + '</table></div>'
+    h += '<div class="card"><h3>Token 与成本</h3><table>' +
+      row('计费 token', tk(u.billedTokens)) + row('输入', tk(u.inputTokens)) + row('其中缓存命中', tk(u.cachedInputTokens) + ' (' + pct(u.cacheHitRate) + ')') + row('输出', tk(u.outputTokens)) + row('其中思考', tk(u.reasoningTokens)) +
+      row('成本', u.costSource === 'none' ? '<span class="mut">没有价格信息</span>' : usd(u.costUsd) + ' <span class="mut">' + ({ provider: '厂商返回', pricing: '按价目估算', mixed: '部分估算' })[u.costSource] + '</span>') + '</table></div>'
+    var t = s.timing, act = t.activeMs || 1
+    h += '<div class="card"><h3>耗时</h3><div class="bar"><i style="width:' + (t.modelMs / act * 100) + '%;background:var(--c-user)" title="模型"></i><i style="width:' + (t.toolMs / act * 100) + '%;background:var(--c-answers)" title="工具"></i><i style="width:' + (t.overheadMs / act * 100) + '%;background:var(--c-system)" title="其他"></i></div>' +
+      '<div class="legend"><span><i style="background:var(--c-user)"></i>模型 ' + dur(t.modelMs) + '</span><span><i style="background:var(--c-answers)"></i>工具 ' + dur(t.toolMs) + (t.toolSource === 'reported' ? '（自报）' : '') + '</span><span><i style="background:var(--c-system)"></i>其他 ' + dur(t.overheadMs) + '</span></div>' +
+      '<div class="mut">活跃时长 ' + dur(t.activeMs) + '</div></div>'
+    // 趋势
+    h += '<div class="card wide"><h3>上下文趋势<span class="grow"></span><span class="mut" style="font-weight:400">每次请求的组成（估算）；橙线为模型报告的输入 token，点柱子打开浏览器</span></h3>' + trend(r) + legend() + '</div>'
+    // 浏览器
+    h += '<div class="card wide" id="browser"><h3>上下文浏览器<span class="grow"></span><select id="breq">' + r.trend.map(function (p) { return '<option value="' + p.index + '">#' + (p.index + 1) + ' · 第 ' + p.turn + ' 轮 · ' + tk(p.estimatedTokens) + '</option>' }).reverse().join('') + '</select> <select id="bcat"><option value="">全部分类</option>' + CATS.map(function (k) { return '<option value="' + k + '">' + LABEL[k] + '</option>' }).join('') + '</select></h3><div id="bbody" class="mut">选择一次请求</div></div>'
+    // 事件
+    h += '<div class="card wide"><h3>上下文事件</h3><div class="scroll">' + (r.contextEvents.length ? '<table>' + r.contextEvents.slice().reverse().map(function (e) {
+      var cls = e.kind === 'error' || e.kind === 'retry' ? 'err' : e.kind === 'compaction' || e.kind === 'truncation' ? 'warn' : ''
+      return '<tr><td class="mut" style="white-space:nowrap">' + time(e.at) + '</td><td><span class="badge">' + esc(e.kind) + '</span></td><td class="' + cls + '">' + esc(e.text) + (e.before != null ? ' <span class="mut">' + tk(e.before) + ' → ' + tk(e.after) + '</span>' : '') + '</td></tr>'
+    }).join('') + '</table>' : '<div class="mut">没有事件</div>') + '</div></div>'
+    // 工具
+    h += '<div class="card"><h3>工具</h3><div class="scroll">' + (r.tools.length ? '<table><tr><th>工具</th><th class="n">次数</th><th class="n">出错</th><th class="n">耗时</th><th class="n">结果</th></tr>' + r.tools.map(function (x) { return '<tr><td class="mono">' + esc(x.name) + '</td><td class="n">' + x.calls + '</td><td class="n">' + (x.errors ? '<span class="err">' + x.errors + '</span>' : 0) + '</td><td class="n">' + dur(x.totalMs) + '</td><td class="n">' + tk(x.resultTokens) + '</td></tr>' }).join('') + '</table>' : '<div class="mut">没有工具调用</div>') + '</div></div>'
+    h += '<div class="card"><h3>文件活动</h3><div class="scroll">' + (r.files.length ? '<table><tr><th>文件</th><th>操作</th><th class="n">最近</th></tr>' + r.files.map(function (f) { return '<tr><td class="mono">' + esc(f.path) + '</td><td>' + Object.keys(f.ops).map(function (k) { return k + '×' + f.ops[k] }).join(' ') + (f.errors ? ' <span class="err">' + f.errors + ' 出错</span>' : '') + '</td><td class="n">' + ago(f.lastAt) + '</td></tr>' }).join('') + '</table>' : '<div class="mut">没有文件操作</div>') + '</div></div>'
+    h += '<div class="card"><h3>命令执行</h3><div class="scroll">' + (r.commands.length ? '<table><tr><th>命令</th><th class="n">耗时</th></tr>' + r.commands.map(function (x) { return '<tr><td class="mono ' + (x.ok ? '' : 'err') + '" title="' + esc(time(x.at)) + '">' + esc(x.command.length > 200 ? x.command.slice(0, 200) + '…' : x.command) + '</td><td class="n">' + dur(x.durationMs) + '</td></tr>' }).join('') + '</table>' : '<div class="mut">没有命令</div>') + '</div></div>'
+    if (r.skills.length) h += '<div class="card"><h3>技能加载</h3><table>' + r.skills.map(function (x) { return row(esc(x.name), x.loads + ' 次 · ' + ago(x.lastAt)) }).join('') + '</table></div>'
+    if (r.children.length) h += '<div class="card"><h3>子会话（Fleet）</h3>' + r.children.map(function (x) { return '<div class="sc" style="margin-bottom:6px" data-s="' + esc(x.sessionId) + '"><b>' + esc(x.label || x.sessionId) + '</b> <span class="mut">' + esc(x.origin || '') + '</span><div class="mut" style="font-size:11px">上下文 ' + tk(x.contextTokens) + ' · 计费 ' + tk(x.billedTokens) + ' · ' + usd(x.costUsd) + '</div></div>' }).join('') + '</div>'
+    h += '</div>'
+    $('content').innerHTML = h
+    Array.prototype.forEach.call(document.querySelectorAll('.sc,.lnk'), function (el) { el.onclick = function (ev) { ev.preventDefault(); openSession(el.getAttribute('data-s')) } })
+    Array.prototype.forEach.call(document.querySelectorAll('[data-req]'), function (el) { el.onclick = function () { $('breq').value = el.getAttribute('data-req'); loadBrowser(0) } })
+    if ($('breq')) { $('breq').onchange = function () { loadBrowser(0) }; $('bcat').onchange = function () { loadBrowser(0) } }
+    if (state.browser) { $('breq').value = String(state.browser.index); $('bcat').value = state.browserCat; loadBrowser(state.browser.offset) }
+  }
+  function injected(c) {
+    var o = Object.keys(c.injectedBy || {}).sort(function (a, b) { return c.injectedBy[b] - c.injectedBy[a] })
+    var h = o.length ? '<div class="mut" style="font-size:12px">插件注入来自：' + o.map(function (k) { return esc(k) + ' ' + tk(c.injectedBy[k]) }).join('，') + '</div>' : ''
+    if (c.sections) h += '<details style="margin-top:6px"><summary class="mut">System 片段（' + c.sections.length + '）</summary><table>' + c.sections.map(function (s) { return '<tr><td class="mono">' + esc(s.id) + '</td><td class="mut">' + esc(s.layer) + '</td><td>' + esc(s.owner) + '</td><td class="n">' + tk(s.tokens) + '</td></tr>' }).join('') + '</table></details>'
+    if (c.toolDefs) { var ks = Object.keys(c.toolDefs).sort(function (a, b) { return c.toolDefs[b] - c.toolDefs[a] }); h += '<details><summary class="mut">工具定义（' + ks.length + '）</summary><table>' + ks.map(function (k) { return '<tr><td class="mono">' + esc(k) + '</td><td class="n">' + tk(c.toolDefs[k]) + '</td></tr>' }).join('') + '</table></details>' }
+    return h
+  }
+  function row(k, v) { return '<tr><td class="mut">' + k + '</td><td class="n">' + v + '</td></tr>' }
+  function trend(r) {
+    var pts = r.trend
+    if (!pts.length) return '<div class="mut">还没有模型请求</div>'
+    var W = 900, H = 180, n = pts.length, bw = Math.max(2, Math.min(26, (W - 40) / n - 2))
+    var max = Math.max.apply(null, pts.map(function (p) { return Math.max(p.estimatedTokens, p.usage ? p.usage.inputTokens : 0) }).concat([1]))
+    var soft = r.current ? r.current.window.softLimitTokens : 0
+    if (soft && soft < max * 1.5) max = Math.max(max, soft)
+    var y = function (v) { return H - 20 - v / max * (H - 30) }
+    var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" style="height:' + H + 'px">'
+    pts.forEach(function (p, i) {
+      var x = 30 + i * (W - 40) / n, tot = sum(p.composition) || 1, acc = 0
+      CATS.forEach(function (k) { var v = p.composition[k] / tot * p.estimatedTokens; if (!v) return; svg += '<rect data-req="' + p.index + '" x="' + x + '" y="' + y(acc + v) + '" width="' + bw + '" height="' + Math.max(0.5, y(acc) - y(acc + v)) + '" fill="var(--c-' + k + ')" style="cursor:pointer"><title>#' + (p.index + 1) + ' ' + LABEL[k] + ' ' + tk(v) + '</title></rect>'; acc += v })
+      if (p.compacted) svg += '<text x="' + (x + bw / 2) + '" y="12" fill="#f0b35a" font-size="11" text-anchor="middle">⇣</text>'
+    })
+    var line = pts.filter(function (p) { return p.usage }).map(function (p) { return (30 + p.index * (W - 40) / n + bw / 2) + ',' + y(p.usage.inputTokens) }).join(' ')
+    if (line) svg += '<polyline points="' + line + '" fill="none" stroke="#f0b35a" stroke-width="1.5"/>'
+    if (soft && soft <= max) svg += '<line x1="30" x2="' + W + '" y1="' + y(soft) + '" y2="' + y(soft) + '" stroke="#ff6b6b" stroke-dasharray="4 4"><title>自动压缩阈值 ' + tk(soft) + '</title></line>'
+    svg += '<text x="2" y="12" fill="#8a93a3" font-size="10">' + tk(max) + '</text></svg>'
+    return svg
+  }
+  function loadBrowser(offset) {
+    var idx = $('breq').value, cat = $('bcat').value
+    state.browserCat = cat
+    var url = '/api/sessions/' + encodeURIComponent(state.session) + '/requests/' + idx + '?limit=50&offset=' + (offset || 0) + (cat ? '&category=' + cat : '')
+    return api(url).then(function (d) {
+      state.browser = d
+      var h = '<div class="mut" style="margin-bottom:6px">' + time(d.at) + ' · ' + esc(d.model) + ' · ' + (d.source === 'log' ? '日志明细' : '推算') + '</div>' + stack(d.composition) + legend(d.composition)
+      h += d.items.map(function (it, i) {
+        var key = d.index + ':' + (d.offset + i)
+        return '<div class="item"><div class="h" data-k="' + key + '"><span class="sw" style="background:var(--c-' + it.category + ')"></span><span class="mono">' + esc(it.kind === 'message' ? it.label : it.id) + '</span><span class="mut">' + esc(it.kind === 'message' ? '' : it.label) + '</span><span class="grow"></span><span class="mut">' + (it.tokens ? tk(it.tokens) : '') + '</span></div>' +
+          (state.open[key] && it.preview ? '<pre>' + esc(it.preview) + '</pre>' : '') + '</div>'
+      }).join('')
+      var pages = ''
+      if (d.offset > 0) pages += '<button id="bprev">上一页</button> '
+      if (d.offset + d.limit < d.total) pages += '<button id="bnext">下一页</button>'
+      h += '<div style="margin-top:6px" class="mut">' + (d.offset + 1) + '–' + Math.min(d.total, d.offset + d.limit) + ' / ' + d.total + ' ' + pages + '</div>'
+      $('bbody').innerHTML = h
+      $('bbody').className = ''
+      Array.prototype.forEach.call(document.querySelectorAll('#bbody .h'), function (el) { el.onclick = function () { var k = el.getAttribute('data-k'); state.open[k] = !state.open[k]; loadBrowser(d.offset) } })
+      if ($('bprev')) $('bprev').onclick = function () { loadBrowser(Math.max(0, d.offset - d.limit)) }
+      if ($('bnext')) $('bnext').onclick = function () { loadBrowser(d.offset + d.limit) }
+    }).catch(fail)
+  }
+  function fail(e) { $('content').innerHTML = '<div class="empty err">' + esc(e.message || e) + '</div>' }
+
+  function setTab(t) {
+    state.tab = t
+    $('t-insight').className = t === 'insight' ? 'on' : ''
+    $('t-session').className = t === 'session' ? 'on' : ''
+    $('side').className = t === 'session' ? 'show' : ''
+    $('range').style.display = t === 'insight' ? '' : 'none'
+  }
+  $('t-insight').onclick = function () { setTab('insight'); history.replaceState(null, '', location.pathname); loadInsight() }
+  $('t-session').onclick = function () { setTab('session'); loadList(); loadReport() }
+  $('range').onchange = loadInsight
+  $('q').oninput = renderList
+
+  // —— 实时：收到更新后合并刷新（1.5 秒内最多一次） ——
+  var pending = null
+  function refreshSoon(u) {
+    if (pending) return
+    pending = setTimeout(function () {
+      pending = null
+      if (state.tab === 'insight') loadInsight()
+      else { loadList(); if (!u || u.sessionId === state.session) loadReport() }
+    }, 1500)
+  }
+  function connect() {
+    var es = new EventSource('/api/stream' + (token ? '?token=' + encodeURIComponent(token) : ''))
+    es.addEventListener('hello', function () { $('live').textContent = '实时'; $('live').className = 'badge ok' })
+    es.addEventListener('update', function (ev) { try { refreshSoon(JSON.parse(ev.data)) } catch (e) { refreshSoon() } })
+    es.onerror = function () { $('live').textContent = '已断开，重连中'; $('live').className = 'badge warn' }
+  }
+
+  var m = /#s=([^&]+)/.exec(location.hash)
+  if (m) { state.session = decodeURIComponent(m[1]); setTab('session'); loadList(); loadReport() } else loadInsight()
+  connect()
+})()
+</script>
+</body>
+</html>

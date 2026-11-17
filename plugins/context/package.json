@@ -1,0 +1,49 @@
+{
+  "name": "leo-plugin-context",
+  "version": "0.1.0",
+  "description": "上下文观测：每次请求的上下文由什么组成（system 片段、插件注入、工具定义、消息分类）、离窗口和自动压缩多远、怎么演变；跨会话用量与成本洞察。独立本机网页 + /context 命令，只读",
+  "type": "module",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/CherryKingOne/leo-plugin.git",
+    "directory": "plugins/context"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "leo-plugin.json",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "gen:ui": "node scripts/gen-ui.mjs",
+    "build": "node scripts/gen-ui.mjs && tsc -p tsconfig.json && esbuild src/index.ts --bundle --platform=node --format=esm --target=node22 --external:leo-agents --outfile=dist/context.bundle.js --log-level=warning",
+    "typecheck": "node scripts/gen-ui.mjs && tsc -p tsconfig.test.json --noEmit",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "leo-agents": ">=0.2.1"
+  },
+  "dependencies": {
+    "zod": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "esbuild": "^0.28.0",
+    "leo-agents": "github:CherryKingOne/leo-agents#12fade8",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.0"
+  }
+}
