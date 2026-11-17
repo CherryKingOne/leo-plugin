@@ -29,9 +29,9 @@ describe('prepareQianfanBody', () => {
     expect(effort({ enabled: true, effort: 'max' }, { reasoningEffort: 'low' })).toBe('max')
   })
 
-  it('ernie-5.5-flash-preview: always on, never sends disabled or an effort', () => {
-    expect(prep('ernie-5.5-flash-preview')).toEqual({ model: 'ernie-5.5-flash-preview' })
-    expect(prep('ernie-5.5-flash-preview', { reasoning: { enabled: false, effort: 'max' }, body: { reasoning_effort: 'low', thinking: { type: 'disabled' } } })).toEqual({ model: 'ernie-5.5-flash-preview' })
+  it('ernie-5.5-flash-preview: always sends thinking enabled, never disabled or an effort', () => {
+    expect(prep('ernie-5.5-flash-preview')).toEqual({ model: 'ernie-5.5-flash-preview', thinking: { type: 'enabled' } })
+    expect(prep('ernie-5.5-flash-preview', { reasoning: { enabled: false, effort: 'max' }, body: { reasoning_effort: 'low', thinking: { type: 'disabled' } } })).toEqual({ model: 'ernie-5.5-flash-preview', thinking: { type: 'enabled' } })
   })
 
   it('ernie-5.1: a plain text model, no thinking parameters, reasoning_content dropped', () => {
@@ -107,8 +107,8 @@ describe('provider-qianfan with the provider registry', () => {
     const r = await app.createAgent().run('2+3?')
     expect(r.text).toBe('5')
     expect(calls).toEqual([`POST ${BASE}/chat/completions Bearer ${KEY}`, `POST ${BASE}/chat/completions Bearer ${KEY}`])
-    expect(bodies[0]).toMatchObject({ model: 'ernie-5.5-flash-preview', stream: true })
-    expect(bodies[0].thinking).toBeUndefined()
+    expect(bodies[0]).toMatchObject({ model: 'ernie-5.5-flash-preview', stream: true, thinking: { type: 'enabled' } })
+    expect(bodies[0].reasoning_effort).toBeUndefined()
     expect(bodies[1].messages.find((m: any) => m.role === 'assistant')).toMatchObject({ content: '', reasoning_content: '先算一下', tool_calls: [{ id: 'c1' }] })
     await app.dispose()
   })

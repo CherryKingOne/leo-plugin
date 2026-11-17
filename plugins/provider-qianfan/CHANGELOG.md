@@ -1,5 +1,9 @@
 # 更新日志
 
+## 0.1.1 — 2026-11-17
+
+- 修复 `ernie-5.5-flash-preview` 不思考：它“只能开启”但不传 `thinking` 时服务端不思考，现在始终发送 `thinking: { type: enabled }`（仍不发关闭与强度）
+
 ## 0.1.0 — 2026-11-17
 
 首个版本：模型供应商注册层的百度千帆（文心 ERNIE）子插件（需要 leo-agents ≥ 0.2.0、leo-plugin-provider ≥ 0.3.1）。

@@ -11,7 +11,8 @@
  * - 模型（https://cloud.baidu.com/doc/qianfan/s/rmh4stp0j「文本生成 / ERNIE系列-旗舰模型」）：
  *   `ernie-5.5-flash-preview`（1M / 1M）、`ernie-light-dt-1.0`（1M / 128k）、`ernie-5.1`（128k，最大输入 119k，输出 [1, 65536]）
  * - 深度思考（https://cloud.baidu.com/doc/qianfan-docs/s/Wm95lyynv）：
- *   - `thinking: { type: enabled | disabled }`：`ernie-light-dt-1.0` 可开可关；`ernie-5.5-flash-preview` 只能开启
+ *   - `thinking: { type: enabled | disabled }`：`ernie-light-dt-1.0` 可开可关；`ernie-5.5-flash-preview` 只能开启，
+ *     但不传 thinking 时不会思考，所以对它始终发送 `{ type: enabled }`
  *   - `reasoning_effort`：`ernie-light-dt-1.0` 取 low / high / max（默认 max）；`ernie-5.5-flash-preview` 固定 high、不可调
  *   - `ernie-5.1` 不在深度思考模型列表里，按普通文本模型处理，不发思考参数
  *   - 思考内容在 `reasoning_content`；带工具的思考多轮要回传它，新一轮问题时服务端会忽略旧的
@@ -176,8 +177,9 @@ export function prepareQianfanBody(body: Record<string, unknown>, input: { reque
   delete out.enable_thinking
   if (spec.toggle === 'none') enabled = false
   else if (spec.toggle === 'always-on') {
-    // 只能开启：不发关闭（会报错），也不发强度（不可调）
+    // 只能开启：不明确发 enabled 时服务端不思考（用户实测），所以始终发 enabled；不发关闭（不支持），也不发强度（不可调）
     enabled = true
+    out.thinking = { type: 'enabled' }
   } else {
     out.thinking = { type: enabled ? 'enabled' : 'disabled' }
   }

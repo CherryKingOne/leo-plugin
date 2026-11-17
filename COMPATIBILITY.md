@@ -11,7 +11,7 @@ leo-agents（底座）与 leo-plugin（插件）各自发版。这张表回答�
 
 | leo-agents | 发布时间 | 可用插件（推荐版本） | 不可用 / 受限 | 备注 |
 | --- | --- | --- | --- | --- |
-| [0.2.3](https://github.com/CherryKingOne/leo-agents/releases/tag/0.2.3) | 2026-11-17 | 同 0.2.2，另加 context 0.1.0（精确组成）、provider-qianfan 0.1.0 | — | 只新增：`llm/request.breakdown`（System 片段与来源插件、每个工具定义、消息、窗口与预留）、`PromptSection.owner` |
+| [0.2.3](https://github.com/CherryKingOne/leo-agents/releases/tag/0.2.3) | 2026-11-17 | 同 0.2.2，另加 context 0.1.0（精确组成）、provider-qianfan 0.1.1 | — | 只新增：`llm/request.breakdown`（System 片段与来源插件、每个工具定义、消息、窗口与预留）、`PromptSection.owner` |
 | [0.2.2](https://github.com/CherryKingOne/leo-agents/releases/tag/0.2.2) | 2026-11-17 | 同 0.2.1，另加 trajectory 0.1.0（完整计时） | — | 只新增：会话日志 `tool/start` / `tool/end`、`llm/response.startedAt/firstTokenAt`（TTFT）、`session/meta`（`AgentOptions.sessionMeta`）、`SessionStore.list()` |
 | [0.2.1](https://github.com/CherryKingOne/leo-agents/releases/tag/0.2.1) | 2026-11-02 | 同 0.2.0，推荐 gateway 0.3.1、gateway-qq 0.3.1、gateway-feishu 0.3.0、interaction 0.1.1、interaction-persona-whale 0.1.0、interaction-stickers-whale 0.1.0、speakup 0.1.1、skills 0.1.0、trajectory 0.1.0 | trajectory 的工具开始时间、历史 TTFT、日志里的父子关系（需要 0.2.2） | 新增 `commands` 服务（插件斜杠命令）与展示块 `display`：interaction 的 `/persona`、`/sticker`、`/stickers` 与终端画表情、网关转发插件命令从这版开始可用 |
 | [0.2.0](https://github.com/CherryKingOne/leo-agents/releases/tag/0.2.0) | 2026-10-31 | provider 0.3.1、provider-deepseek 0.3.0、provider-longcat 0.1.0、provider-spark 0.1.0、gateway 0.3.1、gateway-qq 0.3.1、gateway-feishu 0.3.0、interaction 0.1.1、interaction-persona-whale 0.1.0、interaction-stickers-whale 0.1.0、mcp 0.1.1、sub-agents 0.1.1 | interaction 的斜杠命令与终端画表情、网关转发插件命令（需要 0.2.1） | **破坏性变更**：底座不再内置模型厂商，必须装 `provider` 加至少一个厂商子插件（deepseek / longcat / spark）才能对话 |
@@ -67,6 +67,7 @@ leo-agents（底座）与 leo-plugin（插件）各自发版。这张表回答�
 
 | 版本 | 发布时间 | 需要 | 更新说明 |
 | --- | --- | --- | --- |
+| 0.1.1 | 2026-11-17 | provider ≥ 0.3.1 | 修复 ernie-5.5-flash-preview 不思考：始终发送 `thinking: { type: enabled }` |
 | 0.1.0 | 2026-11-17 | provider ≥ 0.3.1（自动填充需要 ≥ 0.3.0，错误码分类需要 ≥ 0.3.1） | 首个版本：只内置 ERNIE 旗舰文本模型 ernie-5.5-flash-preview / ernie-light-dt-1.0 / ernie-5.1；`thinking` 开关与 `reasoning_effort` 按模型发送；千帆错误码映射；支持 Token Plan 个人版 baseURL |
 
 ### 消息网关

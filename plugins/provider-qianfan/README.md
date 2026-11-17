@@ -36,7 +36,7 @@ leo -m qianfan/ernie-light-dt-1.0
 按[深度思考文档](https://cloud.baidu.com/doc/qianfan-docs/s/Wm95lyynv)：
 
 - `ernie-light-dt-1.0`：每次请求明确发送 `thinking: { "type": "enabled" | "disabled" }`；开启时可带 `reasoning_effort`（宿主的 minimal → low，medium → high，xhigh → max）。不指定强度时由千帆决定（默认 max）
-- `ernie-5.5-flash-preview`：只能开启、强度不可调，插件不发送 `thinking` 与 `reasoning_effort`（`/think off` 对它无效）
+- `ernie-5.5-flash-preview`：只能开启、强度不可调。不传 `thinking` 时服务端不会思考，所以插件始终发送 `thinking: { "type": "enabled" }`，不发关闭与 `reasoning_effort`（`/think off` 对它无效）
 - `ernie-5.1`：不在深度思考模型列表里，不发思考参数
 - 思考内容（`reasoning_content`）在 leo 里以 💭 显示；思考开启时，带工具调用的多轮请求回传之前的 `reasoning_content`，关闭时不传
 
